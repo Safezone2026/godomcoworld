@@ -2,18 +2,22 @@
 <html>
 <head>
   <title>Godomcoworld</title>
-  <meta charset="UTF-8"><!-- Pi SDK -->
-<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <meta charset="UTF-8">
+  <!-- Pi SDK -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body>
   <h1>Godomcoworld</h1>
   <p>Godomcoworld is a Pi Network educational and marketplace app focused on AI-guided learning, vocational skills, and digital trade.</p>
-  <p>This page is used for Pi Network domain verification and app validation.</p><script>
+  <p>This page is used for Pi Network domain verification and app validation.</p>
+
+  <script>
   // Initialize Pi SDK for Testnet
   Pi.init({
     version: "2.0",
     sandbox: true,
-    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
+    walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
   });
 
   async function connectToPi() {
@@ -36,6 +40,6 @@
 
   // Automatically connect on page load
   window.addEventListener('load', connectToPi);
-</script>
+  </script>
 </body>
 </html>
