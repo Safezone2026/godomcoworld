@@ -10,37 +10,47 @@
   <h1>Godomcoworld</h1>
   <p>Godomcoworld is a Pi Network educational and marketplace app focused on AI-guided learning, vocational skills, and digital trade.</p>
   <p>This page is used for Pi Network domain verification and app validation.</p>
+
   <!-- Pi SDK and Wallet Code Updated -->
-
   <script>
-  // Initialize Pi SDK for Testnet
-  Pi.init({
-    version: "2.0",
-    sandbox: true,
-    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
-    walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
-  });
+    // Initialize Pi SDK for Testnet
+    Pi.init({
+      version: "2.0",
+      sandbox: true,  // For Testnet
+      apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",  // Your Pi Network API key
+      walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"  // Your Pi Network wallet address
+    });
 
-  async function connectToPi() {
-    try {
-      const scopes = ['username', 'payments', 'wallet_address'];
+    // Function to authenticate and connect to Pi Network
+    async function connectToPi() {
+      try {
+        const scopes = ['username', 'payments', 'wallet_address'];
 
-      const authResult = await Pi.authenticate(scopes, function(payment) {
-        console.log("Payment received:", payment);
-      });
+        // Authenticate the user
+        const authResult = await Pi.authenticate(scopes, function(payment) {
+          console.log("Payment received:", payment);
+        });
 
-      console.log("User authenticated:", authResult);
+        // Log the authentication result
+        console.log("User authenticated:", authResult);
 
-      const wallet = await Pi.wallet();
-      console.log("Wallet connected:", wallet);
+        // Display authentication result on the page
+        const authMessage = `Authentication Successful! Username: ${authResult.username}, Wallet: ${authResult.wallet_address}`;
+        const authDiv = document.createElement("div");
+        authDiv.innerHTML = authMessage;
+        document.body.appendChild(authDiv);
 
-    } catch (error) {
-      console.error("Pi SDK error:", error);
+        // Fetch wallet data
+        const wallet = await Pi.wallet();
+        console.log("Wallet connected:", wallet);
+
+      } catch (error) {
+        console.error("Pi SDK error:", error);
+      }
     }
-  }
 
-  // Automatically connect on page load
-  window.addEventListener('load', connectToPi);
+    // Automatically connect on page load
+    window.addEventListener('load', connectToPi);
   </script>
 </body>
 </html>
