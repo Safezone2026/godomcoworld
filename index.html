@@ -1,56 +1,196 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Godomcoworld</title>
   <meta charset="UTF-8">
-  <!-- Pi SDK -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Godomcoworld</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body>
-  <h1>Godomcoworld</h1>
+  <h1>Welcome to Godomcoworld</h1>
   <p>Godomcoworld is a Pi Network educational and marketplace app focused on AI-guided learning, vocational skills, and digital trade.</p>
-  <p>This page is used for Pi Network domain verification and app validation.</p>
+  
+  <!-- Tech Section -->
+  <section id="tech">
+    <h2>Tech Learning</h2>
+    <p>Learn web development, app development, and more!</p>
+    <!-- Interactive coding challenge -->
+    <button onclick="startCodingChallenge()">Start Coding Challenge</button>
+    <!-- Learning module (link to tutorial videos or content) -->
+    <a href="tech_tutorials.html">View Tutorials</a>
+  </section>
 
-  <!-- Pi SDK and Wallet Code Updated -->
   <script>
-    // Initialize Pi SDK for Testnet
+    function startCodingChallenge() {
+      alert("Challenge Started!");
+      // Add challenge logic here
+    }
+  </script>
+
+  <!-- Vocational Training Section -->
+  <section id="vocational">
+    <h2>Vocational Training</h2>
+    <p>Learn a new trade, from carpentry to plumbing!</p>
+    <!-- Course listing with USD and Pi coin price -->
+    <ul>
+      <li>
+        <p>Carpentry Basics - Price: $50 USD (~0.00015949 Pi coins)</p>
+        <button onclick="buyCourse(50)">Unlock Course</button> <!-- 50 USD -->
+      </li>
+      <li>
+        <p>Plumbing 101 - Price: $60 USD (~0.00019138 Pi coins)</p>
+        <button onclick="buyCourse(60)">Unlock Course</button> <!-- 60 USD -->
+      </li>
+    </ul>
+  </section>
+
+  <script>
+    function buyCourse(usdPrice) {
+      // Conversion factor from USD to Pi coins
+      const USD_TO_PI_RATE = 314159; // 1 Pi = $314,159
+      const piEquivalent = usdPrice / USD_TO_PI_RATE;
+
+      alert(`Unlocking course. Total price: $${usdPrice} USD (~${piEquivalent.toFixed(8)} Pi coins)`);
+
+      // Simulate Pi coin payment
+      processCoursePayment(piEquivalent);
+    }
+
+    function processCoursePayment(piEquivalent) {
+      console.log("Processing payment of " + piEquivalent + " Pi coins...");
+
+      Pi.authenticate(['payments'], function(payment) {
+        console.log("Payment received:", payment);
+        if (payment.amount === piEquivalent) {
+          alert("Payment successful! You now have access to the course.");
+        } else {
+          alert("Payment failed or canceled.");
+        }
+      });
+    }
+  </script>
+
+  <!-- Artisan Africa Marketplace -->
+  <section id="artisan">
+    <h2>Artisan Marketplace</h2>
+    <p>Browse handmade crafts and products from artisans across Africa.</p>
+    <!-- Product Listings with USD and Pi coin price -->
+    <div id="productList">
+      <div class="product">
+        <img src="artisan_product_1.jpg" alt="Artisan Product">
+        <p>Handmade Wooden Chair</p>
+        <p>Price: $300 USD (~0.00095493 Pi coins)</p> <!-- USD price and Pi coin equivalent -->
+        <button onclick="buyProduct(300)">Buy Now</button> <!-- 300 USD -->
+      </div>
+      <div class="product">
+        <img src="artisan_product_2.jpg" alt="Artisan Product">
+        <p>Handmade Necklace</p>
+        <p>Price: $150 USD (~0.00047746 Pi coins)</p> <!-- USD price and Pi coin equivalent -->
+        <button onclick="buyProduct(150)">Buy Now</button> <!-- 150 USD -->
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function buyProduct(usdPrice) {
+      // Conversion factor from USD to Pi coins
+      const USD_TO_PI_RATE = 314159; // 1 Pi = $314,159
+      const piEquivalent = usdPrice / USD_TO_PI_RATE;
+
+      alert(`Product added to cart. Total price: $${usdPrice} USD (~${piEquivalent.toFixed(8)} Pi coins)`);
+
+      // Simulate Pi coin payment
+      processPayment(piEquivalent);
+    }
+
+    // Simulate the payment process using Pi SDK
+    function processPayment(piEquivalent) {
+      console.log("Processing payment of " + piEquivalent + " Pi coins...");
+
+      Pi.authenticate(['payments'], function(payment) {
+        console.log("Payment received:", payment);
+        if (payment.amount === piEquivalent) {
+          alert("Payment successful! Thank you for your purchase.");
+        } else {
+          alert("Payment failed or canceled.");
+        }
+      });
+    }
+  </script>
+
+  <!-- Agriculture Africa Marketplace -->
+  <section id="agriculture">
+    <h2>Agriculture Marketplace</h2>
+    <p>Buy and sell agricultural products like seeds and farming tools.</p>
+    <!-- Product Listings -->
+    <div id="agriProductList">
+      <div class="product">
+        <img src="agri_product_1.jpg" alt="Agricultural Product">
+        <p>Organic Tomato Seeds</p>
+        <p>Price: $50 USD (~0.00015949 Pi coins)</p>
+        <button onclick="buyAgriProduct(50)">Buy Now</button> <!-- 50 USD -->
+      </div>
+      <div class="product">
+        <img src="agri_product_2.jpg" alt="Agricultural Product">
+        <p>Farming Tools Set</p>
+        <p>Price: $150 USD (~0.00047746 Pi coins)</p>
+        <button onclick="buyAgriProduct(150)">Buy Now</button> <!-- 150 USD -->
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function buyAgriProduct(usdPrice) {
+      // Conversion factor from USD to Pi coins
+      const USD_TO_PI_RATE = 314159; // 1 Pi = $314,159
+      const piEquivalent = usdPrice / USD_TO_PI_RATE;
+
+      alert(`Agricultural product added to cart. Total price: $${usdPrice} USD (~${piEquivalent.toFixed(8)} Pi coins)`);
+
+      // Simulate Pi coin payment
+      processAgriPayment(piEquivalent);
+    }
+
+    // Simulate the payment process using Pi SDK
+    function processAgriPayment(piEquivalent) {
+      console.log("Processing payment of " + piEquivalent + " Pi coins...");
+
+      Pi.authenticate(['payments'], function(payment) {
+        console.log("Payment received:", payment);
+        if (payment.amount === piEquivalent) {
+          alert("Payment successful! Thank you for your purchase.");
+        } else {
+          alert("Payment failed or canceled.");
+        }
+      });
+    }
+  </script>
+
+  <!-- Pi SDK Authentication and Wallet Connection -->
+  <script>
     Pi.init({
       version: "2.0",
-      sandbox: true,  // For Testnet
-      apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",  // Your Pi Network API key
-      walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"  // Your Pi Network wallet address
+      sandbox: true,  // Use true for Testnet
+      apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h", // Replace with your API key
+      walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2" // Replace with your wallet address
     });
 
-    // Function to authenticate and connect to Pi Network
     async function connectToPi() {
       try {
         const scopes = ['username', 'payments', 'wallet_address'];
-
-        // Authenticate the user
         const authResult = await Pi.authenticate(scopes, function(payment) {
           console.log("Payment received:", payment);
         });
 
-        // Log the authentication result
         console.log("User authenticated:", authResult);
-
-        // Display authentication result on the page
-        const authMessage = `Authentication Successful! Username: ${authResult.username}, Wallet: ${authResult.wallet_address}`;
-        const authDiv = document.createElement("div");
-        authDiv.innerHTML = authMessage;
-        document.body.appendChild(authDiv);
-
-        // Fetch wallet data
         const wallet = await Pi.wallet();
         console.log("Wallet connected:", wallet);
-
       } catch (error) {
         console.error("Pi SDK error:", error);
       }
     }
 
-    // Automatically connect on page load
     window.addEventListener('load', connectToPi);
   </script>
 </body>
-</html>
+  </html>
