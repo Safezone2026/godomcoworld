@@ -3,6 +3,7 @@
 <head>
   <title>Godomcoworld</title>
   <meta charset="UTF-8">
+  <!-- Pi SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body>
@@ -10,34 +11,35 @@
   <p>Godomcoworld is a Pi Network educational and marketplace app focused on AI-guided learning, vocational skills, and digital trade.</p>
   <p>This page is used for Pi Network domain verification and app validation.</p>
 
-<script>
-Pi.init({
-  version: "2.0",
-  sandbox: true,
-  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
-  walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
-});
+  <script>
+  // Initialize Pi SDK for Testnet
+  Pi.init({
+    version: "2.0",
+    sandbox: true,
+    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
+    walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
+  });
 
-async function connectToPi() {
-  try {
-    const scopes = ['username', 'payments', 'wallet_address'];
+  async function connectToPi() {
+    try {
+      const scopes = ['username', 'payments', 'wallet_address'];
 
-    const authResult = await Pi.authenticate(scopes, function(payment) {
-      console.log("Payment received:", payment);
-    });
+      const authResult = await Pi.authenticate(scopes, function(payment) {
+        console.log("Payment received:", payment);
+      });
 
-    console.log("User authenticated:", authResult);
+      console.log("User authenticated:", authResult);
 
-    const wallet = await Pi.wallet();
-    console.log("Wallet connected:", wallet);
+      const wallet = await Pi.wallet();
+      console.log("Wallet connected:", wallet);
 
-  } catch (error) {
-    console.error("Pi SDK error:", error);
+    } catch (error) {
+      console.error("Pi SDK error:", error);
+    }
   }
-}
 
-window.addEventListener('load', connectToPi);
-</script>
-
+  // Automatically connect on page load
+  window.addEventListener('load', connectToPi);
+  </script>
 </body>
-</html>
+  </html>
