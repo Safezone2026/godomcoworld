@@ -27,7 +27,7 @@
 
 <div class="container">
 
-<h2>Blockchain Technology Course</h2>
+<h2 id="courseTitle">Course</h2>
 
 <div class="card">
 
@@ -185,6 +185,23 @@ console.error(error);
 
 });
 
+}
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const course = params.get("course");
+
+if(course === "blockchain"){
+document.getElementById("courseTitle").innerText="Blockchain Technology";
+}
+
+if(course === "nanotech"){
+document.getElementById("courseTitle").innerText="Nanotechnology";
+}
+
+if(course === "space"){
+document.getElementById("courseTitle").innerText="Space Technology";
 }
 
 </script>
