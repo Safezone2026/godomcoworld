@@ -1,0 +1,70 @@
+body{
+background:#0b0b0b;
+color:white;
+font-family:Arial;
+margin:0;
+}
+
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
+background:#111;
+border-bottom:1px solid #222;
+}
+
+.logo{
+font-size:22px;
+font-weight:bold;
+color:#f5a623;
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:#121212;
+border:1px solid #222;
+border-radius:15px;
+padding:20px;
+margin-bottom:20px;
+transition:0.3s;
+}
+
+.card:hover{
+border-color:#f5a623;
+transform:scale(1.02);
+}
+
+button{
+background:#f5a623;
+border:none;
+padding:12px 18px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.course-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+}
+
+.price{
+color:#f5a623;
+font-weight:bold;
+}
+
+.bottom-nav{
+position:fixed;
+bottom:0;
+width:100%;
+background:#111;
+display:flex;
+justify-content:space-around;
+padding:12px;
+border-top:1px solid #222;
+  }
