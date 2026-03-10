@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Course Details - Godomcoworld</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">🌍 Godomcoworld</div>
+
+<button onclick="loginPi()">Sign in with Pi</button>
+
+</header>
+
+
+<div class="container">
+
+<h2>Blockchain Technology Course</h2>
+
+<div class="card">
+
+<h3>Course Overview</h3>
+
+<p>
+
+This course teaches Blockchain technology from 
+Basic → Professional → Practical implementation.
+
+Topics include:
+
+</p>
+
+<ul>
+
+<li>Blockchain fundamentals</li>
+
+<li>Smart contracts</li>
+
+<li>Web3 ecosystem</li>
+
+<li>Cryptocurrency infrastructure</li>
+
+<li>Decentralized applications</li>
+
+</ul>
+
+</div>
+
+
+<div class="card">
+
+<h3>Course Levels</h3>
+
+<p>✔ Basic Level</p>
+
+<p>✔ Professional Level</p>
+
+<p>✔ Practical Implementation</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>Course Price</h3>
+
+<p class="price">
+
+$300 USD
+
+</p>
+
+<p>
+
+Equivalent Pi value:
+
+</p>
+
+<p class="price">
+
+0.00095493 π
+
+</p>
+
+<button onclick="payCourse()">
+
+Pay with Pi
+
+</button>
+
+</div>
+
+</div>
+
+
+<!-- Bottom Navigation -->
+
+<div class="bottom-nav">
+
+<a href="index.html">Home</a>
+
+<a href="learn.html">Learn</a>
+
+<a href="marketplace.html">Marketplace</a>
+
+<a href="finance.html">Finance</a>
+
+<a href="dashboard.html">Dashboard</a>
+
+</div>
+
+
+<script>
+
+Pi.init({
+version:"2.0",
+sandbox:true
+});
+
+async function loginPi(){
+
+const scopes=['username','payments'];
+
+const auth=await Pi.authenticate(scopes);
+
+alert("Welcome "+auth.user.username);
+
+}
+
+const piRate=314159;
+
+function payCourse(){
+
+let usd=300;
+
+let pi=(usd/piRate).toFixed(6);
+
+Pi.createPayment({
+
+amount:pi,
+
+memo:"Godomcoworld Blockchain Course",
+
+metadata:{course:"blockchain"}
+
+},
+
+{
+
+onReadyForServerApproval:function(paymentId){
+
+console.log(paymentId);
+
+},
+
+onReadyForServerCompletion:function(paymentId,txid){
+
+console.log(txid);
+
+},
+
+onCancel:function(paymentId){
+
+console.log("Payment cancelled");
+
+},
+
+onError:function(error){
+
+console.error(error);
+
+}
+
+});
+
+}
+
+</script>
+
+</body>
+
+  </html>
