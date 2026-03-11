@@ -1,45 +1,183 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <title>Godomcoworld</title>
-  <meta charset="UTF-8">
-  <!-- Pi SDK -->
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Godomcoworld</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
 </head>
+
 <body>
-  <h1>Godomcoworld</h1>
-  <p>Godomcoworld is a Pi Network educational and marketplace app focused on AI-guided learning, vocational skills, and digital trade.</p>
-  <p>This page is used for Pi Network domain verification and app validation.</p>
 
-  <script>
-  // Initialize Pi SDK for Testnet
-  Pi.init({
-    version: "2.0",
-    sandbox: true,
-    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
-    walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
-  });
+<header>
 
-  async function connectToPi() {
-    try {
-      const scopes = ['username', 'payments', 'wallet_address'];
+<div class="logo">🌍 Godomcoworld</div>
 
-      const authResult = await Pi.authenticate(scopes, function(payment) {
-        console.log("Payment received:", payment);
-      });
+<button onclick="loginPi()">Sign in with Pi</button>
 
-      console.log("User authenticated:", authResult);
+</header>
 
-      const wallet = await Pi.wallet();
-      console.log("Wallet connected:", wallet);
+<div class="container">
 
-    } catch (error) {
-      console.error("Pi SDK error:", error);
-    }
-  }
+<h2>Welcome to Godomcoworld</h2>
 
-  // Automatically connect on page load
-  window.addEventListener('load', connectToPi);
-  </script>
+<p>Education • Innovation • African Marketplace • Web3 Economy</p>
+
+
+<!-- Learning Section -->
+
+<div class="card">
+
+<h3>🎓 Technology Learning Center</h3>
+
+<p>
+Blockchain • Nanotechnology • Space Technology • 
+Augmented Reality • Hologram Technology
+</p>
+
+<button onclick="location.href='learn.html'">
+Browse Courses
+</button>
+
+</div>
+
+
+<!-- AI Assistant -->
+
+<div class="card">
+
+<h3>🤖 AI Learning Assistant</h3>
+
+<p>Ask questions and receive guidance while learning.</p>
+
+<button onclick="location.href='learn.html'">
+Open AI Tutor
+</button>
+
+</div>
+
+
+<!-- Marketplace -->
+
+<div class="card">
+
+<h3>🌾 Agriculture Africa</h3>
+
+<p>Farmers and food processors marketplace.</p>
+
+<button onclick="location.href='marketplace.html'">
+Open Marketplace
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>🛠 Artisan Africa</h3>
+
+<p>African artisans can sell crafts globally.</p>
+
+<button onclick="location.href='marketplace.html'">
+Explore Products
+</button>
+
+</div>
+
+
+<!-- Financial Services -->
+
+<div class="card">
+
+<h3>💳 Financial Services</h3>
+
+<p>
+Mobile Airtime • Electricity Bills • TV Subscription
+</p>
+
+<button onclick="location.href='finance.html'">
+Open Services
+</button>
+
+</div>
+
+
+<!-- User Dashboard -->
+
+<div class="card">
+
+<h3>👤 User Dashboard</h3>
+
+<p>Track courses, purchases and marketplace listings.</p>
+
+<button onclick="location.href='dashboard.html'">
+Open Dashboard
+</button>
+
+</div>
+
+</div>
+
+
+<!-- Bottom Navigation -->
+
+<div class="bottom-nav">
+
+<a href="index.html">Home</a>
+
+<a href="learn.html">Learn</a>
+
+<a href="marketplace.html">Marketplace</a>
+
+<a href="finance.html">Finance</a>
+
+<a href="dashboard.html">Dashboard</a>
+
+</div>
+
+
+<script>
+
+const PI_API_KEY="qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h";
+
+const WALLET_ADDRESS="GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2";
+
+Pi.init({
+version:"2.0",
+sandbox:true
+});
+
+
+async function loginPi(){
+
+try{
+
+const scopes=['username','payments'];
+
+const auth=await Pi.authenticate(scopes);
+
+console.log(auth);
+
+alert("Welcome "+auth.user.username);
+
+localStorage.setItem("piUser",auth.user.username);
+
+}catch(e){
+
+console.error(e);
+
+}
+
+}
+
+</script>
+
 </body>
   </html>
