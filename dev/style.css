@@ -57,7 +57,21 @@ gap:15px;
 color:#f5a623;
 font-weight:bold;
 }
+.view-btn{
+background:#00bfff;
+color:white;
+padding:10px 15px;
+border-radius:8px;
+text-decoration:none;
+font-weight:bold;
+display:inline-block;
+margin-top:10px;
+}
 
+.view-btn:hover{
+background:#f5a623;
+color:black;
+  }
 .bottom-nav{
 position:fixed;
 bottom:0;
