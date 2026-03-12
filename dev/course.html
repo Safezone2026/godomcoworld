@@ -4,6 +4,39 @@
 <meta charset="UTF-8">
 <title>Technology Courses - Godomcoworld</title>
 <link rel="stylesheet" href="style.css">
+
+<style>
+.course-container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+padding:20px;
+}
+
+.course-card{
+background:#111;
+color:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.5);
+}
+
+.btn{
+display:inline-block;
+margin-top:10px;
+padding:8px 15px;
+background:#4CAF50;
+color:white;
+text-decoration:none;
+border-radius:5px;
+}
+
+.pay-btn{
+background:#ffcc00;
+color:black;
+margin-left:10px;
+}
+</style>
 </head>
 
 <body>
@@ -20,7 +53,6 @@
 <a href="dashboard.html">Dashboard</a>
 <a href="upload.html">Upload</a>
 </nav>
-
 </header>
 
 <main>
@@ -31,51 +63,58 @@
 
 <div class="course-card">
 <h3>Blockchain Technology</h3>
-<p>Learn blockchain fundamentals, smart contracts, and Web3 systems.</p>
-<p>Price: $300 (~0.00095493π)</p>
+<p>Learn blockchain fundamentals and decentralized systems.</p>
+<p>$300 (~0.00095π)</p>
 <a href="courses/blockchain.html" class="btn">View Details</a>
+<button class="btn pay-btn" onclick="payCourse('Blockchain Technology',0.00095)">Pay with Pi</button>
 </div>
 
 <div class="course-card">
 <h3>Nanotechnology</h3>
-<p>Understand nanoscale engineering and molecular manufacturing.</p>
-<p>Price: $280 (~0.00089150π)</p>
+<p>Explore nanoscale engineering and molecular science.</p>
+<p>$280 (~0.00089π)</p>
 <a href="courses/nanotech.html" class="btn">View Details</a>
+<button class="btn pay-btn" onclick="payCourse('Nanotechnology',0.00089)">Pay with Pi</button>
 </div>
 
 <div class="course-card">
 <h3>Web & Blockchain Development</h3>
 <p>Build decentralized applications and Web3 platforms.</p>
-<p>Price: $320 (~0.00101859π)</p>
+<p>$320 (~0.00101π)</p>
 <a href="courses/webblockchain.html" class="btn">View Details</a>
+<button class="btn pay-btn" onclick="payCourse('Web3 Development',0.00101)">Pay with Pi</button>
 </div>
 
 <div class="course-card">
 <h3>Argumentation Technology</h3>
-<p>Master advanced debate systems, logic frameworks, and AI reasoning.</p>
-<p>Price: $250 (~0.00079578π)</p>
+<p>Master logical reasoning systems and AI argument modeling.</p>
+<p>$250 (~0.00079π)</p>
 <a href="courses/argumentation.html" class="btn">View Details</a>
+<button class="btn pay-btn" onclick="payCourse('Argumentation Technology',0.00079)">Pay with Pi</button>
 </div>
 
 <div class="course-card">
 <h3>Hologram Technology</h3>
-<p>Learn holographic imaging, 3D projection, and immersive display tech.</p>
-<p>Price: $270 (~0.00085944π)</p>
+<p>Learn holographic projection and immersive display systems.</p>
+<p>$270 (~0.00085π)</p>
 <a href="courses/hologram.html" class="btn">View Details</a>
+<button class="btn pay-btn" onclick="payCourse('Hologram Technology',0.00085)">Pay with Pi</button>
 </div>
 
 <div class="course-card">
 <h3>Space Technology</h3>
-<p>Explore spacecraft engineering, satellite systems, and orbital science.</p>
-<p>Price: $350 (~0.00111409π)</p>
+<p>Study spacecraft engineering and satellite technology.</p>
+<p>$350 (~0.00111π)</p>
 <a href="courses/space.html" class="btn">View Details</a>
+<button class="btn pay-btn" onclick="payCourse('Space Technology',0.00111)">Pay with Pi</button>
 </div>
 
 <div class="course-card">
 <h3>Augmented Reality</h3>
-<p>Build AR applications and interactive digital environments.</p>
-<p>Price: $260 (~0.00082760π)</p>
+<p>Create immersive AR applications.</p>
+<p>$260 (~0.00082π)</p>
 <a href="courses/ar.html" class="btn">View Details</a>
+<button class="btn pay-btn" onclick="payCourse('Augmented Reality',0.00082)">Pay with Pi</button>
 </div>
 
 </div>
@@ -83,7 +122,40 @@
 </main>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-<script src="js/script.js"></script>
+
+<script>
+async function payCourse(course, amount){
+
+try{
+
+const payment = await Pi.createPayment({
+amount: amount,
+memo: "Payment for " + course,
+metadata: {course: course}
+},{
+onReadyForServerApproval: function(paymentId){
+console.log("Payment ready",paymentId);
+},
+
+onReadyForServerCompletion: function(paymentId,txid){
+console.log("Payment completed",paymentId);
+},
+
+onCancel: function(paymentId){
+alert("Payment cancelled");
+},
+
+onError: function(error){
+console.error(error);
+}
+});
+
+}catch(e){
+console.log(e);
+}
+
+}
+</script>
 
 </body>
-</html>
+  </html>
