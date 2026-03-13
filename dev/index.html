@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Godomcoworld - Dev Sandbox</title>
-  <!-- Link to CSS in root -->
+
+  <!-- Main CSS from root -->
   <link rel="stylesheet" href="../style.css">
 </head>
+
 <body>
+
   <!-- Header -->
   <header>
     <h1>Godomcoworld Sandbox</h1>
+
     <nav>
       <a href="../index.html">Home</a>
       <a href="../learn.html">Learn</a>
@@ -22,47 +27,87 @@
   </header>
 
   <!-- Main Content -->
-  <main>
+  <main class="container">
+
     <h2>Welcome to Godomcoworld Dev Sandbox</h2>
-    <p>This is the sandbox version for Pi SDK testing.</p>
 
-    <button id="pi-login-btn">Connect Pi Wallet</button>
+    <p>This is the development environment used to test the Pi login and payment system.</p>
 
-    <section id="sandbox-info">
-      <p>Use this page to test courses, marketplace, finance, and upload sections.</p>
-    </section>
+    <div class="card">
+      <h3>Connect Your Pi Wallet</h3>
+      <p>Click the button below to authenticate with Pi.</p>
+
+      <button id="pi-login-btn">Connect Pi Wallet</button>
+
+      <p id="user-info"></p>
+    </div>
+
+    <div class="card">
+      <h3>Sandbox Testing Area</h3>
+      <p>
+        Use this environment to test:
+      </p>
+
+      <ul>
+        <li>Course payments</li>
+        <li>Marketplace transactions</li>
+        <li>Finance tools</li>
+        <li>User dashboard</li>
+      </ul>
+
+    </div>
+
   </main>
 
   <!-- Pi SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
   <script>
-    // Initialize Pi SDK for Sandbox
+
     Pi.init({
       version: "2.0",
       sandbox: true,
-      apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
-      walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
+      apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
     });
 
     async function connectPi() {
+
       try {
-        const scopes = ['username', 'payments', 'wallet_address'];
-        const authResult = await Pi.authenticate(scopes, function(payment) {
-          console.log("Payment received:", payment);
+
+        const scopes = ['username', 'payments'];
+
+        const authResult = await Pi.authenticate(scopes, function (payment) {
+          console.log("Payment event:", payment);
         });
-        console.log("User authenticated:", authResult);
+
+        console.log("Authenticated user:", authResult);
+
+        document.getElementById("user-info").innerHTML =
+          "Connected as: <b>" + authResult.user.username + "</b>";
+
         const wallet = await Pi.wallet();
-        console.log("Wallet connected:", wallet);
-      } catch (err) {
-        console.error("Pi SDK error:", err);
+
+        console.log("Wallet:", wallet);
+
       }
+
+      catch (error) {
+
+        console.error("Pi authentication error:", error);
+
+      }
+
     }
 
-    // Connect on button click
-    document.getElementById("pi-login-btn").addEventListener("click", connectPi);
+    document
+      .getElementById("pi-login-btn")
+      .addEventListener("click", connectPi);
+
   </script>
 
-  <!-- Link to JS in root -->
+  <!-- Root JS -->
   <script src="../js/script.js"></script>
+
 </body>
+
   </html>
