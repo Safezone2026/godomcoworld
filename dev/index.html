@@ -62,48 +62,46 @@
   <!-- Pi SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
-  <script>
+<script>
 
-    Pi.init({
-      version: "2.0",
-      sandbox: true,
-      apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
-    });
+document.addEventListener("DOMContentLoaded", function(){
 
-    async function connectPi() {
+  Pi.init({
+    version: "2.0",
+    sandbox: true,
+    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+  });
 
-      try {
+  async function connectPi(){
 
-        const scopes = ['username', 'payments', 'wallet_address'];
+    try{
 
-        const authResult = await Pi.authenticate(scopes, function (payment) {
-          console.log("Payment event:", payment);
-        });
+      const scopes = ['username','payments','wallet_address'];
 
-        console.log("Authenticated user:", authResult);
+      const authResult = await Pi.authenticate(scopes, function(payment){
+        console.log("Payment event:", payment);
+      });
 
-        document.getElementById("user-info").innerHTML =
-          "Connected as: <b>" + authResult.user.username + "</b>";
+      console.log("User authenticated:", authResult);
 
-        const wallet = await Pi.wallet();
-
-        console.log("Wallet:", wallet);
-
-      }
-
-      catch (error) {
-
-        console.error("Pi authentication error:", error);
-
-      }
+      document.getElementById("user-info").innerHTML =
+      "Connected as: <b>" + authResult.user.username + "</b>";
 
     }
 
-    document
-      .getElementById("pi-login-btn")
-      .addEventListener("click", connectPi);
+    catch(error){
 
-  </script>
+      console.error("Pi login failed:", error);
+
+    }
+
+  }
+
+  document.getElementById("pi-login-btn").addEventListener("click", connectPi);
+
+});
+
+</script>
 
   <!-- Root JS -->
   <script src="../js/script.js"></script>
