@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Pi SDK Test</title>
+</head>
+
+<body style="background:black;color:white;font-family:Arial;text-align:center;padding:50px;">
+
+<h2>Pi SDK Test Page</h2>
+
+<button id="login">Connect Pi Wallet</button>
+
+<p id="result"></p>
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+<script>
+
+Pi.init({
+  version: "2.0",
+  sandbox: true,
+  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+});
+
+document.getElementById("login").onclick = async function(){
+
+  try{
+
+    const scopes = ['username','payments','wallet_address'];
+
+    const auth = await Pi.authenticate(scopes);
+
+    document.getElementById("result").innerHTML =
+    "Connected as: " + auth.user.username;
+
+  }
+
+  catch(err){
+
+    document.getElementById("result").innerHTML =
+    "Login failed";
+
+    console.log(err);
+
+  }
+
+};
+
+</script>
+
+</body>
+
+</html>
