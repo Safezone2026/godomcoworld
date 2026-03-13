@@ -64,7 +64,7 @@
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", () => {
 
   Pi.init({
     version: "2.0",
@@ -72,36 +72,34 @@ document.addEventListener("DOMContentLoaded", function(){
     apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
   });
 
-  async function connectPi(){
+  const loginBtn = document.getElementById("pi-login-btn");
 
-    try{
+  loginBtn.onclick = async () => {
+
+    try {
 
       const scopes = ['username','payments','wallet_address'];
 
-      const authResult = await Pi.authenticate(scopes, function(payment){
-        console.log("Payment event:", payment);
-      });
+      const auth = await Pi.authenticate(scopes);
 
-      console.log("User authenticated:", authResult);
+      console.log("User:", auth);
 
       document.getElementById("user-info").innerHTML =
-      "Connected as: <b>" + authResult.user.username + "</b>";
+      "Connected as: <b>" + auth.user.username + "</b>";
 
     }
 
-    catch(error){
+    catch(err) {
 
-      console.error("Pi login failed:", error);
+      console.error("Pi login error:", err);
 
     }
 
-  }
-
-  document.getElementById("pi-login-btn").addEventListener("click", connectPi);
+  };
 
 });
 
-</script>
+  </script>
 
   <!-- Root JS -->
   <script src="../js/script.js"></script>
