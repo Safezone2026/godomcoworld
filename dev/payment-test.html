@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Godomcoworld Payment Test</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+</head>
+
+<body>
+
+<h2>Blockchain Course Payment Test</h2>
+
+<p>Basic Plan</p>
+<p class="price">$20 / 0.0000637 π per month</p>
+
+<button id="payBtn">Pay with Pi</button>
+
+<div id="courseContent" style="display:none; margin-top:20px;">
+<h3>Course Unlocked</h3>
+<p>Welcome to Blockchain Technology Basic Course.</p>
+</div>
+
+<script>
+
+Pi.init({
+  version:"2.0",
+  sandbox:true
+});
+
+const priceUSD = 20;
+const pricePi = priceUSD / 314159;
+
+document.getElementById("payBtn").addEventListener("click", async () => {
+
+  try{
+
+    const payment = await Pi.createPayment({
+      amount: pricePi,
+      memo: "Blockchain Basic Course",
+      metadata: { course:"blockchain_basic" }
+    });
+
+    console.log(payment);
+
+    alert("Payment requested");
+
+  }catch(error){
+
+    console.error(error);
+    alert("Payment failed");
+
+  }
+
+});
+
+</script>
+
+</body>
+  </html>
