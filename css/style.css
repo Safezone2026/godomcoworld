@@ -22,6 +22,7 @@ color:#f5a623;
 
 .container{
 padding:20px;
+padding-bottom:80px;
 }
 
 .card{
@@ -79,21 +80,9 @@ width:100%;
 background:#111;
 display:flex;
 justify-content:space-around;
-padding:12px;
-border-top:1px solid #222;
-}
-.bottom-nav{
-
-position:fixed;
-bottom:0;
-width:100%;
-background:#111;
-display:flex;
-justify-content:space-around;
 padding:12px 0;
 border-top:2px solid #00bfff;
-
-}
+  }
 
 .bottom-nav a{
 
