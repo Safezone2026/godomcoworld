@@ -71,22 +71,38 @@ Pi.createPayment(
 {
 
 onReadyForServerApproval:function(paymentId){
-console.log("Ready for approval",paymentId);
+
+console.log("Approve payment:",paymentId);
+
+/* Simulate server approval */
+setTimeout(function(){
+
+console.log("Payment approved (sandbox)");
+
+},1000);
+
 },
 
 onReadyForServerCompletion:function(paymentId,txid){
-console.log("Payment completed",txid);
+
+console.log("Payment completed:",txid);
+
 alert("Payment successful");
+
 document.getElementById("courseContent").style.display="block";
+
 },
 
 onCancel:function(paymentId){
+
 console.log("Payment cancelled");
+
 },
 
 onError:function(error){
+
 console.error(error);
-alert("Payment error");
+
 }
 
 }
