@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hologram Technology Course - Godomcoworld Sandbox</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header>
+  <h1>Hologram Technology</h1>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../course.html">Courses</a>
+    <a href="../marketplace.html">Marketplace</a>
+    <a href="../finance.html">Finance</a>
+    <a href="../dashboard.html">Dashboard</a>
+    <a href="../upload.html">Upload</a>
+  </nav>
+</header>
+<main>
+  <h2>Hologram Technology Course</h2>
+  <p>Learn holographic displays, projection technology, and practical applications in industry and entertainment.</p>
+  <p>Price: $360 (~0.00114572 π)</p>
+  <button id="pi-pay-btn">Pay with Pi</button>
+</main>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+Pi.init({version:"2.0",sandbox:true,apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",walletAddress:"GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"});
+document.getElementById("pi-pay-btn").addEventListener("click",async()=>{try{const payment=await Pi.requestPay({amount:0.00114572,memo:"Hologram Course Payment"});console.log("Payment result:",payment);}catch(e){console.error("Payment error:",e);}});
+</script>
+<script src="../js/script.js"></script>
+</body>
+</html>
