@@ -17,47 +17,46 @@
 <p>Basic Plan</p>
 <p class="price">$20 / 0.0000637 π per month</p>
 
+<button onclick="loginPi()">Connect Pi</button>
+<button onclick="payCourse()">Pay with Pi</button>
+
+<p id="result"></p>
+
 <div id="courseContent" style="display:none; margin-top:20px;">
 <h3>Course Unlocked</h3>
 <p>Welcome to Blockchain Technology Basic Course.</p>
 </div>
 
 <script>
-‎
-‎Pi.init({
-‎  version: "2.0",
-‎  sandbox: true,
-‎  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
-‎});
-‎
-‎document.getElementById("login").onclick = async function(){
-‎
-‎  try{
-‎
-‎    const scopes = ['username','payments','wallet_address'];
-‎
-‎    const auth = await Pi.authenticate(scopes);
-‎
-‎    document.getElementById("result").innerHTML =
-‎    "Connected as: " + auth.user.username;
-‎
-‎  }
-‎
-‎  catch(err){
-‎
-‎    document.getElementById("result").innerHTML =
-‎    "Login failed";
-‎
-‎    console.log(err);
-‎
-‎  }
-‎
-‎};
-‎
-‎</script>
-  <button onclick="loginPi()">Connect Pi</button>
-  <button onclick="payCourse()">Pay with Pi</button>
-  <script>
+
+Pi.init({
+  version: "2.0",
+  sandbox: true,
+  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+});
+
+async function loginPi(){
+
+  try{
+
+    const scopes = ['username','payments','wallet_address'];
+
+    const auth = await Pi.authenticate(scopes);
+
+    document.getElementById("result").innerHTML =
+    "Connected as: " + auth.user.username;
+
+  }
+
+  catch(err){
+
+    document.getElementById("result").innerHTML = "Login failed";
+
+    console.log(err);
+
+  }
+
+}
 
 function payCourse(){
 
@@ -72,30 +71,22 @@ Pi.createPayment(
 {
 
 onReadyForServerApproval:function(paymentId){
-
 console.log("Ready for approval",paymentId);
-
 },
 
 onReadyForServerCompletion:function(paymentId,txid){
-
 console.log("Payment completed",txid);
-
 alert("Payment successful");
-
+document.getElementById("courseContent").style.display="block";
 },
 
 onCancel:function(paymentId){
-
 console.log("Payment cancelled");
-
 },
 
 onError:function(error){
-
 console.error(error);
 alert("Payment error");
-
 }
 
 }
@@ -104,7 +95,7 @@ alert("Payment error");
 
 }
 
-  </script>
+</script>
 
 </body>
   </html>
