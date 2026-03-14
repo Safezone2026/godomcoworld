@@ -17,7 +17,9 @@
 <p>Basic Plan</p>
 <p class="price">$20 / 0.0000637 π per month</p>
 
-<button id="payBtn">Pay with Pi</button>
+<button onclick="loginPi()">Connect Pi</button>
+
+<button onclick="payCourse()">Pay with Pi</button>
 
 <div id="courseContent" style="display:none; margin-top:20px;">
 <h3>Course Unlocked</h3>
@@ -31,48 +33,71 @@ Pi.init({
   sandbox: true
 });
 
-const priceUSD = 20;
-const pricePi = priceUSD / 314159;
+let currentUser = null;
 
+// Authenticate user first
+async function loginPi(){
+
+  try{
+
+    const scopes = ['username','payments'];
+
+    const auth = await Pi.authenticate(scopes);
+
+    currentUser = auth.user;
+
+    console.log("Logged in:", currentUser.username);
+
+    alert("Connected as: " + currentUser.username);
+
+  }catch(err){
+
+    console.error(err);
+    alert("Login failed");
+
+  }
+
+}
+
+// Payment function
 function payCourse(){
 
 Pi.createPayment(
-  {
-    amount: pricePi,
-    memo: "Blockchain Basic Course",
-    metadata: { course: "blockchain_basic" }
-  },
 
-  {
+{
+  amount: 0.0000637,
+  memo: "Blockchain Basic Course",
+  metadata: { course: "blockchain_basic" }
 
-    onReadyForServerApproval: function(paymentId){
-      console.log("Ready for approval:", paymentId);
-    },
+},
 
-    onReadyForServerCompletion: function(paymentId, txid){
-      console.log("Ready for completion:", paymentId, txid);
-      alert("Payment successful!");
-      document.getElementById("courseContent").style.display="block";
-    },
+{
 
-    onCancel: function(paymentId){
-      console.log("Payment cancelled", paymentId);
-    },
+onReadyForServerApproval: function(paymentId){
+console.log("Approval:", paymentId);
+},
 
-    onError: function(error){
-      console.error(error);
-      alert("Payment error occurred");
-    }
+onReadyForServerCompletion: function(paymentId, txid){
+console.log("Completed:", txid);
+alert("Payment successful!");
+},
 
-  }
+onCancel: function(paymentId){
+console.log("Cancelled");
+},
+
+onError: function(error){
+console.error(error);
+alert("Payment error");
+}
+
+}
 
 );
 
 }
 
-document.getElementById("payBtn").addEventListener("click", payCourse);
-
-</script>
+  </script>
 
 </body>
   </html>
