@@ -24,38 +24,55 @@
 <p>Welcome to Blockchain Technology Basic Course.</p>
 </div>
 
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
 <script>
 
 Pi.init({
-  version:"2.0",
-  sandbox:true
+  version: "2.0",
+  sandbox: true
 });
 
 const priceUSD = 20;
 const pricePi = priceUSD / 314159;
 
-document.getElementById("payBtn").addEventListener("click", async () => {
+function payCourse(){
 
-  try{
+Pi.createPayment(
+  {
+    amount: pricePi,
+    memo: "Blockchain Basic Course",
+    metadata: { course: "blockchain_basic" }
+  },
 
-    const payment = await Pi.createPayment({
-      amount: pricePi,
-      memo: "Blockchain Basic Course",
-      metadata: { course:"blockchain_basic" }
-    });
+  {
 
-    console.log(payment);
+    onReadyForServerApproval: function(paymentId){
+      console.log("Ready for approval:", paymentId);
+    },
 
-    alert("Payment requested");
+    onReadyForServerCompletion: function(paymentId, txid){
+      console.log("Ready for completion:", paymentId, txid);
+      alert("Payment successful!");
+      document.getElementById("courseContent").style.display="block";
+    },
 
-  }catch(error){
+    onCancel: function(paymentId){
+      console.log("Payment cancelled", paymentId);
+    },
 
-    console.error(error);
-    alert("Payment failed");
+    onError: function(error){
+      console.error(error);
+      alert("Payment error occurred");
+    }
 
   }
 
-});
+);
+
+}
+
+document.getElementById("payBtn").addEventListener("click", payCourse);
 
 </script>
 
