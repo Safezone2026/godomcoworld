@@ -1,34 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Blockchain Technology Course - Godomcoworld Sandbox</title>
-  <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-<header>
-  <h1>Blockchain Technology</h1>
-  <nav>
-    <a href="../index.html">Home</a>
-    <a href="../learn.html">Learn</a>
-    <a href="../course.html">Courses</a>
-    <a href="../marketplace.html">Marketplace</a>
-    <a href="../finance.html">Finance</a>
-    <a href="../dashboard.html">Dashboard</a>
-    <a href="../upload.html">Upload</a>
-  </nav>
-</header>
-<main>
-  <h2>Blockchain Technology Course</h2>
-  <p>Learn blockchain from basics to advanced concepts. Practical and professional lessons included.</p>
-  <p>Price: $300 (~0.00095493 π)</p>
-  <button id="pi-pay-btn">Pay with Pi</button>
-</main>
-<script src="https://sdk.minepi.com/pi-sdk.js"></script>
-<script>
-Pi.init({version:"2.0",sandbox:true,apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",walletAddress:"GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"});
-document.getElementById("pi-pay-btn").addEventListener("click",async()=>{try{const payment=await Pi.requestPay({amount:0.00095493,memo:"Blockchain Course Payment"});console.log("Payment result:",payment);}catch(e){console.error("Payment error:",e);}});
-</script>
-<script src="../js/script.js"></script>
+<!DOCTYPE html><html lang="en">
+<head><meta charset="UTF-8">
+<title>Blockchain Technology Course - Godomcoworld</title><link rel="stylesheet" href="../style.css"></head><body><header><h1>Blockchain Technology</h1><nav>
+<a href="../index.html">Home</a>
+<a href="../learn.html">Learn</a>
+<a href="../course.html">Courses</a>
+<a href="../marketplace.html">Marketplace</a>
+<a href="../finance.html">Finance</a>
+<a href="../dashboard.html">Dashboard</a>
+<a href="../upload.html">Upload</a>
+</nav></header><main><h2>Blockchain Technology Course</h2><p>
+Learn blockchain from fundamentals to advanced Web3 systems.
+</p><h3>Select Learning Tier</h3><div class="card"><h3>Basic</h3><p>
+Introduction to Blockchain  
+Cryptography basics  
+Bitcoin architecture  
+</p><p class="price">$20/month (~0.0000637 π)</p><button onclick="payCourse(0.0000637,'Blockchain Basic')">
+Pay with Pi
+</button></div><div class="card"><h3>Professional</h3><p>
+Smart contracts  
+Ethereum ecosystem  
+DeFi fundamentals  
+</p><p class="price">$50/month (~0.000159 π)</p><button onclick="payCourse(0.000159,'Blockchain Professional')">
+Pay with Pi
+</button></div><div class="card"><h3>Premium</h3><p>
+Layer-2 networks  
+Cross-chain systems  
+Blockchain security
+</p><p class="price">$100/month (~0.000318 π)</p><button onclick="payCourse(0.000318,'Blockchain Premium')">
+Pay with Pi
+</button></div><div class="card"><h3>Practical</h3><p>
+Build real blockchain apps  
+Deploy smart contracts  
+Web3 development labs
+</p><p class="price">$200/month (~0.000637 π)</p><button onclick="payCourse(0.000637,'Blockchain Practical')">
+Pay with Pi
+</button></div><div id="courseContent" style="display:none;margin-top:40px"><h3>Course Unlocked</h3><p>
+Welcome to the Blockchain course.
+All course materials are now available.
+</p></div></main><script src="https://sdk.minepi.com/pi-sdk.js"></script><script>
+
+Pi.init({
+version:"2.0",
+sandbox:true,
+apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+});
+
+function payCourse(amount,courseName){
+
+Pi.createPayment(
+
+{
+amount:amount,
+memo:courseName,
+metadata:{course:courseName}
+},
+
+{
+
+onReadyForServerApproval:function(paymentId){
+
+console.log("Ready for approval",paymentId);
+
+},
+
+onReadyForServerCompletion:function(paymentId,txid){
+
+console.log("Payment complete",txid);
+
+alert("Payment successful for "+courseName);
+
+document.getElementById("courseContent").style.display="block";
+
+},
+
+onCancel:function(paymentId){
+
+console.log("Payment cancelled");
+
+},
+
+onError:function(error){
+
+console.error(error);
+alert("Payment error");
+
+}
+
+}
+
+);
+
+}
+
+</script><script src="../js/script.js"></script>
 </body>
 </html>
