@@ -1,48 +1,237 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Marketplace - Godomcoworld</title>
+<title>Godomcoworld Market</title>
 
 <link rel="stylesheet" href="css/style.css">
 
+<style>
+
+body{
+background:#000;
+color:white;
+font-family:Arial;
+margin:0;
+padding-bottom:80px;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
+background:#0b0b0b;
+border-bottom:1px solid #222;
+}
+
+.header h2{
+color:#f9a825;
+}
+
+.home-btn{
+background:#f9a825;
+color:black;
+padding:8px 14px;
+border-radius:6px;
+text-decoration:none;
+font-weight:bold;
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:#111;
+border:1px solid #222;
+border-radius:10px;
+padding:20px;
+margin-bottom:20px;
+}
+
+.card h3{
+margin-top:0;
+}
+
+.btn{
+background:#19b5fe;
+color:white;
+border:none;
+padding:10px 16px;
+border-radius:6px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.bottom-nav{
+position:fixed;
+bottom:0;
+width:100%;
+background:#0b0b0b;
+display:flex;
+justify-content:space-around;
+border-top:1px solid #222;
+}
+
+.bottom-nav a{
+text-align:center;
+color:white;
+text-decoration:none;
+padding:10px 0;
+font-size:12px;
+}
+
+.bottom-nav span{
+display:block;
+font-size:20px;
+}
+
+</style>
+
 </head>
+
 
 <body>
 
-<header>
-<h1>Godomcoworld Marketplace</h1>
-</header>
+
+<div class="header">
+
+<h2>🛒 Godomcoworld Market</h2>
+
+<a class="home-btn" href="index.html">Home</a>
+
+</div>
+
+
 
 <div class="container">
 
-<div class="card">
+<h2>Africa Digital Marketplace</h2>
 
-<h3>Agriculture Africa</h3>
+<p>Buy products, sell goods and connect artisans with global customers.</p>
 
-<p>Farm products marketplace.</p>
 
-<button onclick="location.href='agriculture.html'">
-Enter Market
-</button>
-
-</div>
+<!-- Seller Registration -->
 
 <div class="card">
 
-<h3>Artisan Africa</h3>
+<h3>Register as Seller</h3>
 
-<p>African handmade crafts marketplace.</p>
+<p>Register your business and start selling products.</p>
 
-<button onclick="location.href='artisan.html'">
-Enter Market
-</button>
+<a href="marketplace/seller-register.html">
+<button class="btn">Register</button>
+</a>
+
+</div>
+
+
+<!-- Artisan Registration -->
+
+<div class="card">
+
+<h3>Register as Artisan</h3>
+
+<p>Artisans can showcase handmade African products.</p>
+
+<a href="marketplace/artisan-register.html">
+<button class="btn">Register</button>
+</a>
 
 </div>
 
+
+<!-- Upload Product -->
+
+<div class="card">
+
+<h3>Upload Products</h3>
+
+<p>Registered sellers can upload products.</p>
+
+<a href="marketplace/upload.html">
+<button class="btn">Upload</button>
+</a>
+
 </div>
+
+
+<!-- Browse Products -->
+
+<div class="card">
+
+<h3>Browse Products</h3>
+
+<p>Explore available products from African sellers.</p>
+
+<a href="marketplace/browse.html">
+<button class="btn">Browse</button>
+</a>
+
+</div>
+
+
+<!-- Track Delivery -->
+
+<div class="card">
+
+<h3>Track Delivery</h3>
+
+<p>Track your product delivery.</p>
+
+<a href="marketplace/track.html">
+<button class="btn">Track Order</button>
+</a>
+
+</div>
+
+
+</div>
+
+
+
+<!-- Bottom Navigation -->
+
+<nav class="bottom-nav">
+
+<a href="index.html">
+<span>🏠</span>
+Home
+</a>
+
+<a href="learn.html">
+<span>🎓</span>
+Learn
+</a>
+
+<a href="courses.html">
+<span>📚</span>
+Courses
+</a>
+
+<a href="marketplace.html">
+<span>🛒</span>
+Market
+</a>
+
+<a href="finance.html">
+<span>💰</span>
+Finance
+</a>
+
+<a href="dashboard.html">
+<span>📊</span>
+Dashboard
+</a>
+
+</nav>
+
 
 </body>
+
 </html>
