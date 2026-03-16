@@ -6,6 +6,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Upload Product</title>
+  <script>
+
+function registerSeller(){
+
+const business = document.getElementById("business").value;
+const owner = document.getElementById("owner").value;
+
+if(business === "" || owner === ""){
+
+alert("Please fill all fields");
+
+return;
+
+}
+
+localStorage.setItem("seller_registered","true");
+localStorage.setItem("seller_business",business);
+
+alert("Seller registration successful");
+
+window.location.href="upload.html";
+
+}
+
+  </script>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -36,8 +61,8 @@
 
 <label>Description</label>
 <textarea></textarea>
+<button onclick="registerSeller()">Register</button>
 
-<button type="submit">Upload Product</button>
 
 </form>
 
