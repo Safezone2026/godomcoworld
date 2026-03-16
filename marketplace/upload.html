@@ -53,21 +53,51 @@ window.location.href="seller-register.html";
 
 <h2>Upload Product</h2>
 
-<form>
+<input type="text" id="productName" placeholder="Product Name"><br><br>
 
-<input type="text" placeholder="Product Name" required><br><br>
+<input type="text" id="productPrice" placeholder="Price ($)"><br><br>
 
-<input type="text" placeholder="Price ($)" required><br><br>
+<input type="text" id="productImage" placeholder="Image URL"><br><br>
 
-<input type="file" accept="image/*"><br><br>
+<textarea id="productDesc" placeholder="Product Description"></textarea><br><br>
 
-<textarea placeholder="Product Description"></textarea><br><br>
-
-<button onclick="registerSeller()">Register</button>
+<button onclick="uploadProduct()">Upload Product</button>
 
 </form>
 
 </div>
+  <script>
+
+function uploadProduct(){
+
+let name = document.getElementById("productName").value;
+let price = document.getElementById("productPrice").value;
+let image = document.getElementById("productImage").value;
+let desc = document.getElementById("productDesc").value;
+
+if(name=="" || price==""){
+alert("Please fill required fields");
+return;
+}
+
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+products.push({
+name:name,
+price:price,
+image:image,
+desc:desc
+});
+
+localStorage.setItem("products", JSON.stringify(products));
+
+alert("Product uploaded successfully");
+
+window.location.href="products.html";
+
+}
+
+  </script>
 <a href="../marketplace.html">
 <button>Back to Marketplace</button>
 </a>
