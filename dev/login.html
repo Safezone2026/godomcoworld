@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login - Godomcoworld</title>
+<link rel="stylesheet" href="../CSS/style.css">
+</head>
+
+<body>
+
+<header>
+<h1>Godomcoworld Login</h1>
+</header>
+
+<main>
+
+<h2>Connect Your Pi Account</h2>
+
+<p>Login using your Pi Network wallet.</p>
+
+<button id="pi-login">Connect Pi</button>
+
+<p id="user-info"></p>
+
+</main>
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+<script>
+
+Pi.init({
+version:"2.0",
+sandbox:true,
+apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+});
+
+document.getElementById("pi-login").addEventListener("click", async () => {
+
+try{
+
+const scopes = ['username','payments','wallet_address'];
+
+const auth = await Pi.authenticate(scopes, function(payment){});
+
+document.getElementById("user-info").innerHTML =
+"Connected as: " + auth.user.username;
+
+localStorage.setItem("pi_user", auth.user.username);
+
+window.location.href="dashboard.html";
+
+}catch(e){
+
+console.log(e);
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
