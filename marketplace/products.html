@@ -78,9 +78,14 @@ card.innerHTML = `
 <p>${product.desc}</p>
 <p><b>$${product.price}</b></p>
 
+<button onclick="buyProduct(${index})" style="background:#00bfff;color:white;margin-top:10px;">
+Buy Now
+</button>
+
 <button onclick="deleteProduct(${index})" style="background:red;color:white;margin-top:10px;">
 Delete
 </button>
+`;
 
 `;
 
@@ -101,7 +106,15 @@ localStorage.setItem("products", JSON.stringify(products));
 location.reload();
 
 }
+function buyProduct(index){
 
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+let product = products[index];
+
+alert("You are buying: " + product.name + " for $" + product.price);
+
+  }
   </script>
 
 </body>
