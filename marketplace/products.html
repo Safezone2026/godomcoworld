@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marketplace Products - Godomcoworld</title>
+<title>Marketplace Products</title>
 <link rel="stylesheet" href="../css/style.css">
 </head>
+
 <body>
 
 <header>
@@ -18,88 +19,86 @@
   <div class="course-grid" id="productList"></div>
 </div>
 
-<a href="marketplace.html"><button>Back to Marketplace</button></a>
+<a href="marketplace.html">
+  <button>Back to Marketplace</button>
+</a>
 
-<!-- Pi SDK -->
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <script>
-  let currentUser = localStorage.getItem("piUser");
-
+// ✅ Ensure user exists
+let currentUser = localStorage.getItem("piUser");
 if(!currentUser){
-  currentUser = "seller1"; // fallback for testing
+  currentUser = "seller1";
   localStorage.setItem("piUser", currentUser);
 }
-// --- MOCK logged-in user ---
-// Replace this with your login system for real app
-let currentUser = localStorage.getItem("piUser") || "buyer1"; // example
 
-// Initialize Pi SDK
+// ✅ Initialize Pi
 Pi.init({
   version: "2.0",
-  sandbox: true, // switch to false for Mainnet
-  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
-  walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
+  sandbox: true,
+  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
 });
 
+// ✅ Load products
 document.addEventListener("DOMContentLoaded", function(){
 
-  // Sample products (always visible)
+  // 🧱 Sample products (ALWAYS show)
   let sampleProducts = [
-  {
-    name:"African Handmade Bag",
-    priceUSD:25,
-    pricePi:(25/314159).toFixed(8),
-    desc:"High-quality handmade bag",
-    image:"sample1.jpg"
-  },
-  {
-    name:"Wooden Chair",
-    priceUSD:40,
-    pricePi:(40/314159).toFixed(8),
-    desc:"Sturdy wooden chair",
-    image:"sample2.jpg"
-  }
-];
+    {
+      name:"African Handmade Bag",
+      desc:"High-quality handmade bag",
+      priceUSD:25,
+      pricePi:(25/314159).toFixed(8),
+      image:"sample1.jpg"
+    },
+    {
+      name:"Wooden Chair",
+      desc:"Sturdy wooden chair",
+      priceUSD:40,
+      pricePi:(40/314159).toFixed(8),
+      image:"sample2.jpg"
+    }
+  ];
 
-  // Uploaded products from sellers
+  // 📦 Uploaded products
   let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
 
-  let products = sampleProducts.concat(uploadedProducts);
+  let allProducts = sampleProducts.concat(uploadedProducts);
 
-  // Render all products
   let container = document.getElementById("productList");
   container.innerHTML = "";
 
-  products.forEach(function(product, index){
+  allProducts.forEach(function(product, index){
+
     let card = document.createElement("div");
     card.className = "card";
 
-    let deleteBtn = "";
+    // ✅ FIX IMAGE (handles both base64 + sample images)
+    let imgSrc = product.image.startsWith("data:")
+      ? product.image
+      : "images/" + product.image;
 
-if(index >= 2 && product.sellerUsername === currentUser){
-  deleteBtn = `
-    <button onclick="deleteProduct(${index})" 
-    style="background:red;color:white;margin-top:10px;">
-    Delete
-    </button>
-  `;
-}
+    // ✅ Delete button (ONLY seller)
+    let deleteBtn = "";
+    if(index >= 2 && product.sellerUsername === currentUser){
+      deleteBtn = `
+        <button onclick="deleteProduct(${index})"
+        style="background:red;color:white;margin-top:10px;">
+        Delete
+        </button>
+      `;
+    }
 
     card.innerHTML = `
-      let imgSrc = product.image.startsWith("data:") 
-  ? product.image 
-  : "images/" + product.image;
-
-card.innerHTML = `
-  <img src="${imgSrc}" style="width:100%; border-radius:10px;">
-`;
+      <img src="${imgSrc}" style="width:100%; border-radius:10px;">
       <h3>${product.name}</h3>
       <p>${product.desc}</p>
-      <p><b>$${product.price}</b></p>
+      <p><b>$${product.priceUSD}</b> | ${product.pricePi} π</p>
 
-      <button onclick="buyProduct(${index})" style="background:#00bfff;color:white;margin-top:10px;">
-        Buy Now
+      <button onclick="buyProduct(${index})"
+      style="background:#00bfff;color:white;margin-top:10px;">
+      Buy Now
       </button>
 
       ${deleteBtn}
@@ -109,49 +108,51 @@ card.innerHTML = `
   });
 
 });
-  
-// Delete uploaded product
+
+// 🗑 Delete product
 function deleteProduct(index){
   let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
-  if(index >= 2){ // only delete uploaded products
-    uploadedProducts.splice(index-2, 1);
-    localStorage.setItem("products", JSON.stringify(uploadedProducts));
-    location.reload();
-  }
+
+  uploadedProducts.splice(index-2, 1);
+
+  localStorage.setItem("products", JSON.stringify(uploadedProducts));
+
+  location.reload();
 }
 
-// Buy product
+// 💰 Buy product
 async function buyProduct(index){
+
   let sampleProducts = [
-    {name:"African Handmade Bag", price:25, desc:"High-quality handmade bag", image:"images/sample1.jpg"},
-    {name:"Wooden Chair", price:40, desc:"Sturdy wooden chair", image:"images/sample2.jpg"}
+    {priceUSD:25, pricePi:(25/314159).toFixed(8)},
+    {priceUSD:40, pricePi:(40/314159).toFixed(8)}
   ];
 
   let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
-  let products = sampleProducts.concat(uploadedProducts);
+  let allProducts = sampleProducts.concat(uploadedProducts);
 
-  let product = products[index];
+  let product = allProducts[index];
 
-  // Sellers cannot buy their own product
-  if(index >=2 && product.sellerUsername === currentUser){
+  // ❌ Prevent buying own product
+  if(index >= 2 && product.sellerUsername === currentUser){
     alert("You cannot buy your own product!");
     return;
   }
 
   try {
     const payment = await Pi.requestPay({
-      amount: parseFloat(product.price)/314159,
-      memo: `Purchase: ${product.name}`,
-      metadata:{product: product.name}
+      amount: parseFloat(product.pricePi),
+      memo: "Purchase",
+      metadata:{}
     });
 
     if(payment && payment.txid){
-      alert(`Payment successful! Product unlocked: ${product.name}`);
-      // Optionally, mark product as purchased for currentUser
+      alert("Payment successful!");
     }
+
   } catch(err){
-    console.error("Payment error:", err);
-    alert("Payment failed or cancelled.");
+    console.error(err);
+    alert("Payment failed");
   }
 }
 </script>
