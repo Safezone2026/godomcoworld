@@ -87,8 +87,6 @@ Delete
 </button>
 `;
 
-
-
 container.appendChild(card);
 
 });
@@ -106,6 +104,7 @@ localStorage.setItem("products", JSON.stringify(products));
 location.reload();
 
 }
+
 function buyProduct(index){
 
 let products = JSON.parse(localStorage.getItem("products")) || [];
@@ -114,22 +113,7 @@ let product = products[index];
 
 alert("You are buying: " + product.name + " for $" + product.price);
 
-  }
-  </script>
-<script>
-
-let debugBox = document.createElement("div");
-debugBox.style.background = "black";
-debugBox.style.color = "lime";
-debugBox.style.padding = "10px";
-debugBox.style.marginTop = "20px";
-debugBox.style.fontSize = "12px";
-
-let data = localStorage.getItem("products");
-
-debugBox.innerHTML = "<b>DEBUG DATA:</b><br>" + data;
-
-document.body.appendChild(debugBox);
+}
 
   </script>
 </body>
