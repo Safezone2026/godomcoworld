@@ -1,120 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Marketplace Products</title>
-
+<title>Marketplace Products - Godomcoworld</title>
 <link rel="stylesheet" href="../css/style.css">
-
 </head>
-
 <body>
 
 <header>
-
-<div class="logo">Marketplace Products</div>
-
-<a href="index.html">
-<button>Back</button>
-</a>
-
+  <div class="logo">Marketplace Products</div>
+  <a href="../marketplace.html">
+    <button>Back</button>
+  </a>
 </header>
 
 <div class="container">
+  <h2>Available Products</h2>
 
-<h2>Available Products</h2>
-
-<!-- STATIC SAMPLE PRODUCTS (optional) -->
-<div class="course-grid">
-
-<div class="card">
-<img src="../images/sample1.jpg" style="width:100%; border-radius:10px;">
-<h3>African Handmade Bag</h3>
-<p>$25</p>
-<button>Buy Now</button>
-</div>
-
-<div class="card">
-<img src="../images/sample2.jpg" style="width:100%; border-radius:10px;">
-<h3>Wooden Chair</h3>
-<p>$40</p>
-<button>Buy Now</button>
-</div>
-
-</div>
-
-<!-- ✅ DYNAMIC PRODUCTS WILL APPEAR HERE -->
-<div id="productList" class="course-grid"></div>
-
+  <!-- Container for dynamic product cards -->
+  <div class="course-grid" id="productList"></div>
 </div>
 
 <a href="../marketplace.html">
-<button>Back to Marketplace</button>
+  <button>Back to Marketplace</button>
 </a>
 
-<!-- ✅ SCRIPT TO LOAD PRODUCTS -->
+<!-- Pi SDK -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
 <script>
+// Initialize Pi SDK
+Pi.init({
+  version: "2.0",
+  sandbox: true, // change to false for Mainnet
+  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
+  walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
+});
 
+// Render products
 document.addEventListener("DOMContentLoaded", function(){
+  let products = JSON.parse(localStorage.getItem("products")) || [];
+  let container = document.getElementById("productList");
+  container.innerHTML = "";
 
-let products = JSON.parse(localStorage.getItem("products")) || [];
+  products.forEach(function(product, index){
+    let card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${product.image}" style="width:100%; border-radius:10px;">
+      <h3>${product.name}</h3>
+      <p>${product.desc}</p>
+      <p><b>$${product.price}</b></p>
 
-let container = document.getElementById("productList");
+      <button onclick="buyProduct(${index})" style="background:#00bfff;color:white;margin-top:10px;">
+        Buy Now
+      </button>
 
-container.innerHTML = "";
-
-products.forEach(function(product, index){
-
-let card = document.createElement("div");
-
-card.className = "card";
-
-card.innerHTML = `
-<img src="${product.image}" style="width:100%; border-radius:10px;">
-<h3>${product.name}</h3>
-<p>${product.desc}</p>
-<p><b>$${product.price}</b></p>
-
-<button onclick="buyProduct(${index})" style="background:#00bfff;color:white;margin-top:10px;">
-Buy Now
-</button>
-
-<button onclick="deleteProduct(${index})" style="background:red;color:white;margin-top:10px;">
-Delete
-</button>
-`;
-
-container.appendChild(card);
-
+      <button onclick="deleteProduct(${index})" style="background:red;color:white;margin-top:10px;">
+        Delete
+      </button>
+    `;
+    container.appendChild(card);
+  });
 });
 
-});
-
+// Delete product
 function deleteProduct(index){
-
-let products = JSON.parse(localStorage.getItem("products")) || [];
-
-products.splice(index, 1);
-
-localStorage.setItem("products", JSON.stringify(products));
-
-location.reload();
-
+  let products = JSON.parse(localStorage.getItem("products")) || [];
+  products.splice(index, 1);
+  localStorage.setItem("products", JSON.stringify(products));
+  location.reload();
 }
 
-function buyProduct(index){
+// Buy product via Pi
+async function buyProduct(index){
+  let products = JSON.parse(localStorage.getItem("products")) || [];
+  let product = products[index];
 
-let products = JSON.parse(localStorage.getItem("products")) || [];
+  try {
+    // Request Pay
+    const payment = await Pi.requestPay({
+      amount: parseFloat(product.price) / 314159, // Convert $ to Pi using π formula
+      memo: `Purchase: ${product.name}`,
+      metadata: {product: product.name}
+    });
 
-let product = products[index];
+    console.log("Payment result:", payment);
 
-alert("You are buying: " + product.name + " for $" + product.price);
-
+    if(payment && payment.txid){
+      alert(`Payment successful!\nProduct unlocked: ${product.name}`);
+      // Optional: mark product as purchased for this user
+    }
+  } catch(err){
+    console.error("Payment error:", err);
+    alert("Payment failed or cancelled.");
+  }
 }
+</script>
 
-  </script>
 </body>
 </html>
