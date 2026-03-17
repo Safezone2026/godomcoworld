@@ -181,3 +181,29 @@ color:white;
 main{
 padding-bottom:80px;
   }
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #ffffff; /* THIS fixes invisible text */
+  font-size: 16px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #888; /* lighter placeholder text */
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #f5a623;
+  }
+input, textarea {
+  background: #111;
+  border: 1px solid #222;
+  color: #fff;
+  }
