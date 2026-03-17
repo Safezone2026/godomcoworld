@@ -57,7 +57,7 @@ window.location.href="seller-register.html";
 
 <input type="text" id="productPrice" placeholder="Price ($)"><br><br>
 
-<input type="text" id="productImage" placeholder="Image URL"><br><br>
+<input type="file" id="productImage"><br><br>
 
 <textarea id="productDesc" placeholder="Product Description"></textarea><br><br>
 
@@ -66,38 +66,50 @@ window.location.href="seller-register.html";
 </form>
 
 </div>
-  <script>
+<script>
 
 function uploadProduct(){
 
 let name = document.getElementById("productName").value;
 let price = document.getElementById("productPrice").value;
-let image = document.getElementById("productImage").value;
 let desc = document.getElementById("productDesc").value;
 
-if(name=="" || price==""){
-alert("Please fill required fields");
+let fileInput = document.getElementById("productImage");
+let file = fileInput.files[0];
+
+if(!file){
+alert("Please select an image");
 return;
 }
+
+let reader = new FileReader();
+
+reader.onload = function(){
+
+let imageBase64 = reader.result;
 
 let products = JSON.parse(localStorage.getItem("products")) || [];
 
 products.push({
 name:name,
 price:price,
-image:image,
-desc:desc
+desc:desc,
+image:imageBase64
 });
 
 localStorage.setItem("products", JSON.stringify(products));
 
 alert("Product uploaded successfully");
 
-window.location.href="products.html";
+window.location.href = "products.html";
+
+};
+
+reader.readAsDataURL(file);
 
 }
 
-  </script>
+</script>
 <a href="../marketplace.html">
 <button>Back to Marketplace</button>
 </a>
