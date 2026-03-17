@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 
 <meta charset="UTF-8">
@@ -28,37 +27,64 @@
 
 <h2>Available Products</h2>
 
+<!-- STATIC SAMPLE PRODUCTS (optional) -->
 <div class="course-grid">
 
 <div class="card">
-
 <img src="../images/sample1.jpg" style="width:100%; border-radius:10px;">
-
 <h3>African Handmade Bag</h3>
-
 <p>$25</p>
-
 <button>Buy Now</button>
-
 </div>
 
 <div class="card">
-
 <img src="../images/sample2.jpg" style="width:100%; border-radius:10px;">
-
 <h3>Wooden Chair</h3>
-
 <p>$40</p>
-
 <button>Buy Now</button>
-
 </div>
 
 </div>
 
+<!-- ✅ DYNAMIC PRODUCTS WILL APPEAR HERE -->
+<div id="productList" class="course-grid"></div>
+
 </div>
+
 <a href="../marketplace.html">
 <button>Back to Marketplace</button>
 </a>
+
+<!-- ✅ SCRIPT TO LOAD PRODUCTS -->
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+let container = document.getElementById("productList");
+
+products.forEach(function(product){
+
+let card = document.createElement("div");
+
+card.className = "card";
+
+card.innerHTML = `
+<img src="${product.image}" style="width:100%; border-radius:10px;">
+<h3>${product.name}</h3>
+<p>${product.desc}</p>
+<p><b>$${product.price}</b></p>
+<button>Buy Now</button>
+`;
+
+container.appendChild(card);
+
+});
+
+});
+
+</script>
+
 </body>
 </html>
