@@ -1,115 +1,83 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Upload Product</title>
-  <script>
-
-function registerSeller(){
-
-const business = document.getElementById("business").value;
-const owner = document.getElementById("owner").value;
-
-if(business === "" || owner === ""){
-
-alert("Please fill all fields");
-
-return;
-
-}
-
-localStorage.setItem("seller_registered","true");
-localStorage.setItem("seller_business",business);
-
-alert("Seller registration successful");
-
-window.location.href="seller-register.html";
-
-}
-
-  </script>
-
+<title>Upload Product - Godomcoworld Marketplace</title>
 <link rel="stylesheet" href="../css/style.css">
-
 </head>
-
 <body>
 
 <header>
-
-<div class="logo">Upload Product</div>
-
-<a href="index.html">
-<button>Back</button>
-</a>
-
+  <div class="logo">Upload Product</div>
+  <a href="../marketplace.html"><button>Back</button></a>
 </header>
 
 <div class="container">
+  <h2>Upload Your Product</h2>
 
-<h2>Upload Product</h2>
-
-<input type="text" id="productName" placeholder="Product Name"><br><br>
-
-<input type="text" id="productPrice" placeholder="Price ($)"><br><br>
-
-<input type="file" id="productImage"><br><br>
-
-<textarea id="productDesc" placeholder="Product Description"></textarea><br><br>
-
-<button onclick="uploadProduct()">Upload Product</button>
-
-</form>
-
+  <input type="text" id="productName" placeholder="Product Name"><br><br>
+  <textarea id="productDesc" placeholder="Product Description"></textarea><br><br>
+  
+  <label>Product Image:</label>
+  <input type="file" id="productImage" accept="image/*"><br><br>
+  
+  <input type="number" id="productPrice" placeholder="Price (USD)"><br><br>
+  
+  <button onclick="uploadProduct()">Upload Product</button>
 </div>
+
 <script>
+  // Current logged-in seller
+  let currentUser = localStorage.getItem("piUser") || "seller1"; // replace with real login
 
-function uploadProduct(){
+  function uploadProduct() {
+    const name = document.getElementById("productName").value.trim();
+    const desc = document.getElementById("productDesc").value.trim();
+    const priceUSD = parseFloat(document.getElementById("productPrice").value);
+    const imageInput = document.getElementById("productImage");
 
-let name = document.getElementById("productName").value;
-let price = document.getElementById("productPrice").value;
-let desc = document.getElementById("productDesc").value;
+    if(!name || !desc || !priceUSD || !imageInput.files.length){
+      alert("Please fill all fields and select an image");
+      return;
+    }
 
-let fileInput = document.getElementById("productImage");
-let file = fileInput.files[0];
+    // Convert image file to Base64 for localStorage
+    const reader = new FileReader();
+    reader.onload = function(event){
+      const imageData = event.target.result;
+      
+      // Convert USD to Pi
+      const pricePi = (priceUSD / 314159).toFixed(8); // 8 decimals
 
-if(!file){
-alert("Please select an image");
-return;
-}
+      // Get existing products
+      let products = JSON.parse(localStorage.getItem("products")) || [];
 
-let reader = new FileReader();
+      // Add new product
+      products.push({
+        name: name,
+        desc: desc,
+        image: imageData,
+        priceUSD: priceUSD.toFixed(2),
+        pricePi: pricePi,
+        sellerUsername: currentUser
+      });
 
-reader.onload = function(){
+      // Save to localStorage
+      localStorage.setItem("products", JSON.stringify(products));
 
-let imageBase64 = reader.result;
+      alert("Product uploaded successfully!");
 
-let products = JSON.parse(localStorage.getItem("products")) || [];
+      // Redirect to products page
+      window.location.href = "../products.html";
+    };
 
-products.push({
-name:name,
-price:price,
-desc:desc,
-image:imageBase64
-});
-
-localStorage.setItem("products", JSON.stringify(products));
-
-alert("Product uploaded successfully");
-
-window.location.href = "products.html";
-
-};
-
-reader.readAsDataURL(file);
-
-}
-
+    reader.readAsDataURL(imageInput.files[0]);
+  }
 </script>
+
+</body>
+</html>
 <a href="../marketplace.html">
 <button>Back to Marketplace</button>
 </a>
