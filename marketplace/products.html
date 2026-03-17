@@ -64,7 +64,9 @@ let products = JSON.parse(localStorage.getItem("products")) || [];
 
 let container = document.getElementById("productList");
 
-products.forEach(function(product){
+container.innerHTML = "";
+
+products.forEach(function(product, index){
 
 let card = document.createElement("div");
 
@@ -75,7 +77,11 @@ card.innerHTML = `
 <h3>${product.name}</h3>
 <p>${product.desc}</p>
 <p><b>$${product.price}</b></p>
-<button>Buy Now</button>
+
+<button onclick="deleteProduct(${index})" style="background:red;color:white;margin-top:10px;">
+Delete
+</button>
+
 `;
 
 container.appendChild(card);
@@ -84,7 +90,19 @@ container.appendChild(card);
 
 });
 
-</script>
+function deleteProduct(index){
+
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+products.splice(index, 1);
+
+localStorage.setItem("products", JSON.stringify(products));
+
+location.reload();
+
+}
+
+  </script>
 
 </body>
 </html>
