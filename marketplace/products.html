@@ -24,6 +24,12 @@
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <script>
+  let currentUser = localStorage.getItem("piUser");
+
+if(!currentUser){
+  currentUser = "seller1"; // fallback for testing
+  localStorage.setItem("piUser", currentUser);
+}
 // --- MOCK logged-in user ---
 // Replace this with your login system for real app
 let currentUser = localStorage.getItem("piUser") || "buyer1"; // example
@@ -40,9 +46,21 @@ document.addEventListener("DOMContentLoaded", function(){
 
   // Sample products (always visible)
   let sampleProducts = [
-    {name:"African Handmade Bag", price:25, desc:"High-quality handmade bag", image:"images/sample1.jpg"},
-    {name:"Wooden Chair", price:40, desc:"Sturdy wooden chair", image:"images/sample2.jpg"}
-  ];
+  {
+    name:"African Handmade Bag",
+    priceUSD:25,
+    pricePi:(25/314159).toFixed(8),
+    desc:"High-quality handmade bag",
+    image:"sample1.jpg"
+  },
+  {
+    name:"Wooden Chair",
+    priceUSD:40,
+    pricePi:(40/314159).toFixed(8),
+    desc:"Sturdy wooden chair",
+    image:"sample2.jpg"
+  }
+];
 
   // Uploaded products from sellers
   let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
@@ -64,7 +82,13 @@ document.addEventListener("DOMContentLoaded", function(){
     }
 
     card.innerHTML = `
-      <img src="${product.image}" style="width:100%; border-radius:10px;">
+      let imgSrc = product.image.startsWith("data:") 
+  ? product.image 
+  : "images/" + product.image;
+
+card.innerHTML = `
+  <img src="${imgSrc}" style="width:100%; border-radius:10px;">
+`;
       <h3>${product.name}</h3>
       <p>${product.desc}</p>
       <p><b>$${product.price}</b></p>
