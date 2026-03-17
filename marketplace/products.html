@@ -76,10 +76,15 @@ document.addEventListener("DOMContentLoaded", function(){
     card.className = "card";
 
     let deleteBtn = "";
-    // Only seller of uploaded product can see Delete button
-    if(index >= 2 && product.sellerUsername === currentUser){
-      deleteBtn = `<button onclick="deleteProduct(${index})" style="background:red;color:white;margin-top:10px;">Delete</button>`;
-    }
+
+if(index >= 2 && product.sellerUsername === currentUser){
+  deleteBtn = `
+    <button onclick="deleteProduct(${index})" 
+    style="background:red;color:white;margin-top:10px;">
+    Delete
+    </button>
+  `;
+}
 
     card.innerHTML = `
       let imgSrc = product.image.startsWith("data:") 
