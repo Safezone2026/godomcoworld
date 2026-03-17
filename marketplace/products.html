@@ -4,49 +4,65 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marketplace Products - Godomcoworld</title>
-<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header>
   <div class="logo">Marketplace Products</div>
-  <a href="../marketplace.html">
-    <button>Back</button>
-  </a>
+  <a href="marketplace.html"><button>Back</button></a>
 </header>
 
 <div class="container">
   <h2>Available Products</h2>
-
-  <!-- Container for dynamic product cards -->
   <div class="course-grid" id="productList"></div>
 </div>
 
-<a href="../marketplace.html">
-  <button>Back to Marketplace</button>
-</a>
+<a href="marketplace.html"><button>Back to Marketplace</button></a>
 
 <!-- Pi SDK -->
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <script>
+// --- MOCK logged-in user ---
+// Replace this with your login system for real app
+let currentUser = localStorage.getItem("piUser") || "buyer1"; // example
+
 // Initialize Pi SDK
 Pi.init({
   version: "2.0",
-  sandbox: true, // change to false for Mainnet
+  sandbox: true, // switch to false for Mainnet
   apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h",
   walletAddress: "GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2"
 });
 
-// Render products
 document.addEventListener("DOMContentLoaded", function(){
-  let products = JSON.parse(localStorage.getItem("products")) || [];
+
+  // Sample products (always visible)
+  let sampleProducts = [
+    {name:"African Handmade Bag", price:25, desc:"High-quality handmade bag", image:"images/sample1.jpg"},
+    {name:"Wooden Chair", price:40, desc:"Sturdy wooden chair", image:"images/sample2.jpg"}
+  ];
+
+  // Uploaded products from sellers
+  let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
+
+  let products = sampleProducts.concat(uploadedProducts);
+
+  // Render all products
   let container = document.getElementById("productList");
   container.innerHTML = "";
 
   products.forEach(function(product, index){
     let card = document.createElement("div");
     card.className = "card";
+
+    let deleteBtn = "";
+    // Only seller of uploaded product can see Delete button
+    if(index >= 2 && product.sellerUsername === currentUser){
+      deleteBtn = `<button onclick="deleteProduct(${index})" style="background:red;color:white;margin-top:10px;">Delete</button>`;
+    }
+
     card.innerHTML = `
       <img src="${product.image}" style="width:100%; border-radius:10px;">
       <h3>${product.name}</h3>
@@ -57,40 +73,52 @@ document.addEventListener("DOMContentLoaded", function(){
         Buy Now
       </button>
 
-      <button onclick="deleteProduct(${index})" style="background:red;color:white;margin-top:10px;">
-        Delete
-      </button>
+      ${deleteBtn}
     `;
+
     container.appendChild(card);
   });
-});
 
-// Delete product
+});
+  
+// Delete uploaded product
 function deleteProduct(index){
-  let products = JSON.parse(localStorage.getItem("products")) || [];
-  products.splice(index, 1);
-  localStorage.setItem("products", JSON.stringify(products));
-  location.reload();
+  let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
+  if(index >= 2){ // only delete uploaded products
+    uploadedProducts.splice(index-2, 1);
+    localStorage.setItem("products", JSON.stringify(uploadedProducts));
+    location.reload();
+  }
 }
 
-// Buy product via Pi
+// Buy product
 async function buyProduct(index){
-  let products = JSON.parse(localStorage.getItem("products")) || [];
+  let sampleProducts = [
+    {name:"African Handmade Bag", price:25, desc:"High-quality handmade bag", image:"images/sample1.jpg"},
+    {name:"Wooden Chair", price:40, desc:"Sturdy wooden chair", image:"images/sample2.jpg"}
+  ];
+
+  let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
+  let products = sampleProducts.concat(uploadedProducts);
+
   let product = products[index];
 
+  // Sellers cannot buy their own product
+  if(index >=2 && product.sellerUsername === currentUser){
+    alert("You cannot buy your own product!");
+    return;
+  }
+
   try {
-    // Request Pay
     const payment = await Pi.requestPay({
-      amount: parseFloat(product.price) / 314159, // Convert $ to Pi using π formula
+      amount: parseFloat(product.price)/314159,
       memo: `Purchase: ${product.name}`,
-      metadata: {product: product.name}
+      metadata:{product: product.name}
     });
 
-    console.log("Payment result:", payment);
-
     if(payment && payment.txid){
-      alert(`Payment successful!\nProduct unlocked: ${product.name}`);
-      // Optional: mark product as purchased for this user
+      alert(`Payment successful! Product unlocked: ${product.name}`);
+      // Optionally, mark product as purchased for currentUser
     }
   } catch(err){
     console.error("Payment error:", err);
