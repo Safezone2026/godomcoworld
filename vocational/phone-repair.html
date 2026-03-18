@@ -19,6 +19,7 @@
 
 <div id="lockedContent">
 <p style="color:red;">🔒 Subscribe to unlock this course</p>
+ <p id="expiryMsg" style="color:orange;"></p>
 </div>
 
 <h3>Choose Plan</h3>
@@ -45,11 +46,12 @@
 <div id="courseContent" style="display:none;">
 <h3>Course Content</h3>
 <ul>
-<li>Welding Basics</li>
-<li>Metal Cutting</li>
-<li>Advanced Fabrication</li>
+<li>Phone Hardware Basics</li>
+<li>Screen Replacement</li>
+<li>Battery & Charging Fix</li>
+<li>Software Troubleshooting</li>
+<li>Advanced Diagnostics</li>
 </ul>
-</div>
 </div>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
@@ -61,14 +63,39 @@ document.getElementById("interPi").innerText=(20/314159).toFixed(8)+" π";
 document.getElementById("proPi").innerText=(30/314159).toFixed(8)+" π";
 
 let courseName="Smartphone Repair";
-if(localStorage.getItem("plan_"+courseName)){unlock();}
+let data = localStorage.getItem("plan_" + courseName);
+
+if(data){
+  let parsed = JSON.parse(data);
+  let now = new Date().getTime();
+
+  if(now < parsed.expiry){
+    unlock();
+
+    let daysLeft = Math.ceil((parsed.expiry - now) / (1000*60*60*24));
+    document.getElementById("expiryMsg").innerText =
+      "⏳ Access expires in " + daysLeft + " days";
+
+  } else {
+    localStorage.removeItem("plan_" + courseName);
+    document.getElementById("expiryMsg").innerText =
+      "⚠️ Subscription expired. Please renew.";
+  }
+ } 
 
 async function pay(plan,usd){
 let piAmount=(usd/314159).toFixed(8);
 try{
 const payment=await Pi.requestPay({amount:parseFloat(piAmount),memo:courseName,metadata:{plan}});
 if(payment&&payment.txid){
-localStorage.setItem("plan_"+courseName,plan);
+let expiryDate = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
+
+let subscriptionData = {
+  plan: plan,
+  expiry: expiryDate
+};
+
+localStorage.setItem("plan_" + courseName, JSON.stringify(subscriptionData));
 alert("Course unlocked!");
 unlock();
 }
