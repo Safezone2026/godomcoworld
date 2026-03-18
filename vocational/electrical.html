@@ -26,49 +26,108 @@
 
 <div class="container">
 
-<h2>Electrical Installation Training</h2>
+<h2>Electrical Installation</h2>
 
-<p>
-Learn electrical wiring, circuit installation, safety procedures and maintenance.
-</p>
+<p>Learn wiring, safety, and installation techniques.</p>
 
-<div class="card">
-
-<h3>Basic Training</h3>
-
-<p>
-Introduction to electrical tools, wiring basics and safety practices.
-</p>
-
-<button>Unlock Course</button>
-
+<!-- LOCKED -->
+<div id="lockedContent">
+  <p style="color:red;">🔒 Subscribe to unlock this course</p>
 </div>
 
+<!-- PRICING -->
+<h3>Choose Plan</h3>
+
+<div class="course-grid">
+
 <div class="card">
-
-<h3>Professional Training</h3>
-
-<p>
-Advanced electrical wiring, load calculations and installation techniques.
-</p>
-
-<button>Unlock Course</button>
-
+  <h3>Basic</h3>
+  <p>$10/month</p>
+  <p id="basicPi"></p>
+  <button onclick="pay('basic',10)">Subscribe</button>
 </div>
 
 <div class="card">
+  <h3>Intermediate</h3>
+  <p>$20/month</p>
+  <p id="interPi"></p>
+  <button onclick="pay('intermediate',20)">Subscribe</button>
+</div>
 
-<h3>Practical Training</h3>
-
-<p>
-Real-world electrical installation projects and troubleshooting.
-</p>
-
-<button>Unlock Course</button>
-
+<div class="card">
+  <h3>Professional</h3>
+  <p>$30/month</p>
+  <p id="proPi"></p>
+  <button onclick="pay('pro',30)">Subscribe</button>
 </div>
 
 </div>
+
+<!-- UNLOCKED CONTENT -->
+<div id="courseContent" style="display:none;">
+  <h3>Course Content</h3>
+  <ul>
+    <li>Lesson 1</li>
+    <li>Lesson 2</li>
+    <li>Practical Training</li>
+  </ul>
+</div>
+
+</div>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+<script>
+Pi.init({
+  version: "2.0",
+  sandbox: true,
+  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+});
+
+// PI PRICES
+document.getElementById("basicPi").innerText = (10/314159).toFixed(8) + " π";
+document.getElementById("interPi").innerText = (20/314159).toFixed(8) + " π";
+document.getElementById("proPi").innerText = (30/314159).toFixed(8) + " π";
+
+// CHECK ACCESS
+let courseName = "Electrical Installation";
+let userPlan = localStorage.getItem("plan_" + courseName);
+
+if(userPlan){
+  unlock();
+}
+
+// PAYMENT
+async function pay(plan, usd){
+
+  let piAmount = (usd / 314159).toFixed(8);
+
+  try{
+    const payment = await Pi.requestPay({
+      amount: parseFloat(piAmount),
+      memo: courseName,
+      metadata:{plan}
+    });
+
+    if(payment && payment.txid){
+
+      localStorage.setItem("plan_" + courseName, plan);
+
+      alert("Course unlocked!");
+
+      unlock();
+    }
+
+  }catch(err){
+    alert("Payment failed");
+  }
+}
+
+// UNLOCK
+function unlock(){
+  document.getElementById("lockedContent").style.display = "none";
+  document.getElementById("courseContent").style.display = "block";
+}
+</script>
 
 </body>
   </html>
