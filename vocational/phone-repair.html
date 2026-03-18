@@ -1,56 +1,84 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Smartphone Repair</title>
-
+<title>Smartphone Repair Training</title>
 <link rel="stylesheet" href="../css/style.css">
-
 </head>
 
 <body>
-
 <header>
-
 <div class="logo">🌍 Godomcoworld</div>
-
-<a href="index.html">
-<button>Back</button>
-</a>
-
+<a href="index.html"><button>Back</button></a>
 </header>
 
 <div class="container">
+<h2>Smartphone Repair</h2>
+<p>Learn mobile diagnostics, repair, and maintenance.</p>
 
-<h2>Smartphone Repair Training</h2>
-
-<p>
-Learn how to repair smartphones and mobile devices.
-</p>
-
-<div class="card">
-<h3>Basic Training</h3>
-<p>Phone components, repair tools and safety.</p>
-<button>Unlock Course</button>
+<div id="lockedContent">
+<p style="color:red;">🔒 Subscribe to unlock this course</p>
 </div>
 
+<h3>Choose Plan</h3>
+
+<div class="course-grid">
+
 <div class="card">
-<h3>Professional Training</h3>
-<p>Screen replacement, battery repair and diagnostics.</p>
-<button>Unlock Course</button>
+<h3>Basic</h3><p>$10/month</p><p id="basicPi"></p>
+<button onclick="pay('basic',10)">Subscribe</button>
 </div>
 
 <div class="card">
-<h3>Practical Training</h3>
-<p>Hands-on smartphone repair and troubleshooting.</p>
-<button>Unlock Course</button>
+<h3>Intermediate</h3><p>$20/month</p><p id="interPi"></p>
+<button onclick="pay('intermediate',20)">Subscribe</button>
+</div>
+
+<div class="card">
+<h3>Professional</h3><p>$30/month</p><p id="proPi"></p>
+<button onclick="pay('pro',30)">Subscribe</button>
 </div>
 
 </div>
 
+<div id="courseContent" style="display:none;">
+<h3>Course Content</h3>
+<ul>
+<li>Welding Basics</li>
+<li>Metal Cutting</li>
+<li>Advanced Fabrication</li>
+</ul>
+</div>
+</div>
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+Pi.init({version:"2.0",sandbox:true,apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"});
+
+document.getElementById("basicPi").innerText=(10/314159).toFixed(8)+" π";
+document.getElementById("interPi").innerText=(20/314159).toFixed(8)+" π";
+document.getElementById("proPi").innerText=(30/314159).toFixed(8)+" π";
+
+let courseName="Smartphone Repair";
+if(localStorage.getItem("plan_"+courseName)){unlock();}
+
+async function pay(plan,usd){
+let piAmount=(usd/314159).toFixed(8);
+try{
+const payment=await Pi.requestPay({amount:parseFloat(piAmount),memo:courseName,metadata:{plan}});
+if(payment&&payment.txid){
+localStorage.setItem("plan_"+courseName,plan);
+alert("Course unlocked!");
+unlock();
+}
+}catch{alert("Payment failed");}
+}
+
+function unlock(){
+document.getElementById("lockedContent").style.display="none";
+document.getElementById("courseContent").style.display="block";
+}
+</script>
 </body>
-</html>
+ </html>
