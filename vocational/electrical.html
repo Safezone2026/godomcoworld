@@ -33,6 +33,7 @@
 <!-- LOCKED -->
 <div id="lockedContent">
   <p style="color:red;">🔒 Subscribe to unlock this course</p>
+  <p id="expiryMsg" style="color:orange;"></p>
 </div>
 
 <!-- PRICING -->
@@ -90,11 +91,25 @@ document.getElementById("proPi").innerText = (30/314159).toFixed(8) + " π";
 
 // CHECK ACCESS
 let courseName = "Electrical Installation";
-let userPlan = localStorage.getItem("plan_" + courseName);
+let data = localStorage.getItem("plan_" + courseName);
 
-if(userPlan){
-  unlock();
-}
+if(data){
+  let parsed = JSON.parse(data);
+  let now = new Date().getTime();
+
+  if(now < parsed.expiry){
+    unlock();
+
+    let daysLeft = Math.ceil((parsed.expiry - now) / (1000*60*60*24));
+    document.getElementById("expiryMsg").innerText =
+      "⏳ Access expires in " + daysLeft + " days";
+
+  } else {
+    localStorage.removeItem("plan_" + courseName);
+    document.getElementById("expiryMsg").innerText =
+      "⚠️ Subscription expired. Please renew.";
+  }
+      }
 
 // PAYMENT
 async function pay(plan, usd){
@@ -110,7 +125,14 @@ async function pay(plan, usd){
 
     if(payment && payment.txid){
 
-      localStorage.setItem("plan_" + courseName, plan);
+      let expiryDate = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
+
+let subscriptionData = {
+  plan: plan,
+  expiry: expiryDate
+};
+
+localStorage.setItem("plan_" + courseName, JSON.stringify(subscriptionData));
 
       alert("Course unlocked!");
 
