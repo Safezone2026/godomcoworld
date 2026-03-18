@@ -94,19 +94,29 @@
   <script>
 function updateButton(courseName, buttonId){
 
-  let plan = localStorage.getItem("plan_" + courseName);
+  let data = localStorage.getItem("plan_" + courseName);
   let btn = document.getElementById(buttonId).querySelector("button");
 
-  if(plan){
-    btn.innerText = "Continue Course 🔓";
-    btn.style.background = "green";
+  if(data){
+    let parsed = JSON.parse(data);
+    let now = new Date().getTime();
+
+    if(now < parsed.expiry){
+      btn.innerText = "Continue Course 🔓";
+      btn.style.background = "green";
+    }else{
+      localStorage.removeItem("plan_" + courseName);
+      btn.innerText = "Renew Course 🔁";
+      btn.style.background = "orange";
+    }
+
   }else{
     btn.innerText = "Unlock Course 🔒";
     btn.style.background = "#00bfff";
   }
 }
 
-// RUN FOR ALL COURSES
+// RUN
 updateButton("Electrical Installation", "btn-electrical");
 updateButton("Solar Installation", "btn-solar");
 updateButton("Welding Technology", "btn-welding");
