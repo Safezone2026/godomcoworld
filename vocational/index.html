@@ -34,47 +34,88 @@
 
 <div class="card">
 <h3>Electrical Installation</h3>
-<a href="electrical.html" class="view-btn">View Course</a>
+<a id="btn-electrical" href="electrical.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 <div class="card">
 <h3>Solar Installation</h3>
-<a href="solar.html" class="view-btn">View Course</a>
+<a id="btn-solar" href="solar.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 <div class="card">
 <h3>Welding Technology</h3>
-<a href="welding.html" class="view-btn">View Course</a>
+<a id="btn-welding" href="welding.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 <div class="card">
 <h3>Automobile Mechanics</h3>
-<a href="mechanics.html" class="view-btn">View Course</a>
+<a id="btn-mechanics" href="mechanics.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 <div class="card">
 <h3>Fashion & Textile Design</h3>
-<a href="fashion.html" class="view-btn">View Course</a>
+<a id="btn-fashion" href="fashion.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 <div class="card">
 <h3>Furniture & Carpentry</h3>
-<a href="carpentry.html" class="view-btn">View Course</a>
+<a id="btn-carpentry" href="carpentry.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 <div class="card">
 <h3>Smartphone Repair</h3>
-<a href="phone-repair.html" class="view-btn">View Course</a>
+<a id="btn-phone" href="phone-repairs.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 <div class="card">
 <h3>Agricultural Processing</h3>
-<a href="agro-processing.html" class="view-btn">View Course</a>
+<a id="btn-agro" href="agro-processing.html">
+  <button class="course-btn">View Course</button>
+</a>
 </div>
 
 </div>
 
 </div>
+  <script>
+function updateButton(courseName, buttonId){
+
+  let plan = localStorage.getItem("plan_" + courseName);
+  let btn = document.getElementById(buttonId).querySelector("button");
+
+  if(plan){
+    btn.innerText = "Continue Course 🔓";
+    btn.style.background = "green";
+  }else{
+    btn.innerText = "Unlock Course 🔒";
+    btn.style.background = "#00bfff";
+  }
+}
+
+// RUN FOR ALL COURSES
+updateButton("Electrical Installation", "btn-electrical");
+updateButton("Solar Installation", "btn-solar");
+updateButton("Welding Technology", "btn-welding");
+updateButton("Automobile Mechanics", "btn-mechanics");
+updateButton("Fashion & Textile Design", "btn-fashion");
+updateButton("Furniture & Carpentry", "btn-carpentry");
+updateButton("Smartphone Repair", "btn-phone");
+updateButton("Agricultural Processing", "btn-agro");
+  </script>
 
 </body>
 </html>
