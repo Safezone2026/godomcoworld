@@ -207,3 +207,16 @@ input, textarea {
   border: 1px solid #222;
   color: #fff;
   }
+#certificate {
+  border: 5px solid gold;
+  border-radius: 10px;
+  font-family: serif;
+}
+
+#certificate h2 {
+  color: darkblue;
+}
+
+#certificate h3 {
+  margin: 10px 0;
+  }
