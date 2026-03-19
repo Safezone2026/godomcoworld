@@ -20,15 +20,19 @@
 <h3>Select Learning Tier</h3>
 
 <div class="card"><h3>Basic</h3><p>$20/month</p>
+<p id="basicPi"></p>
 <button onclick="payCourse(20,'Basic')">Pay</button></div>
 
 <div class="card"><h3>Professional</h3><p>$50/month</p>
+<p id="proPi"></p>
 <button onclick="payCourse(50,'Professional')">Pay</button></div>
 
 <div class="card"><h3>Premium</h3><p>$100/month</p>
+<p id="premiumPi"></p>
 <button onclick="payCourse(100,'Premium')">Pay</button></div>
 
 <div class="card"><h3>Practical</h3><p>$200/month</p>
+<p id="practicalPi"></p>
 <button onclick="payCourse(200,'Practical')">Pay</button></div>
 
 <div id="courseContent" style="display:none;margin-top:40px">
@@ -58,6 +62,19 @@
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script>
 Pi.init({version:"2.0",sandbox:false,apiKey:"YOUR_API_KEY"});
+  window.onload = function(){
+
+  function setPiPrice(id, usd){
+    document.getElementById(id).innerText =
+    (usd / 314159).toFixed(8) + " π";
+  }
+
+  setPiPrice("basicPi",20);
+  setPiPrice("proPi",50);
+  setPiPrice("premiumPi",100);
+  setPiPrice("practicalPi",200);
+
+};
 
 let courseName="Blockchain Technology";
 
