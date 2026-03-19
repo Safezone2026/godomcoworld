@@ -51,7 +51,7 @@
 <li>Interior Fittings & Installations</li>
 <li>Practical Workshop Training</li>
 </ul>
-  <button onclick="generateCertificate()" style="margin-top:15px;">
+  <button id="certBtn" onclick="generateCertificate()" style="display:none; margin-top:15px;">
   🎓 Get Certificate
   </button>
 </div>
@@ -122,26 +122,43 @@ unlock();
 }
 
 function unlock(){
-document.getElementById("lockedContent").style.display="none";
-document.getElementById("courseContent").style.display="block";
+  document.getElementById("lockedContent").style.display = "none";
+  document.getElementById("courseContent").style.display = "block";
+
+  document.getElementById("certBtn").style.display = "block";
 }
   function generateCertificate(){
 
-  let name = prompt("Enter your name for certificate:");
+  let data = localStorage.getItem("plan_" + courseName);
 
+  if(!data){
+    alert("⚠️ You must subscribe before getting certificate");
+    return;
+  }
+
+  let parsed = JSON.parse(data);
+  let now = new Date().getTime();
+
+  // CHECK EXPIRY
+  if(now > parsed.expiry){
+    alert("⚠️ Subscription expired. Please renew.");
+    localStorage.removeItem("plan_" + courseName);
+    return;
+  }
+
+  // IF VALID → GENERATE CERTIFICATE
+  let name = prompt("Enter your name for certificate:");
   if(!name) return;
 
   document.getElementById("studentName").innerText = name;
   document.getElementById("courseTitle").innerText = courseName;
-
-  let today = new Date().toDateString();
-  document.getElementById("date").innerText = today;
+  document.getElementById("date").innerText = new Date().toDateString();
 
   let cert = document.getElementById("certificate");
   cert.style.display = "block";
 
-  window.print(); // allows user to save as PDF
-  }
+  window.print();
+     }
 </script>
 </body>
 </html>
