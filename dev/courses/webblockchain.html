@@ -2,71 +2,147 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Web3 Blockchain Course - Godomcoworld</title>
+<title>Web3 Blockchain Development - Godomcoworld</title>
 <link rel="stylesheet" href="../CSS/style.css">
-</head><body><header><h1>Web3 Blockchain</h1><nav>
-<a href="../index.html">Home</a>
-<a href="../learn.html">Learn</a>
-<a href="../course.html">Courses</a>
-<a href="../marketplace.html">Marketplace</a>
-<a href="../finance.html">Finance</a>
-<a href="../dashboard.html">Dashboard</a>
-<a href="../upload.html">Upload</a>
-</nav></header><main><h2>Web3 Blockchain Development</h2><p>Learn decentralized web technologies and build blockchain-powered applications.</p><h3>Select Learning Tier</h3><div class="card">
-<h3>Basic</h3>
-<p>Introduction to Web3</p>
-<p class="price">$20/month (~0.0000637 π)</p>
-<button onclick="payCourse(0.0000637,'Web3 Blockchain Basic')">Pay with Pi</button>
-</div><div class="card">
-<h3>Professional</h3>
-<p>Smart contract programming</p>
-<p class="price">$50/month (~0.000159 π)</p>
-<button onclick="payCourse(0.000159,'Web3 Blockchain Professional')">Pay with Pi</button>
-</div><div class="card">
-<h3>Premium</h3>
-<p>DeFi and NFT platforms</p>
-<p class="price">$100/month (~0.000318 π)</p>
-<button onclick="payCourse(0.000318,'Web3 Blockchain Premium')">Pay with Pi</button>
-</div><div class="card">
-<h3>Practical</h3>
-<p>Build full Web3 applications</p>
-<p class="price">$200/month (~0.000637 π)</p>
-<button onclick="payCourse(0.000637,'Web3 Blockchain Practical')">Pay with Pi</button>
-</div><div id="courseContent" style="display:none;margin-top:40px">
+</head>
+
+<body>
+
+<header><h1>Web3 & Blockchain Development</h1></header>
+
+<main>
+
+<h2>Web3 Development</h2>
+<p>Build decentralized apps and Web3 systems.</p>
+  
+<p id="lockedMsg" style="color:red;">🔒 Subscribe to unlock this course</p>
+
+<h3>Select Learning Tier</h3>
+
+<div class="card"><h3>Basic</h3><p>$20/month</p>
+<button onclick="payCourse(20,'Basic')">Pay</button></div>
+
+<div class="card"><h3>Professional</h3><p>$50/month</p>
+<button onclick="payCourse(50,'Professional')">Pay</button></div>
+
+<div class="card"><h3>Premium</h3><p>$100/month</p>
+<button onclick="payCourse(100,'Premium')">Pay</button></div>
+
+<div class="card"><h3>Practical</h3><p>$200/month</p>
+<button onclick="payCourse(200,'Practical')">Pay</button></div>
+
+<div id="courseContent" style="display:none;margin-top:40px">
 <h3>Course Unlocked</h3>
-<p>Welcome to the Web3 Blockchain course.</p>
-</div></main><script src="https://sdk.minepi.com/pi-sdk.js"></script><script>
+<ul>
+<li>Web3 Fundamentals</li>
+<li>Wallet Integration</li>
+<li>Smart Contract Deployment</li>
+<li>DApps Frontend</li>
+</ul>
 
-Pi.init({
-version:"2.0",
-sandbox:true,
-apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+<button id="certBtn" onclick="generateCertificate()" style="display:none;">🎓 Get Certificate</button>
+</div>
+
+<div id="certificate" style="display:none;text-align:center;background:white;color:black;padding:20px;">
+<h2>Certificate of Completion</h2>
+<p>This certifies that</p>
+<h3 id="studentName"></h3>
+<p>has completed</p>
+<h3 id="courseTitle"></h3>
+<p>Godomcoworld Technology Platform</p>
+<p id="date"></p>
+</div>
+
+</main>
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+Pi.init({version:"2.0",sandbox:false,apiKey:"YOUR_API_KEY"});
+
+let courseName="Web3 Blockchain Development";
+
+checkAccess();
+
+function checkAccess(){
+let data=localStorage.getItem("plan_"+courseName);
+if(data){
+let parsed=JSON.parse(data);
+if(Date.now()<parsed.expiry){unlock();}
+else{localStorage.removeItem("plan_"+courseName);}
+}
+}
+
+function payCourse(usd,plan){
+let pi=(usd/314159).toFixed(8);
+Pi.createPayment({amount:parseFloat(pi),memo:courseName,metadata:{plan}},{
+onReadyForServerCompletion:function(){
+let expiry=Date.now()+(30*24*60*60*1000);
+localStorage.setItem("plan_"+courseName,JSON.stringify({plan,expiry}));
+unlock();
+alert("Payment successful");
+}
 });
+}
 
-function payCourse(amount,courseName){
-
-Pi.createPayment(
-{amount:amount,memo:courseName,metadata:{course:courseName}},
-{
-
-onReadyForServerApproval:function(paymentId){console.log(paymentId);},
-
-onReadyForServerCompletion:function(paymentId,txid){
-alert("Payment successful for "+courseName);
+function unlock(){
+document.getElementById("lockedMsg").style.display="none";
 document.getElementById("courseContent").style.display="block";
-},
-
-onCancel:function(){alert("Payment cancelled");},
-
-onError:function(error){
-console.log(error);
-alert("Payment error");
+document.getElementById("certBtn").style.display="block";
 }
 
-});
+function generateCertificate(){
+let data=localStorage.getItem("plan_"+courseName);
+if(!data){alert("Subscribe first");return;}
+let parsed=JSON.parse(data);
+if(Date.now()>parsed.expiry){alert("Expired");return;}
 
+let name=prompt("Enter your name:");
+document.getElementById("studentName").innerText=name;
+document.getElementById("courseTitle").innerText=courseName;
+document.getElementById("date").innerText=new Date().toDateString();
+document.getElementById("certificate").style.display="block";
+window.print();
 }
+</script>
 
-</script><script src="../js/script.js"></script>
+<nav class="bottom-nav">
+
+<a href="../index.html">
+<span>🏠</span>
+<p>Home</p>
+</a>
+
+<a href="../learn.html">
+<span>🎓</span>
+<p>Learn</p>
+</a>
+
+<a href="../course.html">
+<span>📚</span>
+<p>Courses</p>
+</a>
+
+<a href="../marketplace.html">
+<span>🛒</span>
+<p>Market</p>
+</a>
+
+<a href="../finance.html">
+<span>💰</span>
+<p>Finance</p>
+</a>
+
+<a href="../login.html">
+<span>🔐</span>
+<p>Login</p>
+</a>
+
+<a href="../dashboard.html">
+<span>📊</span>
+<p>Dashboard</p>
+</a>
+
+</nav>
 </body>
-</html>
+  </html>
+  
