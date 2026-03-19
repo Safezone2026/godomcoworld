@@ -50,7 +50,27 @@
 <li>Panel Installation</li>
 <li>Maintenance</li>
 </ul>
+ <button onclick="generateCertificate()" style="margin-top:15px;">
+  🎓 Get Certificate
+ </button>
 </div>
+ <div id="certificate" style="display:none; text-align:center; padding:20px; background:white; color:black; margin-top:20px;">
+
+  <h2>Certificate of Completion</h2>
+
+  <p>This certifies that</p>
+
+  <h3 id="studentName">Student Name</h3>
+
+  <p>has successfully completed</p>
+
+  <h3 id="courseTitle"></h3>
+
+  <p>on Godomcoworld Vocational Training Platform</p>
+
+  <p id="date"></p>
+
+ </div>
 </div>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
@@ -105,6 +125,23 @@ function unlock(){
 document.getElementById("lockedContent").style.display="none";
 document.getElementById("courseContent").style.display="block";
 }
+ function generateCertificate(){
+
+  let name = prompt("Enter your name for certificate:");
+
+  if(!name) return;
+
+  document.getElementById("studentName").innerText = name;
+  document.getElementById("courseTitle").innerText = courseName;
+
+  let today = new Date().toDateString();
+  document.getElementById("date").innerText = today;
+
+  let cert = document.getElementById("certificate");
+  cert.style.display = "block";
+
+  window.print(); // allows user to save as PDF
+ }
 </script>
 </body>
  </html>
