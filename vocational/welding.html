@@ -54,21 +54,32 @@
   🎓 Get Certificate
   </button>
 </div>
-  <div id="certificate" style="display:none; text-align:center; padding:20px; background:white; color:black; margin-top:20px;">
+  <!-- CERTIFICATE -->
+  <div id="certificate" style="display:none; padding:30px; background:white; color:black; text-align:center; border:8px solid gold; margin-top:20px;">
 
-  <h2>Certificate of Completion</h2>
+  <h1 style="color:darkblue;">🏆 Certificate of Completion</h1>
 
   <p>This certifies that</p>
 
-  <h3 id="studentName">Student Name</h3>
+  <h2 id="studentName" style="margin:10px 0;"></h2>
 
   <p>has successfully completed</p>
 
-  <h3 id="courseTitle"></h3>
+  <h2 id="courseTitle"></h2>
 
-  <p>on Godomcoworld Vocational Training Platform</p>
+  <p>on Godomcoworld Technology Platform</p>
 
   <p id="date"></p>
+
+  <p><strong>Certificate ID:</strong> <span id="certId"></span></p>
+
+  <p style="margin-top:30px;">________________________</p>
+  <p>Authorized Signature</p>
+    ‎<p>
+‎Verify this certificate at:
+‎<br>
+‎<strong>godomcoworld.netlify.app/verify.html</strong>
+‎</p>
 
   </div>
 </div>
@@ -129,36 +140,47 @@ function unlock(){
 }
 function generateCertificate(){
 
-  let data = localStorage.getItem("plan_" + courseName);
+let data = localStorage.getItem("plan_" + courseName);
 
-  if(!data){
-    alert("⚠️ You must subscribe before getting certificate");
-    return;
-  }
+if(!data){
+alert("⚠️ Subscribe first");
+return;
+}
 
-  let parsed = JSON.parse(data);
-  let now = new Date().getTime();
+let parsed = JSON.parse(data);
 
-  // CHECK EXPIRY
-  if(now > parsed.expiry){
-    alert("⚠️ Subscription expired. Please renew.");
-    localStorage.removeItem("plan_" + courseName);
-    return;
-  }
+if(Date.now() > parsed.expiry){
+alert("⚠️ Subscription expired");
+return;
+}
 
-  // IF VALID → GENERATE CERTIFICATE
-  let name = prompt("Enter your name for certificate:");
-  if(!name) return;
+// NAME
+let name = prompt("Enter your name:");
+if(!name) return;
 
-  document.getElementById("studentName").innerText = name;
-  document.getElementById("courseTitle").innerText = courseName;
-  document.getElementById("date").innerText = new Date().toDateString();
+// GENERATE UNIQUE ID
+let certId = "GODO-" + Date.now();
 
-  let cert = document.getElementById("certificate");
-  cert.style.display = "block";
+// SAVE CERTIFICATE
+let certData = {
+name: name,
+course: courseName,
+date: new Date().toDateString(),
+id: certId
+};
 
-  window.print();
-  }
+localStorage.setItem("cert_" + certId, JSON.stringify(certData));
+
+// DISPLAY
+document.getElementById("studentName").innerText = name;
+document.getElementById("courseTitle").innerText = courseName;
+document.getElementById("date").innerText = certData.date;
+document.getElementById("certId").innerText = certId;
+
+document.getElementById("certificate").style.display = "block";
+
+window.print();
+}
 </script>
 </body>
   </html>
