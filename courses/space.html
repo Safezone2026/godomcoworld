@@ -72,9 +72,11 @@ Verify this certificate at:
 <br>
 <strong>godomcoworld.netlify.app/verify.html</strong>
   </p>
+  <div id="qrcode" style="margin-top:20px;"></div>
 
 </div>
 </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script>
@@ -144,10 +146,10 @@ return;
 let name = prompt("Enter your name:");
 if(!name) return;
 
-// GENERATE UNIQUE ID
+// GENERATE CERTIFICATE ID
 let certId = "GODO-" + Date.now();
 
-// SAVE CERTIFICATE
+// SAVE
 let certData = {
 name: name,
 course: courseName,
@@ -163,10 +165,22 @@ document.getElementById("courseTitle").innerText = courseName;
 document.getElementById("date").innerText = certData.date;
 document.getElementById("certId").innerText = certId;
 
+// 🔗 CREATE VERIFY LINK
+let verifyURL = window.location.origin + "/verify.html?id=" + certId;
+
+// CLEAR OLD QR
+document.getElementById("qrcode").innerHTML = "";
+
+// GENERATE QR
+new QRCode(document.getElementById("qrcode"), {
+text: verifyURL,
+width: 120,
+height: 120
+});
+
 document.getElementById("certificate").style.display = "block";
 
 window.print();
-  }
 </script>
 
 <nav class="bottom-nav">
