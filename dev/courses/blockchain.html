@@ -46,15 +46,28 @@
 
 <button id="certBtn" onclick="generateCertificate()" style="display:none;">🎓 Get Certificate</button>
 </div>
+<!-- CERTIFICATE -->
+<div id="certificate" style="display:none; padding:30px; background:white; color:black; text-align:center; border:8px solid gold; margin-top:20px;">
 
-<div id="certificate" style="display:none;text-align:center;background:white;color:black;padding:20px;">
-<h2>Certificate of Completion</h2>
-<p>This certifies that</p>
-<h3 id="studentName"></h3>
-<p>has completed</p>
-<h3 id="courseTitle"></h3>p
-<p>Godomcoworld Technology Platform</p>
-<p id="date"></p>
+  <h1 style="color:darkblue;">🏆 Certificate of Completion</h1>
+
+  <p>This certifies that</p>
+
+  <h2 id="studentName" style="margin:10px 0;"></h2>
+
+  <p>has successfully completed</p>
+
+  <h2 id="courseTitle"></h2>
+
+  <p>on Godomcoworld Technology Platform</p>
+
+  <p id="date"></p>
+
+  <p><strong>Certificate ID:</strong> <span id="certId"></span></p>
+
+  <p style="margin-top:30px;">________________________</p>
+  <p>Authorized Signature</p>
+
 </div>
 
 </main>
@@ -108,18 +121,48 @@ document.getElementById("certBtn").style.display="block";
 }
 
 function generateCertificate(){
-let data=localStorage.getItem("plan_"+courseName);
-if(!data){alert("Subscribe first");return;}
-let parsed=JSON.parse(data);
-if(Date.now()>parsed.expiry){alert("Expired");return;}
 
-let name=prompt("Enter your name:");
-document.getElementById("studentName").innerText=name;
-document.getElementById("courseTitle").innerText=courseName;
-document.getElementById("date").innerText=new Date().toDateString();
-document.getElementById("certificate").style.display="block";
-window.print();
+let data = localStorage.getItem("plan_" + courseName);
+
+if(!data){
+alert("⚠️ Subscribe first");
+return;
 }
+
+let parsed = JSON.parse(data);
+
+if(Date.now() > parsed.expiry){
+alert("⚠️ Subscription expired");
+return;
+}
+
+// NAME
+let name = prompt("Enter your name:");
+if(!name) return;
+
+// GENERATE UNIQUE ID
+let certId = "GODO-" + Date.now();
+
+// SAVE CERTIFICATE
+let certData = {
+name: name,
+course: courseName,
+date: new Date().toDateString(),
+id: certId
+};
+
+localStorage.setItem("cert_" + certId, JSON.stringify(certData));
+
+// DISPLAY
+document.getElementById("studentName").innerText = name;
+document.getElementById("courseTitle").innerText = courseName;
+document.getElementById("date").innerText = certData.date;
+document.getElementById("certId").innerText = certId;
+
+document.getElementById("certificate").style.display = "block";
+
+window.print();
+  }
 </script>
   <nav class="bottom-nav">
 
