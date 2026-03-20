@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Verify Certificate</title>
+</head>
+
+<body>
+
+<h2>Verify Certificate</h2>
+
+<input type="text" id="certInput" placeholder="Enter Certificate ID">
+<button onclick="verifyCert()">Verify</button>
+
+<div id="result"></div>
+
+<script>
+function verifyCert(){
+
+let id = document.getElementById("certInput").value;
+
+let data = localStorage.getItem("cert_" + id);
+
+if(data){
+let cert = JSON.parse(data);
+
+document.getElementById("result").innerHTML = `
+✅ Valid Certificate<br>
+Name: ${cert.name}<br>
+Course: ${cert.course}<br>
+Date: ${cert.date}
+`;
+}else{
+document.getElementById("result").innerHTML = "❌ Invalid Certificate";
+}
+
+}
+</script>
+
+</body>
+</html>
