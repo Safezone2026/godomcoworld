@@ -13,6 +13,9 @@
 
   <!-- Header -->
   <header>
+    <div class="logo">
+  <img src="/images/logo.png" alt="Godomcoworld Logo" class="app-logo">
+    </div>
     <h1>Godomcoworld Sandbox</h1>
 
   </header>
@@ -49,6 +52,11 @@
     </div>
 
   </main>
+  <script>
+document.querySelectorAll(".logo").forEach(el => {
+  el.innerHTML = '<img src="/images/logo.png" class="app-logo">';
+});
+  </script>
 
   <!-- Pi SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
