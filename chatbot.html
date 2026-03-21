@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Support Chatbot</title>
+
+<style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
+.container{
+  padding:20px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:none;
+  background:#1a1a1a;
+  color:white;
+}
+
+button{
+  padding:10px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  background:#4CAF50;
+  color:white;
+}
+
+.chatbox{
+  background:#111;
+  padding:15px;
+  border-radius:10px;
+  margin-top:20px;
+  min-height:100px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Support Chatbot</h2>
+
+<input type="text" id="userInput" placeholder="Ask a question...">
+
+<button onclick="chat()">Send</button>
+
+<div class="chatbox" id="chatbox"></div>
+
+</div>
+
+<script>
+
+function chat(){
+
+let input = document.getElementById("userInput").value.toLowerCase();
+
+let reply = "Sorry, I don't understand. Please contact support.";
+
+if(input.includes("payment")){
+reply = "Payments are held securely until delivery is confirmed.";
+}
+
+else if(input.includes("delivery")){
+reply = "You can track delivery in your Orders page.";
+}
+
+else if(input.includes("refund")){
+reply = "Refunds are processed if delivery fails.";
+}
+
+else if(input.includes("seller")){
+reply = "Sellers receive payment after delivery confirmation.";
+}
+
+document.getElementById("chatbox").innerHTML +=
+"<p><strong>You:</strong> " + input + "</p>" +
+"<p><strong>Bot:</strong> " + reply + "</p>";
+
+document.getElementById("userInput").value = "";
+
+}
+
+</script>
+
+</body>
+</html>
