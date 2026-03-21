@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Checkout - Godomcoworld</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
+.container{
+  padding:20px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin-top:5px;
+  border-radius:8px;
+  border:none;
+  background:#1a1a1a;
+  color:white;
+}
+
+input::placeholder{
+  color:#aaa;
+}
+
+button{
+  padding:12px;
+  width:100%;
+  border:none;
+  border-radius:8px;
+  background:#00bcd4;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+.summary{
+  background:#111;
+  padding:15px;
+  border-radius:10px;
+  margin-top:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+  <div class="logo">
+  <img src="/images/logo.png" alt="Godomcoworld Logo" class="app-logo">
+  </div>
+</header>
+
+<div class="container">
+
+<h2>Checkout</h2>
+
+<input type="text" id="name" placeholder="Full Name"><br><br>
+<input type="text" id="street" placeholder="Street Address"><br><br>
+<input type="text" id="phone" placeholder="Phone Number"><br><br>
+<input type="email" id="email" placeholder="Email Address"><br><br>
+
+<div class="summary">
+  <h3>Order Summary</h3>
+
+  <p id="productPrice"></p>
+  <p id="shippingFee"></p>
+  <p id="platformFee"></p>
+  <p><strong id="total"></strong></p>
+</div>
+
+<br>
+
+<button onclick="checkout()">Pay Now</button>
+
+</div>
+
+<!-- PI SDK (for future payment integration) -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+<script>
+
+// GET PRODUCT PRICE
+let productPrice = localStorage.getItem("cart_price") || 0;
+
+// SHIPPING
+let shipping = 5;
+
+// PLATFORM FEE (5%)
+let platformFee = productPrice * 0.05;
+
+// TOTAL
+let total = Number(productPrice) + shipping + platformFee;
+
+// DISPLAY
+document.getElementById("productPrice").innerText = "Product: $" + productPrice;
+document.getElementById("shippingFee").innerText = "Shipping: $" + shipping;
+document.getElementById("platformFee").innerText = "Service Fee: $" + platformFee.toFixed(2);
+document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
+
+// CHECKOUT FUNCTION
+function checkout(){
+
+let name = document.getElementById("name").value;
+let street = document.getElementById("street").value;
+let phone = document.getElementById("phone").value;
+let email = document.getElementById("email").value;
+
+if(name === "" || street === "" || phone === "" || email === ""){
+  alert("Please fill all details");
+  return;
+}
+
+// SAVE ORDER DETAILS
+localStorage.setItem("order_name", name);
+localStorage.setItem("order_address", street);
+localStorage.setItem("order_phone", phone);
+localStorage.setItem("order_email", email);
+localStorage.setItem("order_total", total);
+localStorage.setItem("order_status", "paid");
+
+alert("Payment successful!");
+
+// REDIRECT (optional)
+window.location.href = "success.html";
+
+}
+
+</script>
+  <script>
+document.querySelectorAll(".logo").forEach(el => {
+  el.innerHTML = '<img src="/images/logo.png" class="app-logo">';
+});
+  </script>
+
+</body>
+  </html>
