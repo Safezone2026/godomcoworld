@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Orders - Godomcoworld</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<h2>My Order</h2>
+
+<p id="status"></p>
+<p id="details"></p>
+
+<button onclick="confirmDelivery()">Confirm Delivery</button>
+
+<script>
+
+// LOAD ORDER
+let status = localStorage.getItem("order_status") || "No Order";
+
+document.getElementById("status").innerText = "Status: " + status;
+
+document.getElementById("details").innerText =
+"Product: $" + localStorage.getItem("cart_price");
+
+// CONFIRM DELIVERY
+function confirmDelivery(){
+
+let productPrice = Number(localStorage.getItem("cart_price")) || 0;
+let platformFee = Number(localStorage.getItem("platform_fee")) || 0;
+
+let sellerAmount = productPrice;
+let platformEarning = platformFee;
+
+localStorage.setItem("order_status","delivered");
+
+let wallet = localStorage.getItem("seller_wallet");
+
+alert(
+"✅ Delivered\nSeller Paid: $" + sellerAmount +
+"\nPlatform Earned: $" + platformEarning +
+"\nWallet: " + wallet
+);
+
+location.reload();
+}
+
+</script>
+
+</body>
+</html>
