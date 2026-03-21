@@ -16,7 +16,9 @@
 
 <header>
 
-<div class="logo">🌍 Godomcoworld</div>
+<div class="logo">
+  <img src="/images/logo.png" alt="Godomcoworld Logo" class="app-logo">
+</div>
 
 <a href="../index.html">
 <button>Home</button>
@@ -91,6 +93,12 @@
 </div>
 
 </div>
+<script>
+document.querySelectorAll(".logo").forEach(el => {
+  el.innerHTML = '<img src="/images/logo.png" class="app-logo">';
+});
+</script>
+  
   <script>
 function updateButton(courseName, buttonId){
 
