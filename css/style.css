@@ -220,3 +220,8 @@ input, textarea {
 #certificate h3 {
   margin: 10px 0;
   }
+.app-logo {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+  }
