@@ -40,11 +40,79 @@
 
 <input type="text" placeholder="Business Location" required><br><br>
 
-<button type="submit">Register</button>
+<h2>Seller Registration</h2>
+
+<div class="container">
+
+<!-- EXISTING FIELDS -->
+<input type="text" id="name" placeholder="Full Name"><br><br>
+<input type="email" id="email" placeholder="Email"><br><br>
+
+<!-- ✅ ADD WALLET FIELD HERE -->
+<h3>Wallet Address</h3>
+<input type="text" id="wallet" placeholder="Enter your Pi Wallet Address"><br><br>
+
+<!-- ✅ ADD TERMS HERE -->
+<h3>Terms & Agreement</h3>
+
+<div style="background:#111; padding:15px; border-radius:10px; font-size:14px; max-height:200px; overflow:auto;">
+
+<p><strong>Godomcoworld Marketplace Agreement</strong></p>
+
+<p>1. Payment Protection:</p>
+<p>All payments made by buyers will be held securely by Godomcoworld until the product is confirmed delivered.</p>
+
+<p>2. Fund Release:</p>
+<p>Funds will only be released to the seller’s wallet after delivery confirmation.</p>
+
+<p>3. Seller Responsibility:</p>
+<p>Sellers must provide accurate product descriptions and ensure timely delivery.</p>
+
+<p>4. Fraud Policy:</p>
+<p>Any fraudulent activity will result in account suspension.</p>
+
+</div>
+
+<br>
+
+<label>
+<input type="checkbox" id="agree"> I agree to the Terms & Conditions
+</label>
+
+<br><br>
+
+<!-- ✅ FINAL REGISTER BUTTON -->
+<button onclick="registerSeller()">Register</button>
+
+</div>
 
 </form>
 
 </div>
+<script>
+function registerSeller(){
+
+let wallet = document.getElementById("wallet").value;
+let agree = document.getElementById("agree").checked;
+
+if(wallet === ""){
+  alert("Enter wallet address");
+  return;
+}
+
+if(!agree){
+  alert("You must agree to terms");
+  return;
+}
+
+alert("Registration successful");
+
+// Save seller wallet
+localStorage.setItem("seller_wallet", wallet);
+
+}
+</script>
+  
 <a href="../marketplace.html">
 <button>Back to Marketplace</button>
 </a>
