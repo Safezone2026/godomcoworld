@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Activity Log</title>
+
+<style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
+.container{
+  padding:20px;
+}
+
+.log{
+  background:#111;
+  padding:15px;
+  border-radius:10px;
+  margin-top:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Activity Log</h2>
+
+<div class="log" id="log"></div>
+
+</div>
+
+<script>
+
+let log = `
+Order Status: ${localStorage.getItem("order_status")} <br><br>
+
+Product Price: $${localStorage.getItem("cart_price")} <br><br>
+
+Platform Fee: $${localStorage.getItem("platform_fee")} <br><br>
+
+Customer: ${localStorage.getItem("order_name")} <br><br>
+
+Address: ${localStorage.getItem("order_address")}
+`;
+
+document.getElementById("log").innerHTML = log;
+
+</script>
+
+</body>
+</html>
