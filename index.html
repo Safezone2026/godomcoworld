@@ -18,7 +18,9 @@
 
 <header>
 
-<div class="logo">🌍 Godomcoworld</div>
+<div class="logo">
+  <img src="/images/logo.png" alt="Godomcoworld Logo" class="app-logo">
+</div>
 
 <button onclick="loginPi()">Sign in with Pi</button>
 
@@ -241,6 +243,11 @@ Open Dashboard
 </a>
 
 </nav>
+  <script>
+document.querySelectorAll(".logo").forEach(el => {
+  el.innerHTML = '<img src="/images/logo.png" class="app-logo">';
+});
+  </script>
 
 
 <script>
