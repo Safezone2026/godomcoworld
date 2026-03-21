@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Seller Orders - Godomcoworld</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
+.container{
+  padding:20px;
+}
+
+.card{
+  background:#111;
+  padding:15px;
+  border-radius:10px;
+  margin-top:15px;
+}
+
+button{
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#ff9800;
+  color:white;
+  cursor:pointer;
+  margin-top:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🌍 Godomcoworld</div>
+</header>
+
+<div class="container">
+
+<h2>Seller Orders</h2>
+
+<div class="card">
+  <p id="orderInfo"></p>
+  <p id="buyerInfo"></p>
+
+  <button onclick="markShipped()">Mark as Shipped</button>
+</div>
+
+</div>
+
+<script>
+
+// LOAD DATA
+let status = localStorage.getItem("order_status") || "No Orders";
+
+let price = localStorage.getItem("cart_price") || 0;
+
+let name = localStorage.getItem("order_name") || "N/A";
+let address = localStorage.getItem("order_address") || "N/A";
+
+document.getElementById("orderInfo").innerText =
+"Status: " + status + " | Product: $" + price;
+
+document.getElementById("buyerInfo").innerText =
+"Buyer: " + name + " | Address: " + address;
+
+// MARK SHIPPED
+function markShipped(){
+
+localStorage.setItem("order_status","shipped");
+
+alert("Order marked as shipped");
+
+location.reload();
+
+}
+
+</script>
+
+</body>
+</html>
