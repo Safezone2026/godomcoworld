@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Support - Godomcoworld</title>
+
+<style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
+.container{
+  padding:20px;
+}
+
+input, textarea{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:none;
+  background:#1a1a1a;
+  color:white;
+}
+
+button{
+  padding:12px;
+  margin-top:15px;
+  width:100%;
+  border:none;
+  border-radius:8px;
+  background:#00bcd4;
+  color:white;
+  cursor:pointer;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Customer Support</h2>
+
+<input type="text" id="name" placeholder="Your Name">
+<input type="email" id="email" placeholder="Your Email">
+
+<textarea id="issue" placeholder="Describe your issue"></textarea>
+
+<button onclick="submitTicket()">Submit Ticket</button>
+
+<p id="msg"></p>
+
+</div>
+
+<script>
+
+function submitTicket(){
+
+let name = document.getElementById("name").value;
+let email = document.getElementById("email").value;
+let issue = document.getElementById("issue").value;
+
+if(name === "" || email === "" || issue === ""){
+alert("Please fill all fields");
+return;
+}
+
+let ticket = {
+name,
+email,
+issue,
+time: new Date().toLocaleString()
+};
+
+localStorage.setItem("support_ticket", JSON.stringify(ticket));
+
+document.getElementById("msg").innerText =
+"✅ Ticket submitted successfully!";
+
+}
+
+</script>
+
+</body>
+</html>
