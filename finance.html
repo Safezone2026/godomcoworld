@@ -15,13 +15,37 @@
 <main>
 
 <h2>Select Your Country</h2>
+  
 
-<select id="country" onchange="loadProviders()">
+<select id="country" onchange="selectCountry()">
   <option value="">-- Select Country --</option>
   <option value="nigeria">🇳🇬 Nigeria</option>
   <option value="ghana">🇬🇭 Ghana</option>
   <option value="kenya">🇰🇪 Kenya</option>
 </select>
+  <!-- SERVICES (HIDDEN FIRST) -->
+<div id="services" style="display:none; margin-top:20px;">
+
+<h3>Select Service</h3>
+
+<div class="service-grid">
+
+<button onclick="showService('airtime')">📱 Airtime Recharge</button>
+
+<button onclick="showService('data')">🌐 Data Top-Up</button>
+
+<button onclick="showService('tv')">📺 TV Subscription</button>
+
+<button onclick="showService('electricity')">💡 Electricity Bill</button>
+
+</div>
+  <!-- SERVICE FORM -->
+<div id="serviceForm" style="margin-top:20px;"></div>
+  <div id="result" style="margin-top:20px;"></div>
+
+<button onclick="payNow()" style="margin-top:10px;">Pay with Pi</button>
+
+</div>
 
 <br><br>
 
@@ -120,8 +144,144 @@ if(result === ""){
 alert("Payment system coming next (Pi integration)");
 
 }
+  function selectCountry(){
+  let country = document.getElementById("country").value;
+
+  if(country !== ""){
+    document.getElementById("services").style.display = "block";
+  }
+  }
+  function showService(type){
+
+let html = "";
+
+if(type === "airtime"){
+html = `
+<h3>Airtime Recharge</h3>
+
+<select id="network">
+<option>MTN</option>
+<option>Glo</option>
+<option>Airtel</option>
+<option>9mobile</option>
+</select><br><br>
+
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+
+<button onclick="calculate('airtime')">Calculate</button>
+`;
+}
+
+if(type === "data"){
+html = `
+<h3>Data Top-Up</h3>
+
+<select id="network">
+<option>MTN</option>
+<option>Airtel</option>
+</select><br><br>
+
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+
+<button onclick="calculate('data')">Calculate</button>
+`;
+}
+
+if(type === "tv"){
+html = `
+<h3>TV Subscription</h3>
+
+<select id="provider">
+<option>DSTV</option>
+<option>GOTV</option>
+<option>Startimes</option>
+</select><br><br>
+
+<input type="text" placeholder="Smart Card Number"><br><br>
+
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+
+<button onclick="calculate('tv')">Calculate</button>
+`;
+}
+
+if(type === "electricity"){
+html = `
+<h3>Electricity Bill</h3>
+
+<input type="text" placeholder="Meter Number"><br><br>
+
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+
+<button onclick="calculate('electricity')">Calculate</button>
+`;
+}
+
+document.getElementById("serviceForm").innerHTML = html;
+  }
+  function calculate(service){
+
+let amount = document.getElementById("amount").value;
+
+// Example rates
+let nairaToUSD = 1500;
+let piRate = 314159;
+
+let usd = amount / nairaToUSD;
+let pi = usd / piRate;
+
+document.getElementById("result").innerHTML =
+`You are paying ₦${amount} = ${pi.toFixed(8)} π`;
+}
+  function payNow(){
+  alert("Payment integration coming next (Pi SDK)");
+}
 
 </script>
+  <nav class="bottom-nav">
+
+<a href="index.html">
+<span>🏠</span>
+<p>Home</p>
+</a>
+
+<a href="learn.html">
+<span>🎓</span>
+<p>Learn</p>
+</a>
+
+<a href="../course.html">
+<span>📚</span>
+<p>Courses</p>
+</a>
+
+<a href="../marketplace.html">
+<span>🛒</span>
+<p>Market</p>
+</a>
+
+<!-- ✅ ACTIVE PAGE -->
+<a href="finance.html" class="active">
+<span>💰</span>
+<p>Finance</p>
+</a>
+
+<a href="support.html">
+<span>🆘</span>
+<p>Support</p>
+</a>
+
+<a href="chatbot.html">
+<span>🤖</span>
+<p>AI Help</p>
+</a>
+
+<a href="../dashboard.html">
+<span>📊</span>
+<p>Dashboard</p>
+</a>
+
+  </nav>
 
 </body>
   </html>
