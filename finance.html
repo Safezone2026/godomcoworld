@@ -54,7 +54,7 @@
 
   </select>
   <!-- SERVICES (HIDDEN FIRST) -->
-<div id="services" style="display:none; margin-top:20px;">
+<div id="servicesSection" style="display:none; margin-top:20px; transition:0.3s;">
 
 <h3>Select Service</h3>
 
@@ -316,6 +316,17 @@ network.appendChild(option);
 
 document.getElementById("servicesSection").style.display = "block";
      }
+  function loadServices(){
+
+let country = document.getElementById("country").value;
+
+if(country !== ""){
+  document.getElementById("servicesSection").style.display = "block";
+} else {
+  document.getElementById("servicesSection").style.display = "none";
+}
+
+  }
 
 </script>
   <nav class="bottom-nav">
