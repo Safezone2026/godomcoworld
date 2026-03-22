@@ -80,8 +80,15 @@ Verify this certificate at:
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-<script>
-Pi.init({version:"2.0",sandbox:true,apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"});
+
+  <script>
+Pi.init({
+  version:"2.0",
+  sandbox:true,
+  apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+});
+
+// ✅ LOAD PI PRICES CORRECTLY
 window.onload = function(){
 
   function setPiPrice(id, usd){
@@ -95,93 +102,119 @@ window.onload = function(){
   setPiPrice("practicalPi",200);
 
 };
-let courseName="Argumentation Technology";
 
-checkAccess();
+// COURSE NAME
+let courseName = "Augmented Reality";
 
-function checkAccess(){
-let data=localStorage.getItem("plan_"+courseName);
-if(data){
-let parsed=JSON.parse(data);
-if(Date.now()<parsed.expiry){unlock();}
-else{localStorage.removeItem("plan_"+courseName);}
-}
-}
-
-function payCourse(usd,plan){
-let pi=(usd/314159).toFixed(8);
-Pi.createPayment({amount:parseFloat(pi),memo:courseName,metadata:{plan}},{
-onReadyForServerCompletion:function(){
-let expiry=Date.now()+(30*24*60*60*1000);
-localStorage.setItem("plan_"+courseName,JSON.stringify({plan,expiry}));
-unlock();
-alert("Payment successful");
-}
-});
-}
-
-function unlock(){
-document.getElementById("lockedMsg").style.display="none";
-document.getElementById("courseContent").style.display="block";
-document.getElementById("certBtn").style.display="block";
-}
-
-function generateCertificate(){
-
+// CHECK ACCESS ON LOAD
 let data = localStorage.getItem("plan_" + courseName);
 
-if(!data){
-alert("⚠️ Subscribe first");
-return;
+if(data){
+  let parsed = JSON.parse(data);
+  let now = new Date().getTime();
+
+  if(now < parsed.expiry){
+    unlock();
+  } else {
+    localStorage.removeItem("plan_" + courseName);
+  }
 }
 
-let parsed = JSON.parse(data);
+// PAYMENT FUNCTION
+function payCourse(usd, plan){
 
-if(Date.now() > parsed.expiry){
-alert("⚠️ Subscription expired");
-return;
+  let piAmount = (usd / 314159).toFixed(8);
+
+  Pi.createPayment(
+  {amount:parseFloat(piAmount), memo:courseName, metadata:{plan}},
+  {
+
+    onReadyForServerCompletion:function(paymentId,txid){
+
+      // SAVE SUBSCRIPTION (30 DAYS)
+      let expiryDate = new Date().getTime() + (30*24*60*60*1000);
+
+      let subscriptionData = {
+        plan: plan,
+        expiry: expiryDate
+      };
+
+      localStorage.setItem("plan_" + courseName, JSON.stringify(subscriptionData));
+
+      alert("Payment successful!");
+      unlock();
+    },
+
+    onCancel:function(){
+      alert("Payment cancelled");
+    },
+
+    onError:function(error){
+      console.log(error);
+      alert("Payment error");
+    }
+
+  });
 }
 
-// NAME
-let name = prompt("Enter your name:");
-if(!name) return;
+// UNLOCK COURSE
+function unlock(){
+  document.getElementById("lockedMsg").style.display = "none";
+  document.getElementById("courseContent").style.display = "block";
+  document.getElementById("certBtn").style.display = "block";
+}
 
-// GENERATE CERTIFICATE ID
-let certId = "GODO-" + Date.now();
+// CERTIFICATE FUNCTION (SECURED)
+function generateCertificate(){
 
-// SAVE
-let certData = {
-name: name,
-course: courseName,
-date: new Date().toDateString(),
-id: certId
-};
+  let data = localStorage.getItem("plan_" + courseName);
 
-localStorage.setItem("cert_" + certId, JSON.stringify(certData));
+  if(!data){
+    alert("⚠️ Subscribe first");
+    return;
+  }
 
-// DISPLAY
-document.getElementById("studentName").innerText = name;
-document.getElementById("courseTitle").innerText = courseName;
-document.getElementById("date").innerText = certData.date;
-document.getElementById("certId").innerText = certId;
+  let parsed = JSON.parse(data);
 
-// 🔗 CREATE VERIFY LINK
-let verifyURL = window.location.origin + "/verify.html?id=" + certId;
+  if(Date.now() > parsed.expiry){
+    alert("⚠️ Subscription expired");
+    return;
+  }
 
-// CLEAR OLD QR
-document.getElementById("qrcode").innerHTML = "";
+  let name = prompt("Enter your name:");
+  if(!name) return;
 
-// GENERATE QR
-new QRCode(document.getElementById("qrcode"), {
-text: verifyURL,
-width: 120,
-height: 120
-});
+  let certId = "GODO-" + Date.now();
 
-document.getElementById("certificate").style.display = "block";
+  let certData = {
+    name: name,
+    course: courseName,
+    date: new Date().toDateString(),
+    id: certId
+  };
 
-window.print();
-</script>
+  localStorage.setItem("cert_" + certId, JSON.stringify(certData));
+
+  document.getElementById("studentName").innerText = name;
+  document.getElementById("courseTitle").innerText = courseName;
+  document.getElementById("date").innerText = certData.date;
+  document.getElementById("certId").innerText = certId;
+
+  let verifyURL = window.location.origin + "/verify.html?id=" + certId;
+
+  document.getElementById("qrcode").innerHTML = "";
+
+  new QRCode(document.getElementById("qrcode"), {
+    text: verifyURL,
+    width: 120,
+    height: 120
+  });
+
+  document.getElementById("certificate").style.display = "block";
+
+  window.print();
+}
+    </script>
 
   <nav class="bottom-nav">
 
