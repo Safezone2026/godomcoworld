@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Financial Services - Godomcoworld</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<header>
+<h1>💰 Financial Services</h1>
+</header>
+
+<main>
+
+<h2>Select Your Country</h2>
+
+<select id="country" onchange="loadProviders()">
+  <option value="">-- Select Country --</option>
+  <option value="nigeria">🇳🇬 Nigeria</option>
+  <option value="ghana">🇬🇭 Ghana</option>
+  <option value="kenya">🇰🇪 Kenya</option>
+</select>
+
+<br><br>
+
+<h3>Network Provider</h3>
+
+<select id="network"></select>
+
+<br><br>
+
+<h3>Enter Amount</h3>
+
+<input type="number" id="amount" placeholder="Enter amount">
+
+<br><br>
+
+<button onclick="calculate()">Calculate</button>
+
+<h3 id="result"></h3>
+
+<button onclick="pay()">Pay with Pi</button>
+
+</main>
+
+<script>
+
+// COUNTRY NETWORK DATA
+const data = {
+  nigeria: {
+    currency: "₦",
+    rate: 314159,
+    networks: ["MTN", "Airtel", "Glo", "9mobile"]
+  },
+  ghana: {
+    currency: "₵",
+    rate: 314159,
+    networks: ["MTN", "Vodafone", "AirtelTigo"]
+  },
+  kenya: {
+    currency: "KSh",
+    rate: 314159,
+    networks: ["Safaricom", "Airtel"]
+  }
+};
+
+// LOAD NETWORKS
+function loadProviders(){
+
+let country = document.getElementById("country").value;
+let networkSelect = document.getElementById("network");
+
+networkSelect.innerHTML = "";
+
+if(country && data[country]){
+
+  data[country].networks.forEach(net => {
+    let option = document.createElement("option");
+    option.text = net;
+    networkSelect.add(option);
+  });
+
+}
+
+}
+
+// CALCULATE PRICE
+function calculate(){
+
+let country = document.getElementById("country").value;
+let amount = document.getElementById("amount").value;
+
+if(!country || amount == ""){
+  alert("Fill all fields");
+  return;
+}
+
+let rate = data[country].rate;
+let currency = data[country].currency;
+
+let pi = (amount / rate).toFixed(8);
+
+document.getElementById("result").innerText =
+`You are buying ${currency}${amount} airtime = ${pi} π`;
+
+}
+
+// PAYMENT (READY FOR PI)
+function pay(){
+
+let result = document.getElementById("result").innerText;
+
+if(result === ""){
+  alert("Calculate first");
+  return;
+}
+
+alert("Payment system coming next (Pi integration)");
+
+}
+
+</script>
+
+</body>
+  </html>
