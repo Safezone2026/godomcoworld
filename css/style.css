@@ -259,3 +259,36 @@ input, textarea {
 .sos-btn:hover {
   background: #ff0000;
   }
+
+.bottom-nav{
+position:fixed;
+bottom:0;
+left:0;
+width:100%;
+background:#111;
+display:flex;
+justify-content:space-around;
+padding:10px 0;
+border-top:1px solid #333;
+z-index:1000;
+}
+
+.bottom-nav a{
+color:white;
+text-align:center;
+text-decoration:none;
+font-size:12px;
+}
+
+.bottom-nav span{
+display:block;
+font-size:18px;
+}
+
+.bottom-nav a:hover{
+color:#ffcc00;
+  }
+.bottom-nav .active{
+color:#ffcc00;
+font-weight:bold;
+  }
