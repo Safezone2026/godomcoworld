@@ -143,11 +143,17 @@ ZA: ["Vodacom", "MTN"]
 // BUILD NETWORK OPTIONS
 let networkOptions = "";
 if(providers[country]){
-providers[country].forEach(p => {
-networkOptions += `<option>${p}</option>`;
-});
+  providers[country].forEach(p => {
+    networkOptions += `<option>${p}</option>`;
+  });
 } else {
-networkOptions = `<option>No providers</option>`;
+  // fallback providers
+  networkOptions = `
+  <option>MTN</option>
+  <option>Airtel</option>
+  <option>Orange</option>
+  <option>Vodafone</option>
+  `;
 }
 
 if(type === "airtime"){
