@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <title>Financial Services - Godomcoworld</title>
 <link rel="stylesheet" href="css/style.css">
+
+<style>
+.service-grid button{
+  background:#4CAF50;
+  color:white;
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:5px;
+}
+</style>
+
 </head>
 
 <body>
@@ -15,10 +27,8 @@
 <main>
 
 <h2>Select Your Country</h2>
-  
 
 <select id="country" onchange="loadServices()">
-
 <option value="">🌍 Select Country</option>
 
 <option value="NG">🇳🇬 Nigeria</option>
@@ -51,34 +61,30 @@
 <option value="GA">🇬🇦 Gabon</option>
 <option value="CG">🇨🇬 Congo</option>
 <option value="CD">🇨🇩 DR Congo</option>
+</select>
 
-  </select>
-  <!-- SERVICES (HIDDEN FIRST) -->
+<!-- SERVICES -->
 <div id="servicesSection" style="display:none; margin-top:20px;">
 
 <h3>Select Service</h3>
 
 <div class="service-grid">
-
 <button onclick="openService('airtime')">📱 Airtime</button>
 <button onclick="openService('data')">🌐 Data</button>
 <button onclick="openService('tv')">📺 TV</button>
 <button onclick="openService('electricity')">💡 Electricity</button>
-
 </div>
 
-<!-- WHERE FORMS WILL LOAD -->
 <div id="serviceContainer" style="margin-top:20px;"></div>
 
 </div>
 
-<br><br>
-
-
 </main>
 
 <script>
-  const countryRates = {
+
+// 🌍 COUNTRY RATES
+const countryRates = {
   NG: { symbol: "₦", rate: 1500 },
   GH: { symbol: "₵", rate: 12 },
   KE: { symbol: "KSh", rate: 160 },
@@ -111,417 +117,123 @@
   CD: { symbol: "CDF", rate: 2800 }
 };
 
-// COUNTRY NETWORK DATA
-const data = {
-  nigeria: {
-    currency: "₦",
-    rate: 314159,
-    networks: ["MTN", "Airtel", "Glo", "9mobile"]
-  },
-  ghana: {
-    currency: "₵",
-    rate: 314159,
-    networks: ["MTN", "Vodafone", "AirtelTigo"]
-  },
-  kenya: {
-    currency: "KSh",
-    rate: 314159,
-    networks: ["Safaricom", "Airtel"]
-  }
-};
-
-// LOAD NETWORKS
-function loadProviders(){
-
-let country = document.getElementById("country").value;
-let networkSelect = document.getElementById("network");
-
-networkSelect.innerHTML = "";
-
-if(country && data[country]){
-
-  data[country].networks.forEach(net => {
-    let option = document.createElement("option");
-    option.text = net;
-    networkSelect.add(option);
-  });
-
-}
-
-}
-
-// CALCULATE PRICE
-function calculate(){
-
-let country = document.getElementById("country").value;
-let amount = document.getElementById("amount").value;
-
-if(!country || amount == ""){
-  alert("Fill all fields");
-  return;
-}
-
-let rate = data[country].rate;
-let currency = data[country].currency;
-
-let pi = (amount / rate).toFixed(8);
-
-document.getElementById("result").innerText =
-`You are buying ${currency}${amount} airtime = ${pi} π`;
-
-}
-
-// PAYMENT (READY FOR PI)
-function pay(){
-
-let result = document.getElementById("result").innerText;
-
-if(result === ""){
-  alert("Calculate first");
-  return;
-}
-
-alert("Payment system coming next (Pi integration)");
-
-}
-  function selectCountry(){
-  let country = document.getElementById("country").value;
-
-  if(country !== ""){
-    document.getElementById("services").style.display = "block";
-  }
-  }
-  function showService(type){
-
-let html = "";
-
-if(type === "airtime"){
-html = `
-<h3>Airtime Recharge</h3>
-
-<select id="network">
-<option>MTN</option>
-<option>Glo</option>
-<option>Airtel</option>
-<option>9mobile</option>
-</select><br><br>
-
-<input type="number" id="amount" placeholder="Enter Amount"><br><br>
-
-<button onclick="calculate('airtime')">Calculate</button>
-`;
-}
-
-if(type === "data"){
-html = `
-<h3>Data Top-Up</h3>
-
-<select id="network">
-<option>MTN</option>
-<option>Airtel</option>
-</select><br><br>
-
-<input type="number" id="amount" placeholder="Enter Amount"><br><br>
-
-<button onclick="calculate('data')">Calculate</button>
-`;
-}
-
-if(type === "tv"){
-html = `
-<h3>TV Subscription</h3>
-
-<select id="provider">
-<option>DSTV</option>
-<option>GOTV</option>
-<option>Startimes</option>
-</select><br><br>
-
-<input type="text" placeholder="Smart Card Number"><br><br>
-
-<input type="number" id="amount" placeholder="Enter Amount"><br><br>
-
-<button onclick="calculate('tv')">Calculate</button>
-`;
-}
-
-if(type === "electricity"){
-html = `
-<h3>Electricity Bill</h3>
-
-<input type="text" placeholder="Meter Number"><br><br>
-
-<input type="number" id="amount" placeholder="Enter Amount"><br><br>
-
-<button onclick="calculate('electricity')">Calculate</button>
-`;
-}
-
-document.getElementById("serviceForm").innerHTML = html;
-  }
-  function calculate(service){
-
-let amount;
+// 📦 LOAD SERVICES
+function loadServices(){
 let country = document.getElementById("country").value;
 
-// GET INPUT BASED ON SERVICE
-if(service === "airtime"){
-  amount = document.getElementById("airtimeAmount").value;
-}
-else if(service === "data"){
-  amount = document.getElementById("dataAmount").value;
-}
-else if(service === "tv"){
-  amount = document.getElementById("tvAmount").value;
-}
-else if(service === "electricity"){
-  amount = document.getElementById("electricAmount").value;
+document.getElementById("servicesSection").style.display =
+country ? "block" : "none";
 }
 
-// GET COUNTRY DATA
-let selected = countryRates[country];
-
-if(!selected){
-  alert("Country not supported yet");
-  return;
-}
-
-let symbol = selected.symbol;
-let rate = selected.rate;
-
-// CONVERT
-let usd = amount / rate;
-let pi = usd / 314159;
-
-// DISPLAY ALL 3
-document.getElementById("result").innerHTML =
-`💰 ${symbol}${amount} (Local)<br>
-💵 $${usd.toFixed(2)} (USD)<br>
-🪙 ${pi.toFixed(8)} π (Pi)`;
-
-  }
-  function payNow(){
-  alert("Payment integration coming next (Pi SDK)");
-}
-  function loadServices(){
-
-let country = document.getElementById("country").value;
-let network = document.getElementById("network");
-
-network.innerHTML = "";
-
-let providers = {
-NG: ["MTN", "Airtel", "Glo", "9mobile"],
-GH: ["MTN", "Vodafone", "AirtelTigo"],
-KE: ["Safaricom", "Airtel Kenya", "Telkom"],
-ZA: ["Vodacom", "MTN", "Cell C", "Telkom"],
-EG: ["Vodafone Egypt", "Orange", "Etisalat"],
-CM: ["MTN", "Orange"],
-UG: ["MTN", "Airtel"],
-TZ: ["Vodacom", "Tigo", "Airtel"],
-ET: ["Ethio Telecom"],
-RW: ["MTN Rwanda", "Airtel"],
-SN: ["Orange", "Free"],
-CI: ["MTN", "Orange", "Moov"],
-DZ: ["Mobilis", "Djezzy", "Ooredoo"],
-MA: ["Maroc Telecom", "Orange", "Inwi"],
-AO: ["Unitel", "Movicel"],
-ZM: ["MTN", "Airtel", "Zamtel"],
-ZW: ["Econet", "NetOne", "Telecel"],
-MW: ["TNM", "Airtel"],
-BW: ["Mascom", "Orange", "BTC"],
-NA: ["MTC", "TN Mobile"],
-SL: ["Africell", "Orange"],
-LR: ["Lonestar", "Orange"],
-TG: ["Moov", "Togocel"],
-BJ: ["MTN", "Moov"],
-NE: ["Airtel", "Moov"],
-ML: ["Orange", "Malitel"],
-BF: ["Orange", "Telecel"],
-GA: ["Airtel", "Moov"],
-CG: ["MTN", "Airtel"],
-CD: ["Vodacom", "Airtel", "Orange"]
-};
-
-if(providers[country]){
-providers[country].forEach(p => {
-let option = document.createElement("option");
-option.text = p;
-network.appendChild(option);
-});
-}
-
-document.getElementById("servicesSection").style.display = "block";
-     }
-  function loadServices(){
-
-let country = document.getElementById("country").value;
-
-if(country !== ""){
-  document.getElementById("servicesSection").style.display = "block";
-} else {
-  document.getElementById("servicesSection").style.display = "none";
-}
-
-  }
-  function openService(type){
+// 🧱 OPEN SERVICE
+function openService(type){
 
 let html = "";
 
 if(type === "airtime"){
 html = `
 <h3>📱 Airtime Recharge</h3>
-
-<select id="network"></select><br><br>
-
 <input type="number" id="amount" placeholder="Enter Amount"><br><br>
-
-<button onclick="calculate('airtime')">Calculate</button>
+<div id="result"></div><br>
+<button onclick="calculate()">Calculate</button>
 `;
 }
 
 if(type === "data"){
 html = `
 <h3>🌐 Data Top-Up</h3>
-
-<select id="network"></select><br><br>
-
 <select>
 <option>1GB</option>
 <option>2GB</option>
 <option>5GB</option>
 </select><br><br>
-
-<button onclick="calculate('data')">Calculate</button>
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+<div id="result"></div><br>
+<button onclick="calculate()">Calculate</button>
 `;
 }
 
 if(type === "tv"){
 html = `
 <h3>📺 TV Subscription</h3>
-
 <select>
 <option>DSTV</option>
 <option>GOTV</option>
 <option>Startimes</option>
 </select><br><br>
-
 <input type="text" placeholder="Smart Card Number"><br><br>
-
 <input type="number" id="amount" placeholder="Enter Amount"><br><br>
-
-<button onclick="calculate('tv')">Calculate</button>
+<div id="result"></div><br>
+<button onclick="calculate()">Calculate</button>
 `;
 }
 
 if(type === "electricity"){
 html = `
 <h3>💡 Electricity Bill</h3>
-
 <input type="text" placeholder="Meter Number"><br><br>
-
 <input type="number" id="amount" placeholder="Enter Amount"><br><br>
-
-<button onclick="calculate('electricity')">Calculate</button>
+<div id="result"></div><br>
+<button onclick="calculate()">Calculate</button>
 `;
 }
 
 document.getElementById("serviceContainer").innerHTML = html;
 
-// Reload network providers after form loads
-loadNetworks();
-  }
-  function loadNetworks(){
-
-let country = document.getElementById("country").value;
-let network = document.getElementById("network");
-
-if(!network) return;
-
-network.innerHTML = "";
-
-let providers = {
-NG: ["MTN", "Airtel", "Glo", "9mobile"],
-GH: ["MTN", "Vodafone"],
-KE: ["Safaricom", "Airtel"],
-ZA: ["Vodacom", "MTN"]
-};
-
-if(providers[country]){
-providers[country].forEach(p => {
-let option = document.createElement("option");
-option.text = p;
-network.appendChild(option);
-});
 }
 
-  }
-  function calculate(type){
+// 💰 CALCULATE (MAIN LOGIC)
+function calculate(){
 
-let amount = document.getElementById("amount")?.value;
+let amount = document.getElementById("amount").value;
+let country = document.getElementById("country").value;
 
 if(!amount){
 alert("Enter amount");
 return;
 }
 
-let rate = 314159;
-let pi = (amount / rate).toFixed(8);
+let selected = countryRates[country];
 
-document.getElementById("serviceContainer").innerHTML +=
-`<p style="margin-top:10px;">💰 ${amount} = ${pi} π</p>
-<button onclick="payNow(${pi})">Pay with Pi</button>`;
-  }
-  function payNow(pi){
-alert("Paying " + pi + " π (Pi integration next)");
-  }
-  
+if(!selected){
+alert("Country not supported");
+return;
+}
+
+let symbol = selected.symbol;
+let rate = selected.rate;
+
+// CONVERSION
+let usd = amount / rate;
+let pi = usd / 314159;
+
+// DISPLAY
+document.getElementById("result").innerHTML =
+`💰 ${symbol}${amount}<br>
+💵 $${usd.toFixed(2)}<br>
+🪙 ${pi.toFixed(8)} π`;
+
+}
 
 </script>
-  <nav class="bottom-nav">
 
-<a href="index.html">
-<span>🏠</span>
-<p>Home</p>
-</a>
+<!-- NAV -->
+<nav class="bottom-nav">
 
-<a href="learn.html">
-<span>🎓</span>
-<p>Learn</p>
-</a>
+<a href="index.html"><span>🏠</span><p>Home</p></a>
+<a href="learn.html"><span>🎓</span><p>Learn</p></a>
+<a href="course.html"><span>📚</span><p>Courses</p></a>
+<a href="marketplace.html"><span>🛒</span><p>Market</p></a>
 
-<a href="../course.html">
-<span>📚</span>
-<p>Courses</p>
-</a>
-
-<a href="../marketplace.html">
-<span>🛒</span>
-<p>Market</p>
-</a>
-
-<!-- ✅ ACTIVE PAGE -->
 <a href="finance.html" class="active">
-<span>💰</span>
-<p>Finance</p>
+<span>💰</span><p>Finance</p>
 </a>
 
-<a href="support.html">
-<span>🆘</span>
-<p>Support</p>
-</a>
+<a href="support.html"><span>🆘</span><p>Support</p></a>
+<a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
+<a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
 
-<a href="chatbot.html">
-<span>🤖</span>
-<p>AI Help</p>
-</a>
-
-<a href="../dashboard.html">
-<span>📊</span>
-<p>Dashboard</p>
-</a>
-
-  </nav>
+</nav>
 
 </body>
   </html>
