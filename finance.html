@@ -78,6 +78,38 @@
 </main>
 
 <script>
+  const countryRates = {
+  NG: { symbol: "₦", rate: 1500 },
+  GH: { symbol: "₵", rate: 12 },
+  KE: { symbol: "KSh", rate: 160 },
+  ZA: { symbol: "R", rate: 18 },
+  EG: { symbol: "E£", rate: 50 },
+  CM: { symbol: "FCFA", rate: 600 },
+  UG: { symbol: "USh", rate: 3800 },
+  TZ: { symbol: "TSh", rate: 2500 },
+  ET: { symbol: "Br", rate: 56 },
+  RW: { symbol: "FRw", rate: 1300 },
+  SN: { symbol: "FCFA", rate: 600 },
+  CI: { symbol: "FCFA", rate: 600 },
+  DZ: { symbol: "DZD", rate: 135 },
+  MA: { symbol: "MAD", rate: 10 },
+  AO: { symbol: "Kz", rate: 830 },
+  ZM: { symbol: "ZK", rate: 25 },
+  ZW: { symbol: "ZWL", rate: 6000 },
+  MW: { symbol: "MK", rate: 1700 },
+  BW: { symbol: "P", rate: 13 },
+  NA: { symbol: "N$", rate: 18 },
+  SL: { symbol: "Le", rate: 23000 },
+  LR: { symbol: "L$", rate: 190 },
+  TG: { symbol: "FCFA", rate: 600 },
+  BJ: { symbol: "FCFA", rate: 600 },
+  NE: { symbol: "FCFA", rate: 600 },
+  ML: { symbol: "FCFA", rate: 600 },
+  BF: { symbol: "FCFA", rate: 600 },
+  GA: { symbol: "FCFA", rate: 600 },
+  CG: { symbol: "FCFA", rate: 600 },
+  CD: { symbol: "CDF", rate: 2800 }
+};
 
 // COUNTRY NETWORK DATA
 const data = {
@@ -229,18 +261,45 @@ document.getElementById("serviceForm").innerHTML = html;
   }
   function calculate(service){
 
-let amount = document.getElementById("amount").value;
+let amount;
+let country = document.getElementById("country").value;
 
-// Example rates
-let nairaToUSD = 1500;
-let piRate = 314159;
-
-let usd = amount / nairaToUSD;
-let pi = usd / piRate;
-
-document.getElementById("result").innerHTML =
-`You are paying ₦${amount} = ${pi.toFixed(8)} π`;
+// GET INPUT BASED ON SERVICE
+if(service === "airtime"){
+  amount = document.getElementById("airtimeAmount").value;
 }
+else if(service === "data"){
+  amount = document.getElementById("dataAmount").value;
+}
+else if(service === "tv"){
+  amount = document.getElementById("tvAmount").value;
+}
+else if(service === "electricity"){
+  amount = document.getElementById("electricAmount").value;
+}
+
+// GET COUNTRY DATA
+let selected = countryRates[country];
+
+if(!selected){
+  alert("Country not supported yet");
+  return;
+}
+
+let symbol = selected.symbol;
+let rate = selected.rate;
+
+// CONVERT
+let usd = amount / rate;
+let pi = usd / 314159;
+
+// DISPLAY ALL 3
+document.getElementById("result").innerHTML =
+`💰 ${symbol}${amount} (Local)<br>
+💵 $${usd.toFixed(2)} (USD)<br>
+🪙 ${pi.toFixed(8)} π (Pi)`;
+
+  }
   function payNow(){
   alert("Payment integration coming next (Pi SDK)");
 }
