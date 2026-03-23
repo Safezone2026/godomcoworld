@@ -54,26 +54,21 @@
 
   </select>
   <!-- SERVICES (HIDDEN FIRST) -->
-<div id="servicesSection" style="display:none; margin-top:20px; transition:0.3s;">
+<div id="servicesSection" style="display:none; margin-top:20px;">
 
 <h3>Select Service</h3>
 
 <div class="service-grid">
 
-<button onclick="showService('airtime')">📱 Airtime Recharge</button>
-
-<button onclick="showService('data')">🌐 Data Top-Up</button>
-
-<button onclick="showService('tv')">📺 TV Subscription</button>
-
-<button onclick="showService('electricity')">💡 Electricity Bill</button>
+<button onclick="openService('airtime')">📱 Airtime</button>
+<button onclick="openService('data')">🌐 Data</button>
+<button onclick="openService('tv')">📺 TV</button>
+<button onclick="openService('electricity')">💡 Electricity</button>
 
 </div>
-  <!-- SERVICE FORM -->
-<div id="serviceForm" style="margin-top:20px;"></div>
-  <div id="result" style="margin-top:20px;"></div>
 
-<button onclick="payNow()" style="margin-top:10px;">Pay with Pi</button>
+<!-- WHERE FORMS WILL LOAD -->
+<div id="serviceContainer" style="margin-top:20px;"></div>
 
 </div>
 
@@ -327,6 +322,118 @@ if(country !== ""){
 }
 
   }
+  function openService(type){
+
+let html = "";
+
+if(type === "airtime"){
+html = `
+<h3>📱 Airtime Recharge</h3>
+
+<select id="network"></select><br><br>
+
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+
+<button onclick="calculate('airtime')">Calculate</button>
+`;
+}
+
+if(type === "data"){
+html = `
+<h3>🌐 Data Top-Up</h3>
+
+<select id="network"></select><br><br>
+
+<select>
+<option>1GB</option>
+<option>2GB</option>
+<option>5GB</option>
+</select><br><br>
+
+<button onclick="calculate('data')">Calculate</button>
+`;
+}
+
+if(type === "tv"){
+html = `
+<h3>📺 TV Subscription</h3>
+
+<select>
+<option>DSTV</option>
+<option>GOTV</option>
+<option>Startimes</option>
+</select><br><br>
+
+<input type="text" placeholder="Smart Card Number"><br><br>
+
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+
+<button onclick="calculate('tv')">Calculate</button>
+`;
+}
+
+if(type === "electricity"){
+html = `
+<h3>💡 Electricity Bill</h3>
+
+<input type="text" placeholder="Meter Number"><br><br>
+
+<input type="number" id="amount" placeholder="Enter Amount"><br><br>
+
+<button onclick="calculate('electricity')">Calculate</button>
+`;
+}
+
+document.getElementById("serviceContainer").innerHTML = html;
+
+// Reload network providers after form loads
+loadNetworks();
+  }
+  function loadNetworks(){
+
+let country = document.getElementById("country").value;
+let network = document.getElementById("network");
+
+if(!network) return;
+
+network.innerHTML = "";
+
+let providers = {
+NG: ["MTN", "Airtel", "Glo", "9mobile"],
+GH: ["MTN", "Vodafone"],
+KE: ["Safaricom", "Airtel"],
+ZA: ["Vodacom", "MTN"]
+};
+
+if(providers[country]){
+providers[country].forEach(p => {
+let option = document.createElement("option");
+option.text = p;
+network.appendChild(option);
+});
+}
+
+  }
+  function calculate(type){
+
+let amount = document.getElementById("amount")?.value;
+
+if(!amount){
+alert("Enter amount");
+return;
+}
+
+let rate = 314159;
+let pi = (amount / rate).toFixed(8);
+
+document.getElementById("serviceContainer").innerHTML +=
+`<p style="margin-top:10px;">💰 ${amount} = ${pi} π</p>
+<button onclick="payNow(${pi})">Pay with Pi</button>`;
+  }
+  function payNow(pi){
+alert("Paying " + pi + " π (Pi integration next)");
+  }
+  
 
 </script>
   <nav class="bottom-nav">
