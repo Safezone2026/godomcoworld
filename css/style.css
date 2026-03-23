@@ -292,3 +292,17 @@ color:#ffcc00;
 color:#ffcc00;
 font-weight:bold;
   }
+.service-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:10px;
+}
+
+.service-grid button{
+padding:15px;
+border:none;
+border-radius:10px;
+background:#222;
+color:white;
+font-size:14px;
+}
