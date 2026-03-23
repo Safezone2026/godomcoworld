@@ -301,8 +301,20 @@ gap:10px;
 .service-grid button{
 padding:15px;
 border:none;
-border-radius:10px;
-background:#222;
-color:white;
-font-size:14px;
+border-radius:12px;
+background:linear-gradient(135deg,#ff9800,#ffcc00);
+color:black;
+font-weight:bold;
+font-size:15px;
+box-shadow:0 4px 10px rgba(0,0,0,0.4);
+transition:0.3s;
 }
+.service-grid button:hover{
+transform:scale(1.05);
+background:linear-gradient(135deg,#ffa726,#ffd54f);
+}
+
+.service-grid button:active{
+transform:scale(0.95);
+}
+
