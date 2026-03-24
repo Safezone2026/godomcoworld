@@ -60,15 +60,19 @@
 <p>Welcome to the Augmented Reality course.</p>
   <hr>
 
-<h3>🤖 AI Tutor</h3>
+<h3>🤖 AI Tutor (Voice Enabled)</h3>
 
-<textarea id="aiQuestion" placeholder="Ask anything about this course..." style="width:100%;height:80px;"></textarea>
+<textarea id="aiQuestion" placeholder="Ask anything..." style="width:100%;height:80px;"></textarea>
 
 <br><br>
 
-<button onclick="askAI()">Ask AI Tutor</button>
+<button onclick="startListening()">🎤 Speak</button>
+<button onclick="askAI()">Ask AI</button>
+<button onclick="speakAnswer()">🔊 Listen</button>
 
 <p id="aiResponse" style="margin-top:15px;"></p>
+
+
 
 <button id="certBtn" onclick="generateCertificate()" style="display:none;">
 🎓 Get Certificate
@@ -170,31 +174,6 @@ function payCourse(usd, plan){
 
       localStorage.setItem("plan_" + courseName, JSON.stringify(subscriptionData));
 
-      alert("Payment successful!");
-      unlock();
-    },
-
-    onCancel:function(){
-      alert("Payment cancelled");
-    },
-
-    onError:function(error){
-      console.log(error);
-      alert("Payment error");
-    }
-
-  });
-}
-
-// UNLOCK COURSE
-function unlock(){
-  document.getElementById("lockedMsg").style.display = "none";
-  document.getElementById("courseContent").style.display = "block";
-  document.getElementById("certBtn").style.display = "block";
-}
-
-// CERTIFICATE FUNCTION (SECURED)
-function generateCertificate(){
 
   let data = localStorage.getItem("plan_" + courseName);
 
@@ -243,7 +222,29 @@ function generateCertificate(){
 
   window.print();
 }
-  async function askAI(){
+// 🎤 SPEECH TO TEXT
+function startListening(){
+
+let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+recognition.lang = "en-US";
+
+recognition.start();
+
+recognition.onresult = function(event){
+let text = event.results[0][0].transcript;
+document.getElementById("aiQuestion").value = text;
+};
+
+recognition.onerror = function(){
+alert("Voice recognition not supported on this device");
+};
+
+}
+
+
+// 🧠 AI RESPONSE
+function askAI(){
 
 let question = document.getElementById("aiQuestion").value;
 
@@ -252,24 +253,41 @@ alert("Ask a question");
 return;
 }
 
-// TEMP MOCK AI (before real API)
 let response = "AI Tutor: ";
 
-// Simple smart responses
 if(question.toLowerCase().includes("blockchain")){
-  response += "Blockchain is a decentralized digital ledger used to store transactions securely.";
+  response += "Blockchain is a decentralized digital ledger that records transactions securely.";
 }
 else if(question.toLowerCase().includes("ar")){
-  response += "Augmented Reality overlays digital content onto the real world using devices.";
+  response += "Augmented Reality blends digital elements with the real world.";
 }
 else if(question.toLowerCase().includes("welding")){
-  response += "Welding is a fabrication process that joins materials using heat.";
+  response += "Welding joins materials using heat and pressure.";
 }
 else{
-  response += "Great question! This will be answered better when real AI is connected.";
+  response += "Great question! Real AI upgrade coming soon.";
 }
 
 document.getElementById("aiResponse").innerText = response;
+
+}
+
+
+// 🔊 TEXT TO SPEECH
+function speakAnswer(){
+
+let text = document.getElementById("aiResponse").innerText;
+
+if(!text){
+alert("No response to read");
+return;
+}
+
+let speech = new SpeechSynthesisUtterance(text);
+
+speech.lang = "en-US";
+
+window.speechSynthesis.speak(speech);
 
   }
 </script>
