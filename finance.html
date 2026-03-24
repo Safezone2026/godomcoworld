@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Financial Services - Godomcoworld</title>
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+.service-grid button{
+  background:#4CAF50;
+  color:white;
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:5px;
+}
+
+.pay-btn{
+  background:#ff9800;
+  color:black;
+  margin-top:5px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>💰 Financial Services</h1>
+</header>
+
+<main>
+
+<h2>Select Your Country</h2>
+
+<select id="country" onchange="loadServices()">
+<option value="">🌍 Select Country</option>
+
+<option value="NG">🇳🇬 Nigeria</option>
+<option value="GH">🇬🇭 Ghana</option>
+<option value="KE">🇰🇪 Kenya</option>
+<option value="ZA">🇿🇦 South Africa</option>
+<option value="EG">🇪🇬 Egypt</option>
+<option value="CM">🇨🇲 Cameroon</option>
+<option value="UG">🇺🇬 Uganda</option>
+<option value="TZ">🇹🇿 Tanzania</option>
+<option value="ET">🇪🇹 Ethiopia</option>
+<option value="RW">🇷🇼 Rwanda</option>
+<option value="SN">🇸🇳 Senegal</option>
+<option value="CI">🇨🇮 Ivory Coast</option>
+<option value="DZ">🇩🇿 Algeria</option>
+<option value="MA">🇲🇦 Morocco</option>
+<option value="AO">🇦🇴 Angola</option>
+<option value="ZM">🇿🇲 Zambia</option>
+<option value="ZW">🇿🇼 Zimbabwe</option>
+<option value="MW">🇲🇼 Malawi</option>
+<option value="BW">🇧🇼 Botswana</option>
+<option value="NA">🇳🇦 Namibia</option>
+<option value="SL">🇸🇱 Sierra Leone</option>
+<option value="LR">🇱🇷 Liberia</option>
+<option value="TG">🇹🇬 Togo</option>
+<option value="BJ">🇧🇯 Benin</option>
+<option value="NE">🇳🇪 Niger</option>
+<option value="ML">🇲🇱 Mali</option>
+<option value="BF">🇧🇫 Burkina Faso</option>
+<option value="GA">🇬🇦 Gabon</option>
+<option value="CG">🇨🇬 Congo</option>
+<option value="CD">🇨🇩 DR Congo</option>
+
+</select>
+
+<!-- SERVICES -->
+<div id="servicesSection" style="display:none; margin-top:20px;">
+
+<h3>Select Service</h3>
+
+<div class="service-grid">
+<button onclick="openService('airtime')">📱 Airtime</button>
+<button onclick="openService('data')">🌐 Data</button>
+<button onclick="openService('tv')">📺 TV</button>
+<button onclick="openService('electricity')">💡 Electricity</button>
+</div>
+
+<div id="serviceContainer" style="margin-top:20px;"></div>
+
+</div>
+
+</main>
+
+<script>
+
+const countryRates = {
+NG: { symbol: "₦", rate: 1500 },
+GH: { symbol: "₵", rate: 12 },
+KE: { symbol: "KSh", rate: 160 },
+ZA: { symbol: "R", rate: 18 },
+EG: { symbol: "E£", rate: 50 },
+CM: { symbol: "FCFA", rate: 600 },
+UG: { symbol: "USh", rate: 3800 },
+TZ: { symbol: "TSh", rate: 2500 },
+ET: { symbol: "Br", rate: 56 },
+RW: { symbol: "FRw", rate: 1300 },
+SN: { symbol: "FCFA", rate: 600 },
+CI: { symbol: "FCFA", rate: 600 },
+DZ: { symbol: "DZD", rate: 135 },
+MA: { symbol: "MAD", rate: 10 },
+AO: { symbol: "Kz", rate: 830 },
+ZM: { symbol: "ZK", rate: 25 },
+ZW: { symbol: "ZWL", rate: 6000 },
+MW: { symbol: "MK", rate: 1700 },
+BW: { symbol: "P", rate: 13 },
+NA: { symbol: "N$", rate: 18 },
+SL: { symbol: "Le", rate: 23000 },
+LR: { symbol: "L$", rate: 190 },
+TG: { symbol: "FCFA", rate: 600 },
+BJ: { symbol: "FCFA", rate: 600 },
+NE: { symbol: "FCFA", rate: 600 },
+ML: { symbol: "FCFA", rate: 600 },
+BF: { symbol: "FCFA", rate: 600 },
+GA: { symbol: "FCFA", rate: 600 },
+CG: { symbol: "FCFA", rate: 600 },
+CD: { symbol: "CDF", rate: 2800 }
+};
+
+// 📱 NETWORK PROVIDERS
+const providers = {
+NG: ["MTN", "Airtel", "Glo", "9mobile"],
+GH: ["MTN", "Vodafone"],
+KE: ["Safaricom", "Airtel"],
+ZA: ["Vodacom", "MTN"]
+};
+
+// LOAD SERVICES
+function loadServices(){
+let country = document.getElementById("country").value;
+document.getElementById("servicesSection").style.display =
+country ? "block" : "none";
+}
+
+// OPEN SERVICE
+function openService(type){
+
+let country = document.getElementById("country").value;
+let nets = providers[country] || ["MTN", "Airtel"];
+
+let networkOptions = nets.map(n => `<option>${n}</option>`).join("");
+
+let html = `
+<h3>${type.toUpperCase()} SERVICE</h3>
+
+<label>Network</label><br>
+<select id="network">${networkOptions}</select><br><br>
+
+<label>Phone</label><br>
+<input type="tel" id="phone" placeholder="Enter phone number"><br><br>
+
+<label>Amount</label><br>
+<input type="number" id="amount" placeholder="Enter amount"><br><br>
+
+<div id="result"></div><br>
+
+<button onclick="calculate()">Calculate</button>
+
+<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
+<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
+`;
+
+document.getElementById("serviceContainer").innerHTML = html;
+
+}
+
+// CALCULATE
+function calculate(){
+
+let amount = document.getElementById("amount").value;
+let country = document.getElementById("country").value;
+
+if(!amount){
+alert("Enter amount");
+return;
+}
+
+let selected = countryRates[country];
+
+if(!selected){
+alert("Country not supported");
+return;
+}
+
+let symbol = selected.symbol;
+let rate = selected.rate;
+
+// CONVERSIONS
+let usd = amount / rate;
+let pi = usd / 314159;
+
+// SAVE FOR PAYMENT
+localStorage.setItem("last_amount_local", amount);
+localStorage.setItem("last_amount_pi", pi);
+
+// DISPLAY
+document.getElementById("result").innerHTML =
+`💰 ${symbol}${amount}<br>
+💵 $${usd.toFixed(2)}<br>
+🪙 ${pi.toFixed(8)} π`;
+
+}
+
+// PAY WITH PI
+function payWithPi(){
+
+let pi = parseFloat(localStorage.getItem("last_amount_pi")) || 0;
+let balance = parseFloat(localStorage.getItem("pi_balance")) || 0;
+
+if(pi === 0){
+alert("Calculate first");
+return;
+}
+
+if(pi > balance){
+alert("❌ Insufficient Pi balance");
+return;
+}
+
+balance -= pi;
+localStorage.setItem("pi_balance", balance);
+
+saveTransaction("Pi", pi);
+
+alert("✅ Paid with Pi");
+location.reload();
+}
+
+// PAY WITH FIAT
+function payWithFiat(){
+
+let amount = parseFloat(localStorage.getItem("last_amount_local")) || 0;
+let balance = parseFloat(localStorage.getItem("fiat_balance")) || 0;
+
+if(amount === 0){
+alert("Calculate first");
+return;
+}
+
+if(amount > balance){
+alert("❌ Insufficient Fiat balance");
+return;
+}
+
+balance -= amount;
+localStorage.setItem("fiat_balance", balance);
+
+saveTransaction("Fiat", amount);
+
+alert("✅ Paid with Fiat");
+location.reload();
+}
+
+// SAVE TRANSACTION
+function saveTransaction(type, amount){
+
+let history = JSON.parse(localStorage.getItem("transactions") || "[]");
+
+history.push({
+type: type,
+amount: amount,
+date: new Date().toLocaleString()
+});
+
+localStorage.setItem("transactions", JSON.stringify(history));
+
+}
+
+</script>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+
+<a href="index.html"><span>🏠</span><p>Home</p></a>
+<a href="learn.html"><span>🎓</span><p>Learn</p></a>
+<a href="course.html"><span>📚</span><p>Courses</p></a>
+<a href="marketplace.html"><span>🛒</span><p>Market</p></a>
+
+<a href="finance.html" class="active">
+<span>💰</span><p>Finance</p>
+</a>
+
+<a href="wallet.html">
+<span>👛</span><p>Wallet</p>
+</a>
+
+<a href="support.html"><span>🆘</span><p>Support</p></a>
+<a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
+<a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
+
+</nav>
+
+</body>
+  </html>
