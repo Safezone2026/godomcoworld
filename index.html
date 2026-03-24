@@ -228,6 +228,15 @@ Open Dashboard
 <span>💰</span>
 <p>Finance</p>
 </a>
+  <a href="wallet.html">
+<span>👛</span>
+<p>Wallet</p>
+</a>
+
+<a href="history.html">
+<span>🧾</span>
+<p>History</p>
+</a>
 
 <a href="login.html">
 <span>🔐</span>
@@ -293,6 +302,25 @@ console.error(e);
 }
 
 }
+  // SAVE TRANSACTION 
+  function saveTransaction(type, amount){
+
+let phone = document.getElementById("phone")?.value || "N/A";
+
+let history = JSON.parse(localStorage.getItem("transactions") || "[]");
+
+history.push({
+type: type,
+amount: amount,
+phone: phone,
+service: "Bill Payment",
+date: new Date().toLocaleString(),
+status: "SUCCESS"
+});
+
+localStorage.setItem("transactions", JSON.stringify(history));
+
+  }
 
 </script>
 <!-- redeploy -->
