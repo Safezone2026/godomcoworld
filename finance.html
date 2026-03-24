@@ -276,20 +276,51 @@ document.getElementById("result").innerHTML =
 🪙 ${pi.toFixed(8)} π`;
 
 }
-function payNow(){
+function payNow(pi){
 
-let amount = document.getElementById("amount")?.value;
-let phone = document.getElementById("phone")?.value;
-
-if(!amount){
-alert("Calculate amount first");
-return;
+if(!pi){
+  alert("Calculate amount first");
+  return;
 }
 
-if(phone !== undefined && phone === ""){
-alert("Enter phone number");
-return;
+// Simulate payment success (for now)
+alert("Processing payment...");
+
+// 👉 Simulate delay like real payment
+setTimeout(() => {
+
+  alert("Payment successful ✅");
+
+  // Save transaction (for future history system)
+  let history = JSON.parse(localStorage.getItem("transactions") || "[]");
+
+  history.push({
+    amount: pi,
+    date: new Date().toLocaleString(),
+    status: "success"
+  });
+
+  localStorage.setItem("transactions", JSON.stringify(history));
+
+}, 1000);
+
 }
+  function payFiat(amount){
+
+let balance = localStorage.getItem("fiat_balance") || 0;
+
+if(amount > balance){
+  alert("Insufficient Fiat balance");
+  return;
+}
+
+balance -= amount;
+localStorage.setItem("fiat_balance", balance);
+
+alert("Payment successful using Fiat Balance");
+
+location.reload();
+  }
 
 // 🚀 FUTURE: Pi SDK integration here
 alert("✅ Payment successful (Demo)\n\nPi integration coming next");
@@ -308,7 +339,10 @@ alert("✅ Payment successful (Demo)\n\nPi integration coming next");
 <a href="finance.html" class="active">
 <span>💰</span><p>Finance</p>
 </a>
-
+<a href="wallet.html">
+<span>👛</span>
+<p>Wallet</p>
+</a>
 <a href="support.html"><span>🆘</span><p>Support</p></a>
 <a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
 <a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
