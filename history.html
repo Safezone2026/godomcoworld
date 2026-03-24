@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Transaction History - Godomcoworld</title>
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+.card{
+  background:#111;
+  color:white;
+  padding:15px;
+  margin:10px 0;
+  border-radius:10px;
+}
+.success{
+  color:#00e676;
+}
+.empty{
+  text-align:center;
+  margin-top:40px;
+  color:gray;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>🧾 Transaction History</h1>
+</header>
+
+<main>
+
+<div id="historyContainer"></div>
+
+</main>
+
+<script>
+
+let history = JSON.parse(localStorage.getItem("transactions") || "[]");
+
+let container = document.getElementById("historyContainer");
+
+if(history.length === 0){
+container.innerHTML = `<p class="empty">No transactions yet</p>`;
+} else {
+
+// SHOW LATEST FIRST
+history.reverse().forEach(tx => {
+
+container.innerHTML += `
+<div class="card">
+
+<p><strong>Type:</strong> ${tx.type}</p>
+<p><strong>Amount:</strong> ${tx.amount}</p>
+<p><strong>Date:</strong> ${tx.date}</p>
+<p class="success"><strong>Status:</strong> ${tx.status || "SUCCESS"}</p>
+
+</div>
+`;
+
+});
+
+}
+
+</script>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+
+<a href="index.html"><span>🏠</span><p>Home</p></a>
+<a href="finance.html"><span>💰</span><p>Finance</p></a>
+<a href="wallet.html"><span>👛</span><p>Wallet</p></a>
+
+<a href="history.html" class="active">
+<span>🧾</span><p>History</p>
+</a>
+
+<a href="support.html"><span>🆘</span><p>Support</p></a>
+<a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
+<a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
+
+</nav>
+
+</body>
+</html>
