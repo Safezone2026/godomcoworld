@@ -302,25 +302,7 @@ console.error(e);
 }
 
 }
-  // SAVE TRANSACTION 
-  function saveTransaction(type, amount){
 
-let phone = document.getElementById("phone")?.value || "N/A";
-
-let history = JSON.parse(localStorage.getItem("transactions") || "[]");
-
-history.push({
-type: type,
-amount: amount,
-phone: phone,
-service: "Bill Payment",
-date: new Date().toLocaleString(),
-status: "SUCCESS"
-});
-
-localStorage.setItem("transactions", JSON.stringify(history));
-
-  }
 
 </script>
 <!-- redeploy -->
