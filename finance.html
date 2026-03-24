@@ -138,21 +138,33 @@ document.getElementById("servicesSection").style.display =
 country ? "block" : "none";
 }
 
-// OPEN SERVICE
+// OPEN SERVICES 
 function openService(type){
 
 let country = document.getElementById("country").value;
-let nets = providers[country] || ["MTN", "Airtel"];
 
+// NETWORKS
+const providers = {
+NG: ["MTN", "Airtel", "Glo", "9mobile"],
+GH: ["MTN", "Vodafone"],
+KE: ["Safaricom", "Airtel"],
+ZA: ["Vodacom", "MTN"]
+};
+
+let nets = providers[country] || ["MTN", "Airtel"];
 let networkOptions = nets.map(n => `<option>${n}</option>`).join("");
 
-let html = `
-<h3>${type.toUpperCase()} SERVICE</h3>
+let html = "";
+
+// 📱 AIRTIME
+if(type === "airtime"){
+html = `
+<h3>📱 Airtime Recharge</h3>
 
 <label>Network</label><br>
 <select id="network">${networkOptions}</select><br><br>
 
-<label>Phone</label><br>
+<label>Phone Number</label><br>
 <input type="tel" id="phone" placeholder="Enter phone number"><br><br>
 
 <label>Amount</label><br>
@@ -161,14 +173,106 @@ let html = `
 <div id="result"></div><br>
 
 <button onclick="calculate()">Calculate</button>
-
 <button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
 <button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
 `;
+}
+
+// 🌐 DATA
+else if(type === "data"){
+html = `
+<h3>🌐 Data Top-Up</h3>
+
+<label>Network</label><br>
+<select id="network">${networkOptions}</select><br><br>
+
+<label>Phone Number</label><br>
+<input type="tel" id="phone" placeholder="Enter phone number"><br><br>
+
+<label>Select Plan</label><br>
+<select id="plan">
+<option value="500">1GB - 500</option>
+<option value="1000">2GB - 1000</option>
+<option value="2000">5GB - 2000</option>
+</select><br><br>
+
+<div id="result"></div><br>
+
+<button onclick="calculateData()">Calculate</button>
+<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
+<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
+`;
+}
+
+// 📺 TV
+else if(type === "tv"){
+html = `
+<h3>📺 TV Subscription</h3>
+
+<select>
+<option>DSTV</option>
+<option>GOTV</option>
+<option>Startimes</option>
+</select><br><br>
+
+<label>Smart Card Number</label><br>
+<input type="text" placeholder="Enter smart card number"><br><br>
+
+<label>Amount</label><br>
+<input type="number" id="amount" placeholder="Enter amount"><br><br>
+
+<div id="result"></div><br>
+
+<button onclick="calculate()">Calculate</button>
+<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
+<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
+`;
+}
+
+// 💡 ELECTRICITY
+else if(type === "electricity"){
+html = `
+<h3>💡 Electricity Bill</h3>
+
+<label>Meter Number</label><br>
+<input type="text" placeholder="Enter meter number"><br><br>
+
+<label>Amount</label><br>
+<input type="number" id="amount" placeholder="Enter amount"><br><br>
+
+<div id="result"></div><br>
+
+<button onclick="calculate()">Calculate</button>
+<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
+<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
+`;
+}
 
 document.getElementById("serviceContainer").innerHTML = html;
 
-}
+  }  
+  function calculateData(){
+
+let amount = document.getElementById("plan").value;
+document.getElementById("amount")?.remove(); // optional cleanup
+
+let country = document.getElementById("country").value;
+let selected = countryRates[country];
+
+let usd = amount / selected.rate;
+let pi = usd / 314159;
+
+// SAVE
+localStorage.setItem("last_amount_local", amount);
+localStorage.setItem("last_amount_pi", pi);
+
+// DISPLAY
+document.getElementById("result").innerHTML =
+`💰 ${selected.symbol}${amount}<br>
+💵 $${usd.toFixed(2)}<br>
+🪙 ${pi.toFixed(8)} π`;
+
+  }
 
 // CALCULATE
 function calculate(){
