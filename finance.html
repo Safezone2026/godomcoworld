@@ -119,10 +119,17 @@ const countryRates = {
 
 // 📦 LOAD SERVICES
 function loadServices(){
+
 let country = document.getElementById("country").value;
 
-document.getElementById("servicesSection").style.display =
-country ? "block" : "none";
+let section = document.getElementById("servicesSection");
+
+if(country){
+  section.style.display = "block";
+} else {
+  section.style.display = "none";
+}
+
 }
 
 // 🧱 OPEN SERVICE
