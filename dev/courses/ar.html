@@ -58,6 +58,20 @@
 <div id="courseContent" style="display:none;margin-top:40px">
 <h3>Course Unlocked</h3>
 <p>Welcome to the Augmented Reality course.</p>
+// AI TUTOR 
+  <hr>
+
+<h3>🤖 AI Tutor (Voice Enabled)</h3>
+
+<textarea id="aiQuestion" placeholder="Ask anything..." style="width:100%;height:80px;"></textarea>
+
+<br><br>
+
+<button onclick="startListening()">🎤 Speak</button>
+<button onclick="askAI()">Ask AI</button>
+<button onclick="speakAnswer()">🔊 Listen</button>
+
+<p id="aiResponse" style="margin-top:15px;"></p>
 
 <button id="certBtn" onclick="generateCertificate()" style="display:none;">
 🎓 Get Certificate
@@ -231,6 +245,74 @@ function generateCertificate(){
 
   window.print();
 }
+  // 🎤 SPEECH TO TEXT
+function startListening(){
+
+let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+recognition.lang = "en-US";
+
+recognition.start();
+
+recognition.onresult = function(event){
+let text = event.results[0][0].transcript;
+document.getElementById("aiQuestion").value = text;
+};
+
+recognition.onerror = function(){
+alert("Voice recognition not supported on this device");
+};
+
+}
+
+
+// 🧠 AI RESPONSE (TEMP LOGIC)
+function askAI(){
+
+let question = document.getElementById("aiQuestion").value;
+
+if(!question){
+alert("Ask a question");
+return;
+}
+
+let response = "AI Tutor: ";
+
+if(question.toLowerCase().includes("blockchain")){
+  response += "Blockchain is a decentralized digital ledger that records transactions securely.";
+}
+else if(question.toLowerCase().includes("ar")){
+  response += "Augmented Reality blends digital elements with the real world.";
+}
+else if(question.toLowerCase().includes("welding")){
+  response += "Welding joins materials using heat and pressure.";
+}
+else{
+  response += "Great question! Real AI upgrade coming soon.";
+}
+
+document.getElementById("aiResponse").innerText = response;
+
+}
+
+
+// 🔊 TEXT TO SPEECH
+function speakAnswer(){
+
+let text = document.getElementById("aiResponse").innerText;
+
+if(!text){
+alert("No response to read");
+return;
+}
+
+let speech = new SpeechSynthesisUtterance(text);
+
+speech.lang = "en-US";
+
+window.speechSynthesis.speak(speech);
+
+   }
    </script>
 
 <nav class="bottom-nav">
