@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wallet - Godomcoworld</title>
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+.balance-card{
+  background:#111;
+  padding:20px;
+  margin:15px 0;
+  border-radius:12px;
+  text-align:center;
+}
+
+button{
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  background:#00c853;
+  color:white;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>💳 My Wallet</h1>
+</header>
+
+<main>
+
+<!-- FIAT BALANCE -->
+<div class="balance-card">
+<h2>💵 Fiat Balance</h2>
+<h1 id="fiatBalance">₦0</h1>
+
+<button onclick="depositFiat()">Deposit</button>
+<button onclick="withdrawFiat()">Withdraw</button>
+</div>
+
+<!-- PI BALANCE -->
+<div class="balance-card">
+<h2>🪙 Pi Balance</h2>
+<h1 id="piBalance">0 π</h1>
+
+<button onclick="depositPi()">Deposit Pi</button>
+<button onclick="sendPi()">Send Pi</button>
+</div>
+
+</main>
+
+<script>
+
+// LOAD BALANCES
+let fiat = localStorage.getItem("fiat_balance") || 0;
+let pi = localStorage.getItem("pi_balance") || 0;
+
+document.getElementById("fiatBalance").innerText = "₦" + fiat;
+document.getElementById("piBalance").innerText = pi + " π";
+
+// 💵 FIAT FUNCTIONS
+function depositFiat(){
+let amount = prompt("Enter amount to deposit (₦):");
+
+if(amount){
+  fiat = Number(fiat) + Number(amount);
+  localStorage.setItem("fiat_balance", fiat);
+  location.reload();
+}
+}
+
+function withdrawFiat(){
+let amount = prompt("Enter amount to withdraw:");
+
+if(amount > fiat){
+  alert("Insufficient balance");
+  return;
+}
+
+fiat -= amount;
+localStorage.setItem("fiat_balance", fiat);
+location.reload();
+}
+
+// 🪙 PI FUNCTIONS
+function depositPi(){
+let amount = prompt("Enter Pi amount received:");
+
+if(amount){
+  pi = Number(pi) + Number(amount);
+  localStorage.setItem("pi_balance", pi);
+  location.reload();
+}
+}
+
+function sendPi(){
+let amount = prompt("Enter Pi to send:");
+
+if(amount > pi){
+  alert("Insufficient Pi balance");
+  return;
+}
+
+pi -= amount;
+localStorage.setItem("pi_balance", pi);
+location.reload();
+}
+
+</script>
+
+</body>
+  </html>
