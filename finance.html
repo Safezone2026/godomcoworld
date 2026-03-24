@@ -364,12 +364,17 @@ location.reload();
 // SAVE TRANSACTION
 function saveTransaction(type, amount){
 
+let phone = document.getElementById("phone")?.value || "N/A";
+
 let history = JSON.parse(localStorage.getItem("transactions") || "[]");
 
 history.push({
 type: type,
 amount: amount,
-date: new Date().toLocaleString()
+phone: phone,
+service: "Bill Payment",
+date: new Date().toLocaleString(),
+status: "SUCCESS"
 });
 
 localStorage.setItem("transactions", JSON.stringify(history));
@@ -393,7 +398,10 @@ localStorage.setItem("transactions", JSON.stringify(history));
 <a href="wallet.html">
 <span>👛</span><p>Wallet</p>
 </a>
-
+<a href="history.html">
+<span>🧾</span>
+<p>History</p>
+</a>
 <a href="support.html"><span>🆘</span><p>Support</p></a>
 <a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
 <a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
