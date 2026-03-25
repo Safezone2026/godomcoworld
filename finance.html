@@ -125,10 +125,43 @@ CD: { symbol: "CDF", rate: 2800 }
 
 // 📱 NETWORK PROVIDERS
 const providers = {
+
 NG: ["MTN", "Airtel", "Glo", "9mobile"],
-GH: ["MTN", "Vodafone"],
+GH: ["MTN", "Vodafone", "AirtelTigo"],
 KE: ["Safaricom", "Airtel"],
-ZA: ["Vodacom", "MTN"]
+ZA: ["Vodacom", "MTN", "Cell C", "Telkom"],
+
+EG: ["Vodafone Egypt", "Orange Egypt", "Etisalat"],
+CM: ["MTN", "Orange"],
+UG: ["MTN", "Airtel"],
+TZ: ["Vodacom", "Airtel", "Tigo"],
+ET: ["Ethio Telecom"],
+RW: ["MTN", "Airtel"],
+
+SN: ["Orange", "Free", "Expresso"],
+CI: ["MTN", "Orange", "Moov"],
+DZ: ["Djezzy", "Mobilis", "Ooredoo"],
+MA: ["Maroc Telecom", "Orange", "Inwi"],
+AO: ["Unitel", "Movicel"],
+
+ZM: ["MTN", "Airtel", "Zamtel"],
+ZW: ["Econet", "NetOne", "Telecel"],
+MW: ["TNM", "Airtel"],
+BW: ["Mascom", "Orange", "BTC"],
+NA: ["MTC", "TN Mobile"],
+
+SL: ["Africell", "Orange"],
+LR: ["Lonestar", "Orange"],
+TG: ["Togocom", "Moov"],
+BJ: ["MTN", "Moov"],
+NE: ["Airtel", "Moov"],
+
+ML: ["Orange", "Malitel"],
+BF: ["Orange", "Moov"],
+GA: ["Airtel", "Moov"],
+CG: ["MTN", "Airtel"],
+CD: ["Vodacom", "Airtel", "Orange"]
+
 };
 
 // LOAD SERVICES
@@ -142,14 +175,6 @@ country ? "block" : "none";
 function openService(type){
 
 let country = document.getElementById("country").value;
-
-// NETWORKS
-const providers = {
-NG: ["MTN", "Airtel", "Glo", "9mobile"],
-GH: ["MTN", "Vodafone"],
-KE: ["Safaricom", "Airtel"],
-ZA: ["Vodacom", "MTN"]
-};
 
 let nets = providers[country] || ["MTN", "Airtel"];
 let networkOptions = nets.map(n => `<option>${n}</option>`).join("");
