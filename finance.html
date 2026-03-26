@@ -332,79 +332,62 @@ localStorage.setItem("last_amount_pi", pi);
 document.getElementById("result").innerHTML =
 `💰 ${symbol}${amount}<br>
 💵 $${usd.toFixed(2)}<br>
-🪙 ${pi.toFixed(8)} π`;
+🪙 ${pi.toFixed(8)} π`
+  // 🔥 BACKEND PAYMENT (USED BY BOTH PI & FIAT)
+async function payWithBackend(method){
 
-}
-
-// PAY WITH PI
-function payWithPi(){
-
-let pi = parseFloat(localStorage.getItem("last_amount_pi")) || 0;
-let balance = parseFloat(localStorage.getItem("pi_balance")) || 0;
-
-if(pi === 0){
-alert("Calculate first");
-return;
-}
-
-if(pi > balance){
-alert("❌ Insufficient Pi balance");
-return;
-}
-
-balance -= pi;
-localStorage.setItem("pi_balance", balance);
-
-saveTransaction("Pi", pi);
-
-alert("✅ Paid with Pi");
-location.reload();
-}
-
-// PAY WITH FIAT
-function payWithFiat(){
-
+let phone = document.getElementById("phone")?.value;
 let amount = parseFloat(localStorage.getItem("last_amount_local")) || 0;
-let balance = parseFloat(localStorage.getItem("fiat_balance")) || 0;
+let network = document.getElementById("network")?.value || "N/A";
 
-if(amount === 0){
-alert("Calculate first");
+if(!phone || !amount){
+alert("Fill all fields & calculate first");
 return;
 }
 
-if(amount > balance){
-alert("❌ Insufficient Fiat balance");
-return;
-}
+try{
 
-balance -= amount;
-localStorage.setItem("fiat_balance", balance);
-
-saveTransaction("Fiat", amount);
-
-alert("✅ Paid with Fiat");
-location.reload();
-}
-
-// SAVE TRANSACTION
-function saveTransaction(type, amount){
-
-let phone = document.getElementById("phone")?.value || "N/A";
-
-let history = JSON.parse(localStorage.getItem("transactions") || "[]");
-
-history.push({
-type: type,
-amount: amount,
+let res = await fetch("http://127.0.0.1:8000/buy-airtime", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
 phone: phone,
-service: "Bill Payment",
-date: new Date().toLocaleString(),
-status: "SUCCESS"
+amount: amount,
+network: network,
+method: method   // 🔥 Pi or Fiat
+})
 });
 
-localStorage.setItem("transactions", JSON.stringify(history));
+let data = await res.json();
+
+// SAVE TRANSACTION
+saveTransaction(method, amount);
+
+// SHOW RESPONSE
+alert(
+`✅ ${data.message}
+📱 ${data.phone}
+💰 ${data.amount}
+💸 Profit: ${data.profit}`
+);
+
+location.reload();
+
+}catch(err){
+alert("❌ Server error");
+console.error(err);
+}
 
 }
+  function payWithPi(){
+payWithBackend("Pi");
+}
+
+function payWithFiat(){
+payWithBackend("Fiat");
+  }
 
 </script>
 
