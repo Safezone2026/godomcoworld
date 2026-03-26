@@ -337,8 +337,20 @@ document.getElementById("result").innerHTML =
   // 🔥 BACKEND PAYMENT (USED BY BOTH PI & FIAT)
 
 async function payWithBackend(type) {
-    const userId = 1;        // Change this to the actual logged-in user ID
-    const amount = 5;        // Payment amount (example)
+    const userId = 1;
+
+    let amount;
+
+    if(type === "Pi"){
+        amount = parseFloat(localStorage.getItem("last_amount_pi"));
+    } else {
+        amount = parseFloat(localStorage.getItem("last_amount_local"));
+    }
+
+    if(!amount){
+        alert("Please calculate amount first!");
+        return;
+    }
 
     try {
         const response = await fetch('http://127.0.0.1:3000/pay', {
@@ -351,14 +363,13 @@ async function payWithBackend(type) {
 
         if (data.success) {
             alert(`${type} payment successful! New balance: ${data.newBalance}`);
-            // Optionally update the balance display in your UI
-            document.getElementById(`${type}-balance`).innerText = data.newBalance;
         } else {
             alert(`Payment failed: ${data.message}`);
         }
+
     } catch (err) {
         console.error(err);
-        alert('Error connecting to backend. Make sure Termux server is running!');
+        alert('Error connecting to backend!');
     }
 }
 
