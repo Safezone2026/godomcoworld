@@ -333,61 +333,38 @@ document.getElementById("result").innerHTML =
 `💰 ${symbol}${amount}<br>
 💵 $${usd.toFixed(2)}<br>
 🪙 ${pi.toFixed(8)} π`
+
   // 🔥 BACKEND PAYMENT (USED BY BOTH PI & FIAT)
-async function payWithBackend(method){
 
-let phone = document.getElementById("phone")?.value;
-let amount = parseFloat(localStorage.getItem("last_amount_local")) || 0;
-let network = document.getElementById("network")?.value || "N/A";
+async function payWithBackend(type) {
+    const userId = 1;        // Change this to the actual logged-in user ID
+    const amount = 5;        // Payment amount (example)
 
-if(!phone || !amount){
-alert("Fill all fields & calculate first");
-return;
+    try {
+        const response = await fetch('http://127.0.0.1:8000/pay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, amount, type })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`${type} payment successful! New balance: ${data.newBalance}`);
+            // Optionally update the balance display in your UI
+            document.getElementById(`${type}-balance`).innerText = data.newBalance;
+        } else {
+            alert(`Payment failed: ${data.message}`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error connecting to backend. Make sure Termux server is running!');
+    }
 }
 
-try{
-
-let res = await fetch("http://127.0.0.1:8000/buy-airtime", {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({
-phone: phone,
-amount: amount,
-network: network,
-method: method   // 🔥 Pi or Fiat
-})
-});
-
-let data = await res.json();
-
-// SAVE TRANSACTION
-saveTransaction(method, amount);
-
-// SHOW RESPONSE
-alert(
-`✅ ${data.message}
-📱 ${data.phone}
-💰 ${data.amount}
-💸 Profit: ${data.profit}`
-);
-
-location.reload();
-
-}catch(err){
-alert("❌ Server error");
-console.error(err);
-}
-
-}
-  function payWithPi(){
-payWithBackend("Pi");
-}
-
-function payWithFiat(){
-payWithBackend("Fiat");
-  }
+// Buttons
+function payWithPi() { payWithBackend("Pi"); }
+function payWithFiat() { payWithBackend("Fiat"); }
 
 </script>
 
