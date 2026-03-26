@@ -29,8 +29,8 @@
 <header>
 <h1>💰 Financial Services</h1>
   <div>
-  <p>🪙 Pi Balance: <span id="pi-balance">10</span> π</p>
-  <p>💵 Fiat Balance: <span id="fiat-balance">5000</span></p>
+  <p>🪙 Pi Balance: <span id="pi-balance">0</span> π</p>
+  <p>💵 Fiat Balance: <span id="fiat-balance">0</span></p>
   </div>
 </header>
 
@@ -402,6 +402,23 @@ async function payWithBackend(type) {
 // Convenience buttons
 function payWithPi() { payWithBackend("Pi"); }
 function payWithFiat() { payWithBackend("Fiat"); }
+  async function loadBalances() {
+    try {
+        const response = await fetch('http://127.0.0.1:3000/users');
+        const data = await response.json();
+        const user = data.users.find(u => u.id === 1); // your logged-in user
+
+        if(user){
+            document.getElementById("pi-balance").innerText = user.walletPi.toFixed(8);
+            document.getElementById("fiat-balance").innerText = user.walletFiat.toFixed(2);
+        }
+    } catch(err){
+        console.error("Could not load balances:", err);
+    }
+}
+
+// Call on page load
+loadBalances();
 
 </script>
 
