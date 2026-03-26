@@ -341,7 +341,7 @@ async function payWithBackend(type) {
     const amount = 5;        // Payment amount (example)
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/pay', {
+        const response = await fetch('http://127.0.0.1:3000/pay', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, amount, type })
