@@ -28,6 +28,10 @@
 
 <header>
 <h1>💰 Financial Services</h1>
+  <div>
+  <p>🪙 Pi Balance: <span id="pi-balance">10</span> π</p>
+  <p>💵 Fiat Balance: <span id="fiat-balance">5000</span></p>
+  </div>
 </header>
 
 <main>
@@ -356,49 +360,36 @@ document.getElementById("result").innerHTML =
   // 🔥 BACKEND PAYMENT (USED BY BOTH PI & FIAT)
 
 async function payWithBackend(type) {
-  let amount;
+    // Use the last calculated amount instead of fixed 5
+    const amount = parseFloat(localStorage.getItem("last_amount_" + (type === "Pi" ? "pi" : "local")));
+    const userId = 1; // your mock user ID
 
-  if(type === "Pi"){
-      amount = parseFloat(localStorage.getItem("last_amount_pi"));
-  } else if(type === "Fiat"){
-      amount = parseFloat(localStorage.getItem("last_amount_local"));
+    try {
+        const response = await fetch('http://127.0.0.1:3000/pay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, amount, type })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`${type} payment successful!`);
+            
+            // Update the displayed balance
+            if(type === "Pi"){
+                document.getElementById("pi-balance").innerText = data.newBalance.toFixed(8);
+            } else {
+                document.getElementById("fiat-balance").innerText = data.newBalance.toFixed(2);
+            }
+        } else {
+            alert(`Payment failed: ${data.message}`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error connecting to backend. Make sure Termux server is running!');
+    }
   }
-
-  if(!amount){
-      alert("Please calculate amount first!");
-      return;
-  }
-
-  // 💡 Confirmation
-  if(!confirm(`You are about to pay:\n${type === "Pi" ? amount.toFixed(8)+" π" : "₦"+amount}\nProceed?`)) {
-      return; // User cancelled
-  }
-
-  try {
-      const response = await fetch('http://127.0.0.1:3000/pay', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: 1, amount, type })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-          alert(`${type} payment successful!`);
-
-          // Update local wallet
-          if(type === "Pi") wallet.pi = data.walletPi;
-          else wallet.fiat = data.walletFiat;
-
-          updateWalletDisplay();
-      } else {
-          alert(`Payment failed: ${data.message}`);
-      }
-  } catch (err) {
-      console.error(err);
-      alert('Error connecting to backend!');
-  }
-     }
 
 // Buttons
 function payWithPi() { payWithBackend("Pi"); }
