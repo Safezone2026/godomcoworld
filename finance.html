@@ -296,16 +296,20 @@ document.getElementById("serviceContainer").innerHTML = html;
   }  
   function calculateData(){
 
-let amount = document.getElementById("plan").value;
-document.getElementById("amount")?.remove(); // optional cleanup
-
+let amount = parseFloat(document.getElementById("plan").value);
 let country = document.getElementById("country").value;
+
 let selected = countryRates[country];
+
+if(!selected){
+    alert("Country not supported");
+    return;
+}
 
 let usd = amount / selected.rate;
 let pi = usd / 314159;
 
-// SAVE
+// SAVE (same keys as others)
 localStorage.setItem("last_amount_local", amount);
 localStorage.setItem("last_amount_pi", pi);
 
@@ -320,19 +324,19 @@ document.getElementById("result").innerHTML =
 // CALCULATE
 function calculate(){
 
-let amount = document.getElementById("amount").value;
+let amount = parseFloat(document.getElementById("amount").value);
 let country = document.getElementById("country").value;
 
-if(!amount){
-alert("Enter amount");
-return;
+if(!amount || amount <= 0){
+    alert("Enter valid amount");
+    return;
 }
 
 let selected = countryRates[country];
 
 if(!selected){
-alert("Country not supported");
-return;
+    alert("Country not supported");
+    return;
 }
 
 let symbol = selected.symbol;
@@ -342,7 +346,7 @@ let rate = selected.rate;
 let usd = amount / rate;
 let pi = usd / 314159;
 
-// SAVE FOR PAYMENT
+// SAVE (VERY IMPORTANT)
 localStorage.setItem("last_amount_local", amount);
 localStorage.setItem("last_amount_pi", pi);
 
@@ -350,19 +354,28 @@ localStorage.setItem("last_amount_pi", pi);
 document.getElementById("result").innerHTML =
 `💰 ${symbol}${amount}<br>
 💵 $${usd.toFixed(2)}<br>
-🪙 ${pi.toFixed(8)} π`
-  }
-  // 🔥 BACKEND PAYMENT (USED BY BOTH PI & FIAT)
+🪙 ${pi.toFixed(8)} π`;
 
+  }
+
+// 🔥 BACKEND PAYMENT FUNCTION (WORKS FOR BOTH PI & FIAT)
 async function payWithBackend(type) {
-    // Use the last calculated amount instead of fixed 5
-    const amount = parseFloat(localStorage.getItem("last_amount_" + (type === "Pi" ? "pi" : "local")));
-    const userId = 1; // your mock user ID
+    // Get the last calculated amount
+    const amount = parseFloat(
+        localStorage.getItem("last_amount_" + (type === "Pi" ? "pi" : "local"))
+    );
+
+    if (isNaN(amount) || amount <= 0) {
+        alert("Invalid amount. Please calculate first.");
+        return;
+    }
+
+    const userId = 1; // Example/mock user ID
 
     try {
-        const response = await fetch('http://127.0.0.1:3000/pay', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("http://127.0.0.1:3000/pay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, amount, type })
         });
 
@@ -370,9 +383,9 @@ async function payWithBackend(type) {
 
         if (data.success) {
             alert(`${type} payment successful!`);
-            
+
             // Update the displayed balance
-            if(type === "Pi"){
+            if (type === "Pi") {
                 document.getElementById("pi-balance").innerText = data.newBalance.toFixed(8);
             } else {
                 document.getElementById("fiat-balance").innerText = data.newBalance.toFixed(2);
@@ -382,11 +395,11 @@ async function payWithBackend(type) {
         }
     } catch (err) {
         console.error(err);
-        alert('Error connecting to backend. Make sure Termux server is running!');
+        alert("Error connecting to backend. Make sure Termux server is running!");
     }
-  }
+}
 
-// Buttons
+// Convenience buttons
 function payWithPi() { payWithBackend("Pi"); }
 function payWithFiat() { payWithBackend("Fiat"); }
 
