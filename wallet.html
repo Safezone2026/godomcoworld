@@ -81,8 +81,13 @@ async function loadBalance(){
 
     const user = data.users.find(u => u.id === 1); // your test user
 
-    document.getElementById("fiatBalance").innerText = "₦" + user.walletFiat;
-    document.getElementById("piBalance").innerText = user.walletPi.toFixed(6) + " π";
+    document.getElementById("fiatBalance").innerText =
+  "₦" + Number(fiat).toLocaleString('en-NG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+   document.getElementById("piBalance").innerText =
+  Number(user.walletPi).toFixed(6) + " π";
 
   } catch (err) {
     console.error(err);
