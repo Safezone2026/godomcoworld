@@ -359,14 +359,13 @@ document.getElementById("result").innerHTML =
 // 🔥 BACKEND PAYMENT FUNCTION (WORKS FOR BOTH PI & FIAT)
 async function payWithBackend(type) {
     // Get the last calculated amount
-    const amount = parseFloat(
-        localStorage.getItem("last_amount_" + (type === "Pi" ? "pi" : "local"))
-    );
+    let key = type === "Pi" ? "last_amount_pi" : "last_amount_local";
+let amount = parseFloat(localStorage.getItem(key));
 
-    if (isNaN(amount) || amount <= 0) {
-        alert("Invalid amount. Please calculate first.");
-        return;
-    }
+if (!amount || isNaN(amount)) {
+    alert("Please click Calculate first!");
+    return;
+}
 
     const userId = 1; // Example/mock user ID
 
