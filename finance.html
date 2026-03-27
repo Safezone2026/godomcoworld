@@ -315,9 +315,9 @@ localStorage.setItem("last_amount_pi", pi);
 
 // DISPLAY
 document.getElementById("result").innerHTML =
-`💰 ${selected.symbol}${amount}<br>
-💵 $${usd.toFixed(2)}<br>
-🪙 ${pi.toFixed(8)} π`;
+`💰 Local: ${symbol}${amount}<br>
+💱 USD Equivalent: $${usd.toFixed(2)}<br>
+🪙 Pi Equivalent: ${pi.toFixed(8)} π`;
 
   }
 
@@ -352,12 +352,10 @@ localStorage.setItem("last_amount_pi", pi);
 
 // DISPLAY
 document.getElementById("result").innerHTML =
-`💰 ${symbol}${amount}<br>
-💵 $${usd.toFixed(2)}<br>
-🪙 ${pi.toFixed(8)} π`;
-
+`💰 Local: ${symbol}${amount}<br>
+💱 USD Equivalent: $${usd.toFixed(2)}<br>
+🪙 Pi Equivalent: ${pi.toFixed(8)} π`;
   }
-
 // 🔥 BACKEND PAYMENT FUNCTION (WORKS FOR BOTH PI & FIAT)
 async function payWithBackend(type) {
     // Get the last calculated amount
