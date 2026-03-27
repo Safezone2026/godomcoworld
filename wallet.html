@@ -74,22 +74,22 @@ button{
 <script>
 
 // LOAD BALANCES
-let fiat = Number(localStorage.getItem("fiat_balance")) || 0;
-let pi = Number(localStorage.getItem("pi_balance")) || 0;
+async function loadBalance(){
+  try {
+    const res = await fetch('http://127.0.0.1:3000/users');
+    const data = await res.json();
 
-document.getElementById("fiatBalance").innerText = "₦" + fiat;
-document.getElementById("piBalance").innerText = pi + " π";
+    const user = data.users.find(u => u.id === 1); // your test user
 
-// 💵 FIAT FUNCTIONS
-function depositFiat(){
-let amount = prompt("Enter amount to deposit (₦):");
+    document.getElementById("fiatBalance").innerText = "₦" + user.walletFiat;
+    document.getElementById("piBalance").innerText = user.walletPi.toFixed(6) + " π";
 
-if(amount){
-  fiat = Number(fiat) + Number(amount);
-  localStorage.setItem("fiat_balance", fiat);
-  location.reload();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load balance from server");
+  }
 }
-}
+
 
 function withdrawFiat(){
 let amount = prompt("Enter amount to withdraw:");
@@ -102,17 +102,6 @@ if(amount > fiat){
 fiat -= amount;
 localStorage.setItem("fiat_balance", fiat);
 location.reload();
-}
-
-// 🪙 PI FUNCTIONS
-function depositPi(){
-let amount = prompt("Enter Pi amount received:");
-
-if(amount){
-  pi = Number(pi) + Number(amount);
-  localStorage.setItem("pi_balance", pi);
-  location.reload();
-}
 }
 
 function sendPi(){
@@ -159,12 +148,16 @@ function showQRCode(){
 
 // Load saved wallet on page load
 window.onload = function(){
-  let saved = localStorage.getItem("pi_address");
 
+  // Load wallet address
+  let saved = localStorage.getItem("pi_address");
   if(saved){
     document.getElementById("pi-address").innerText = saved;
   }
-}
+
+  // 🔥 Load real balance from backend
+  loadBalance();
+  }
 
 </script>
   <!-- NAV -->
