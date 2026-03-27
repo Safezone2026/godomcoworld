@@ -74,8 +74,8 @@ button{
 <script>
 
 // LOAD BALANCES
-let fiat = localStorage.getItem("fiat_balance") || 0;
-let pi = localStorage.getItem("pi_balance") || 0;
+let fiat = Number(localStorage.getItem("fiat_balance")) || 0;
+let pi = Number(localStorage.getItem("pi_balance")) || 0;
 
 document.getElementById("fiatBalance").innerText = "₦" + fiat;
 document.getElementById("piBalance").innerText = pi + " π";
@@ -147,6 +147,7 @@ function showQRCode(){
     alert("Please connect your Pi wallet first");
     return;
   }
+  document.getElementById("qr-container").innerHTML = "";
 
   // Generate QR Code
   document.getElementById("qr-container").innerHTML = `
