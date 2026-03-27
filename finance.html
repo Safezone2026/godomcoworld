@@ -95,7 +95,7 @@
 <script>
   // Mock user wallet (replace with backend data later)
 let wallet = {
-  pi: 10.0,       // initial Pi balance
+  pi: 50.0,       // initial Pi balance
   fiat: 5000      // initial Fiat balance
 };
 
@@ -399,24 +399,27 @@ if (!amount || isNaN(amount)) {
 // Convenience buttons
 function payWithPi() { payWithBackend("Pi"); }
 function payWithFiat() { payWithBackend("Fiat"); }
+  
   async function loadBalances() {
-    try {
-        const response = await fetch('http://127.0.0.1:3000/users');
-        const data = await response.json();
-        const user = data.users.find(u => u.id === 1); // your logged-in user
+  try {
+    const res = await fetch('http://127.0.0.1:3000/users');
+    const data = await res.json();
 
-        if(user){
-            document.getElementById("pi-balance").innerText = user.walletPi.toFixed(8);
-            document.getElementById("fiat-balance").innerText = user.walletFiat.toFixed(2);
-        }
-    } catch(err){
-        console.error("Could not load balances:", err);
+    const user = data.users.find(u => u.id === 1);
+
+    if (user) {
+      document.getElementById("pi-balance").innerText = user.walletPi.toFixed(8);
+      document.getElementById("fiat-balance").innerText = user.walletFiat.toFixed(2);
     }
+
+  } catch (err) {
+    console.error("Error loading balances:", err);
+  }
 }
 
-// Call on page load
-loadBalances();
-
+// Run when page loads
+window.onload = loadBalances;
+  }
 </script>
 
 <!-- NAV -->
