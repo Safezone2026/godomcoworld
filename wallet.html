@@ -148,6 +148,18 @@ function receivePi(){
     document.getElementById("pi-address").innerText = saved;
   }
 }
+ // PI WALLET QR CODE
+  function receivePi(){
+  let address = localStorage.getItem("pi_address");
+
+  if(!address){
+    alert("Connect wallet first");
+    return;
+  }
+
+  document.getElementById("pi-address").innerHTML =
+    address + "<br><img src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + address + "'>";
+  }
 
 </script>
   <!-- NAV -->
