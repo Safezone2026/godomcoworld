@@ -22,6 +22,11 @@ button{
   background:#00c853;
   color:white;
 }
+#qr-container img{
+  border:2px solid #4CAF50;
+  padding:10px;
+  border-radius:10px;
+}
 </style>
 
 </head>
@@ -51,14 +56,17 @@ button{
 <button onclick="depositPi()">Deposit Pi</button>
 <button onclick="sendPi()">Send Pi</button>
 </div>
-  <h2>🪙 Pi Wallet</h2>
+
+<h2>🪙 Pi Wallet</h2>
 
 <div>
   <p><strong>Your Pi Address:</strong></p>
   <p id="pi-address">Not connected</p>
 
   <button onclick="connectWallet()">🔗 Connect Wallet</button>
-  <button onclick="receivePi()">📥 Receive Pi</button>
+  <button onclick="showQRCode()">📥 Receive Pi</button>
+
+  <div id="qr-container" style="margin-top:15px;"></div>
 </div>
 
 </main>
@@ -120,6 +128,7 @@ localStorage.setItem("pi_balance", pi);
 location.reload();
 }
 // CONNECT WALLET 
+
 function connectWallet(){
   let address = prompt("Enter your Pi Wallet Address:");
 
@@ -131,7 +140,7 @@ function connectWallet(){
   }
 }
 
-function receivePi(){
+function showQRCode(){
   let address = localStorage.getItem("pi_address");
 
   if(!address){
@@ -139,27 +148,22 @@ function receivePi(){
     return;
   }
 
-  alert("Send Pi to this address:\n\n" + address);
+  // Generate QR Code
+  document.getElementById("qr-container").innerHTML = `
+    <p>Scan to send Pi:</p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${address}">
+    <p style="word-break:break-all;">${address}</p>
+  `;
 }
-  window.onload = function(){
+
+// Load saved wallet on page load
+window.onload = function(){
   let saved = localStorage.getItem("pi_address");
 
   if(saved){
     document.getElementById("pi-address").innerText = saved;
   }
 }
- // PI WALLET QR CODE
-  function receivePi(){
-  let address = localStorage.getItem("pi_address");
-
-  if(!address){
-    alert("Connect wallet first");
-    return;
-  }
-
-  document.getElementById("pi-address").innerHTML =
-    address + "<br><img src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + address + "'>";
-  }
 
 </script>
   <!-- NAV -->
