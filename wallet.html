@@ -51,6 +51,15 @@ button{
 <button onclick="depositPi()">Deposit Pi</button>
 <button onclick="sendPi()">Send Pi</button>
 </div>
+  <h2>🪙 Pi Wallet</h2>
+
+<div>
+  <p><strong>Your Pi Address:</strong></p>
+  <p id="pi-address">Not connected</p>
+
+  <button onclick="connectWallet()">🔗 Connect Wallet</button>
+  <button onclick="receivePi()">📥 Receive Pi</button>
+</div>
 
 </main>
 
@@ -109,6 +118,35 @@ if(amount > pi){
 pi -= amount;
 localStorage.setItem("pi_balance", pi);
 location.reload();
+}
+// CONNECT WALLET 
+function connectWallet(){
+  let address = prompt("Enter your Pi Wallet Address:");
+
+  if(address && address.length > 10){
+    localStorage.setItem("pi_address", address);
+    document.getElementById("pi-address").innerText = address;
+  } else {
+    alert("Invalid address");
+  }
+}
+
+function receivePi(){
+  let address = localStorage.getItem("pi_address");
+
+  if(!address){
+    alert("Please connect your Pi wallet first");
+    return;
+  }
+
+  alert("Send Pi to this address:\n\n" + address);
+}
+  window.onload = function(){
+  let saved = localStorage.getItem("pi_address");
+
+  if(saved){
+    document.getElementById("pi-address").innerText = saved;
+  }
 }
 
 </script>
