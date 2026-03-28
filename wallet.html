@@ -76,25 +76,36 @@ button{
 // LOAD BALANCES
 async function loadBalance(){
   try {
+    console.log("Loading balance...");
+
     const res = await fetch('http://127.0.0.1:3000/users');
     const data = await res.json();
 
-    const user = data.users.find(u => u.id === 1); // your test user
+    console.log("API DATA:", data);
 
+    if(!data.users || data.users.length === 0){
+      throw new Error("No users found");
+    }
+
+    const user = data.users.find(u => u.id === 1);
+
+    if(!user){
+      throw new Error("User not found");
+    }
+
+    // ✅ Update Fiat
     document.getElementById("fiatBalance").innerText =
-  "₦" + Number(fiat).toLocaleString('en-NG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-   document.getElementById("piBalance").innerText =
-  Number(user.walletPi).toFixed(6) + " π";
-console.log("Loading balance...");
+      "₦" + Number(user.walletFiat).toLocaleString();
+
+    // ✅ Update Pi
+    document.getElementById("piBalance").innerText =
+      Number(user.walletPi).toFixed(6) + " π";
+
   } catch (err) {
-    console.error(err);
+    console.error("FULL ERROR:", err);
     alert("Failed to load balance from server");
   }
-}
-
+  }
 
 function withdrawFiat(){
 let amount = prompt("Enter amount to withdraw:");
