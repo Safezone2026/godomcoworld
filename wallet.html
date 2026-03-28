@@ -88,7 +88,7 @@ async function loadBalance(){
   });
    document.getElementById("piBalance").innerText =
   Number(user.walletPi).toFixed(6) + " π";
-
+console.log("Loading balance...");
   } catch (err) {
     console.error(err);
     alert("Failed to load balance from server");
