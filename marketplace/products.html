@@ -138,6 +138,16 @@ async function buyProduct(index){
     alert("You cannot buy your own product!");
     return;
   }
+  // ADD TO 🛒 
+  function addToCart(product){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  cart.push(product);
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+
+  alert("Added to cart");
+  }
 
   try {
     const payment = await Pi.requestPay({
