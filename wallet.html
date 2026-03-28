@@ -170,6 +170,14 @@ window.onload = function(){
   if(saved){
     document.getElementById("pi-address").innerText = saved;
   }
+  window.onload = function(){
+  loadBalance();
+
+  let saved = localStorage.getItem("pi_address");
+  if(saved){
+    document.getElementById("pi-address").innerText = saved;
+  }
+  }
 
   // 🔥 Load real balance from backend
   loadBalance();
