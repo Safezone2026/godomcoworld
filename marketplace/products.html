@@ -40,32 +40,6 @@ Pi.init({
   apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
 });
 
-// ✅ Load products
-document.addEventListener("DOMContentLoaded", function(){
-
-  // 🧱 Sample products (ALWAYS show)
-  let sampleProducts = [
-    {
-      name:"African Handmade Bag",
-      desc:"High-quality handmade bag",
-      priceUSD:25,
-      pricePi:(25/314159).toFixed(8),
-      image:"sample1.jpg"
-    },
-    {
-      name:"Wooden Chair",
-      desc:"Sturdy wooden chair",
-      priceUSD:40,
-      pricePi:(40/314159).toFixed(8),
-      image:"sample2.jpg"
-    }
-  ];
-
-  // 📦 Uploaded products
-  let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
-
-  let allProducts = sampleProducts.concat(uploadedProducts);
-
   let container = document.getElementById("productList");
   container.innerHTML = "";
 
@@ -120,69 +94,31 @@ function deleteProduct(index){
   location.reload();
 }
 
-// 💰 Buy product
-async function buyProduct(index){
-
-  let sampleProducts = [
-    {priceUSD:25, pricePi:(25/314159).toFixed(8)},
-    {priceUSD:40, pricePi:(40/314159).toFixed(8)}
-  ];
-
-  let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
-  let allProducts = sampleProducts.concat(uploadedProducts);
-
-  let product = allProducts[index];
-
-  // ❌ Prevent buying own product
-  if(index >= 2 && product.sellerUsername === currentUser){
-    alert("You cannot buy your own product!");
-    return;
-  }
-  // ADD TO 🛒 
-  function addToCart(product){
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-  cart.push(product);
-
-  localStorage.setItem("cart", JSON.stringify(cart));
-
-  alert("Added to cart");
-  }
-
-  try {
-    const payment = await Pi.requestPay({
-      amount: parseFloat(product.pricePi),
-      memo: "Purchase",
-      metadata:{}
-    });
-
-    if(payment && payment.txid){
-      alert("Payment successful!");
-    }
-
-  } catch(err){
-    console.error(err);
-    alert("Payment failed");
-  }
-}
   // LOAD PRODUCTS
-  async function loadProducts(){
+  document.addEventListener("DOMContentLoaded", loadProducts);
+
+// ✅ LOAD FROM BACKEND
+async function loadProducts(){
   const res = await fetch('http://127.0.0.1:3000/products');
   const data = await res.json();
 
-  let container = document.getElementById("products");
+  let container = document.getElementById("productList");
   container.innerHTML = "";
 
-  data.products.forEach(p => {
+  data.products.forEach((p, index) => {
+
     container.innerHTML += `
-      <div>
+      <div class="card">
         <h3>${p.name}</h3>
         <p>₦${p.price}</p>
-        <button onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button>
+
+        <button onclick='addToCart(${JSON.stringify(p)})'>
+          🛒 Add to Cart
+        </button>
       </div>
     `;
   });
-        }
+  }
   // ADD PRODUCTS (ADMIN):
   async function addProduct(){
   let name = prompt("Product name");
@@ -196,6 +132,25 @@ async function buyProduct(index){
 
   loadProducts();
      }
+  // ADD TO 🛒
+  function addToCart(product){
+
+  let currentUser = localStorage.getItem("piUser");
+
+  // 🚫 Prevent buying own product
+  if(product.sellerUsername && product.sellerUsername === currentUser){
+    alert("You cannot add your own product to cart!");
+    return;
+  }
+
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  cart.push(product);
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+
+  alert("Added to cart");
+  }
 </script>
 <a href="../marketplace.html">
 ‎<button>Back to Marketplace</button>
