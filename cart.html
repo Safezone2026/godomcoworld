@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cart - Godomcoworld</title>
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+body{
+  background:#000;
+  color:white;
+  font-family:Arial;
+}
+
+.cart-item{
+  background:#111;
+  padding:15px;
+  margin:10px 0;
+  border-radius:10px;
+}
+
+button{
+  padding:8px 12px;
+  margin:5px;
+  border:none;
+  border-radius:6px;
+  background:#00c853;
+  color:white;
+}
+
+.total{
+  font-size:20px;
+  margin-top:15px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>🛒 My Cart</h1>
+</header>
+
+<main>
+
+<div id="cart-items"></div>
+
+<h3 class="total" id="total">Total: ₦0</h3>
+
+<button onclick="checkout()">💳 Checkout</button>
+<button onclick="clearCart()">🗑 Clear Cart</button>
+
+</main>
+
+<script>
+
+// LOAD CART
+function loadCart(){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  let container = document.getElementById("cart-items");
+  let total = 0;
+
+  container.innerHTML = "";
+
+  if(cart.length === 0){
+    container.innerHTML = "<p>Your cart is empty</p>";
+    document.getElementById("total").innerText = "Total: ₦0";
+    return;
+  }
+
+  cart.forEach((item, index) => {
+    total += Number(item.price);
+
+    container.innerHTML += `
+      <div class="cart-item">
+        <h3>${item.name}</h3>
+        <p>₦${item.price}</p>
+        <button onclick="removeItem(${index})">❌ Remove</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("total").innerText =
+    "Total: ₦" + total.toLocaleString();
+}
+
+// REMOVE ITEM
+function removeItem(index){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  cart.splice(index, 1);
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+
+  loadCart();
+}
+
+// CLEAR CART
+function clearCart(){
+  localStorage.removeItem("cart");
+  loadCart();
+}
+
+// CHECKOUT
+function checkout(){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  if(cart.length === 0){
+    alert("Cart is empty");
+    return;
+  }
+
+  let total = cart.reduce((sum, item) => sum + Number(item.price), 0);
+
+  localStorage.setItem("last_amount_local", total);
+
+  window.location.href = "checkout.html";
+}
+
+// AUTO LOAD
+window.onload = loadCart;
+
+</script>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+
+<a href="index.html"><span>🏠</span><p>Home</p></a>
+<a href="finance.html"><span>💰</span><p>Finance</p></a>
+<a href="wallet.html"><span>👛</span><p>Wallet</p></a>
+<a href="cart.html" class="active"><span>🛒</span><p>Cart</p></a>
+<a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
+
+</nav>
+
+</body>
+  </html>
