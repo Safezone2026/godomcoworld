@@ -99,10 +99,11 @@ function deleteProduct(index){
 
 // ✅ LOAD FROM BACKEND
 async function loadProducts(){
+
   const res = await fetch('http://127.0.0.1:3000/products');
   const data = await res.json();
 
-  let container = document.getElementById("productList");
+  let container = document.getElementById("productList"); // ✅ CORRECT ID
   container.innerHTML = "";
 
   data.products.forEach((p, index) => {
@@ -113,12 +114,13 @@ async function loadProducts(){
         <p>₦${p.price}</p>
 
         <button onclick='addToCart(${JSON.stringify(p)})'>
-          🛒 Add to Cart
+          Add to Cart
         </button>
       </div>
     `;
   });
-  }
+
+}
   // ADD PRODUCTS (ADMIN):
   async function addProduct(){
   let name = prompt("Product name");
@@ -129,8 +131,7 @@ async function loadProducts(){
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ name, price })
   });
-
-  loadProducts();
+window.onload =loadProducts();
      }
   // ADD TO 🛒
   function addToCart(product){
