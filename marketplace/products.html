@@ -155,6 +155,37 @@ async function buyProduct(index){
     alert("Payment failed");
   }
 }
+  // LOAD PRODUCTS
+  async function loadProducts(){
+  const res = await fetch('http://127.0.0.1:3000/products');
+  const data = await res.json();
+
+  let container = document.getElementById("products");
+  container.innerHTML = "";
+
+  data.products.forEach(p => {
+    container.innerHTML += `
+      <div>
+        <h3>${p.name}</h3>
+        <p>₦${p.price}</p>
+        <button onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button>
+      </div>
+    `;
+  });
+        }
+  // ADD PRODUCTS (ADMIN):
+  async function addProduct(){
+  let name = prompt("Product name");
+  let price = prompt("Price");
+
+  await fetch('http://127.0.0.1:3000/add-product', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name, price })
+  });
+
+  loadProducts();
+     }
 </script>
 <a href="../marketplace.html">
 ‎<button>Back to Marketplace</button>
