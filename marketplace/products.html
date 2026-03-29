@@ -25,6 +25,7 @@
 <script>
 // ✅ Ensure user exists
 let currentUser = localStorage.getItem("piUser");
+
 if(!currentUser){
   currentUser = "seller1";
   localStorage.setItem("piUser", currentUser);
@@ -35,61 +36,7 @@ Pi.init({
   version: "2.0",
   sandbox: true,
   apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
-});
-
-  let container = document.getElementById("productList");
-  container.innerHTML = "";
-
-  allProducts.forEach(function(product, index){
-
-    let card = document.createElement("div");
-    card.className = "card";
-
-    // ✅ FIX IMAGE (handles both base64 + sample images)
-    let imgSrc = product.image.startsWith("data:")
-      ? product.image
-      : "images/" + product.image;
-
-    // ✅ Delete button (ONLY seller)
-    let deleteBtn = "";
-    if(index >= 2 && product.sellerUsername === currentUser){
-      deleteBtn = `
-        <button onclick="deleteProduct(${index})"
-        style="background:red;color:white;margin-top:10px;">
-        Delete
-        </button>
-      `;
-    }
-
-    card.innerHTML = `
-      <img src="${imgSrc}" style="width:100%; border-radius:10px;">
-      <h3>${product.name}</h3>
-      <p>${product.desc}</p>
-      <p><b>$${product.priceUSD}</b> | ${product.pricePi} π</p>
-
-      <button onclick="buyProduct(${index})"
-      style="background:#00bfff;color:white;margin-top:10px;">
-      Buy Now
-      </button>
-
-      ${deleteBtn}
-    `;
-
-    container.appendChild(card);
-  });
-
-});
-
-// 🗑 Delete product
-function deleteProduct(index){
-  let uploadedProducts = JSON.parse(localStorage.getItem("products")) || [];
-
-  uploadedProducts.splice(index-2, 1);
-
-  localStorage.setItem("products", JSON.stringify(uploadedProducts));
-
-  location.reload();
-}
+})
 
 // ✅ LOAD PRODUCT FROM BACKEND
 
