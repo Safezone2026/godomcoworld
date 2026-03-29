@@ -10,6 +10,9 @@
 <body>
 
 <header>
+  <div style="position:absolute; right:20px; top:10px;">
+  <button onclick="goToCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
+  </div>
   <div class="logo">Marketplace Products</div>
   <a href="marketplace.html"><button>Back</button></a>
 </header>
@@ -86,11 +89,24 @@ function addToCart(product){
 
   localStorage.setItem("cart", JSON.stringify(cart));
 
+  updateCartCount(); // 🔥 UPDATE ICON
+
   alert("Added to cart");
 }
 
 // RUN
 window.onload = loadProducts;
+  function updateCartCount(){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  document.getElementById("cartCount").innerText = cart.length;
+}
+
+function goToCart(){
+  window.location.href = "cart.html";
+}
+
+// Run on load
+updateCartCount();
 
 </script>
 
