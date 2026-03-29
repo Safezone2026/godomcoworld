@@ -40,6 +40,12 @@ input, select {
 <h3 id="shippingFee"></h3>
 <h3 id="platformFee"></h3>
 <h2 id="total"></h2>
+  <button onclick="calculateTotal()">🧮 Calculate Total</button>
+
+<div id="paymentButtons" style="display:none; margin-top:15px;">
+  <button onclick="payWithFiat()">💵 Pay with Fiat</button>
+  <button onclick="payWithPi()">🪙 Pay with Pi</button>
+</div>
 
 <button onclick="checkout()">💳 Pay Now</button>
 
@@ -63,71 +69,101 @@ cart.forEach(item => {
   `;
 });
 
-// 💰 FEES
+// 💱 GLOBAL VALUES
+let totalNaira = 0;
+let totalUSD = 0;
+let totalPi = 0;
+
+// 💰 CALCULATE
 function calculateTotal(){
 
   let shipping = Number(document.getElementById("shipping").value);
+  let platformFee = subtotal * 0.05;
 
-  let platformFee = subtotal * 0.05; // 5%
+  totalNaira = subtotal + shipping + platformFee;
 
-  let total = subtotal + shipping + platformFee;
+  // 🔥 CONVERSION (EDIT RATE IF NEEDED)
+  let nairaToUSD = 1500;     // ₦1500 = $1
+  let piRate = 314159;       // 1 Pi = $314,159
+
+  totalUSD = totalNaira / nairaToUSD;
+  totalPi = totalUSD / piRate;
 
   document.getElementById("subtotal").innerText = "Subtotal: ₦" + subtotal;
   document.getElementById("shippingFee").innerText = "Shipping: ₦" + shipping;
-  document.getElementById("platformFee").innerText = "Platform Fee (5%): ₦" + platformFee.toFixed(2);
-  document.getElementById("total").innerText = "Total: ₦" + total.toFixed(2);
+  document.getElementById("platformFee").innerText = "Platform Fee: ₦" + platformFee.toFixed(2);
 
-  return { total, shipping, platformFee };
+  document.getElementById("total").innerHTML = `
+    Total: ₦${totalNaira.toFixed(2)} <br>
+    ≈ $${totalUSD.toFixed(2)} <br>
+    ≈ ${totalPi.toFixed(8)} π
+  `;
+
+  // ✅ SHOW PAYMENT BUTTONS
+  document.getElementById("paymentButtons").style.display = "block";
 }
 
-// Run initially
-calculateTotal();
+// 💳 PAY WITH FIAT
+async function payWithFiat(){
 
-// Update when shipping changes
-document.getElementById("shipping").addEventListener("change", calculateTotal);
+  let fiat = Number(localStorage.getItem("fiat_balance")) || 0;
 
-
-// 💳 CHECKOUT
-async function checkout(){
-
-  let name = document.getElementById("name").value;
-  let phone = document.getElementById("phone").value;
-  let address = document.getElementById("address").value;
-
-  if(!name || !phone || !address){
-    alert("Please fill all details");
+  if(fiat < totalNaira){
+    alert("Insufficient Fiat balance");
     return;
   }
 
-  let { total, shipping, platformFee } = calculateTotal();
+  fiat -= totalNaira;
+
+  localStorage.setItem("fiat_balance", fiat);
+
+  completeCheckout("Fiat");
+}
+
+// 🪙 PAY WITH PI
+async function payWithPi(){
+
+  let pi = Number(localStorage.getItem("pi_balance")) || 0;
+
+  if(pi < totalPi){
+    alert("Insufficient Pi balance");
+    return;
+  }
+
+  pi -= totalPi;
+
+  localStorage.setItem("pi_balance", pi);
+
+  completeCheckout("Pi");
+}
+
+// ✅ FINALIZE
+async function completeCheckout(method){
 
   try {
 
-    const res = await fetch('http://127.0.0.1:3000/checkout', {
+    await fetch('http://127.0.0.1:3000/checkout', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        user: localStorage.getItem("piUser"),
+        method: method,
+        totalNaira: totalNaira,
+        totalUSD: totalUSD,
+        totalPi: totalPi,
         cart: cart,
-        subtotal: subtotal,
-        shipping: shipping,
-        platformFee: platformFee,
-        total: total,
-        buyer: { name, phone, address }
+        user: localStorage.getItem("piUser")
       })
     });
 
-    const data = await res.json();
+    alert("Payment successful with " + method);
 
-    alert("Payment successful!");
-
-    // 🧾 SAVE HISTORY
+    // SAVE HISTORY
     let history = JSON.parse(localStorage.getItem("history")) || [];
 
     history.push({
       items: cart,
-      total: total,
-      buyer: { name, phone, address },
+      total: totalNaira,
+      method: method,
       date: new Date().toLocaleString()
     });
 
@@ -139,9 +175,8 @@ async function checkout(){
 
   } catch(err){
     alert("Payment failed");
-    console.error(err);
   }
-}
+  }
 
 </script>
 
