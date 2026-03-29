@@ -92,20 +92,19 @@ function deleteProduct(index){
 }
 
 // ✅ LOAD PRODUCT FROM BACKEND
+
 async function loadProducts(){
   try {
     const res = await fetch('http://127.0.0.1:3000/products');
     const data = await res.json();
 
+    console.log("Loaded:", data); // 🔥 DEBUG
+
     let container = document.getElementById("productList");
     container.innerHTML = "";
 
-    if(!data.products || data.products.length === 0){
-      container.innerHTML = "<p>No products available</p>";
-      return;
-    }
-
     data.products.forEach((p) => {
+
       container.innerHTML += `
         <div class="card">
           <h3>${p.name}</h3>
@@ -119,17 +118,17 @@ async function loadProducts(){
     });
 
   } catch(err){
-    console.error(err);
-    alert("Error loading products");
+    console.error("ERROR:", err);
+    alert("Failed to load products");
   }
 }
 
-// ADD TO CART (WITH SELLER PROTECTION)
+// ✅ SELLER RESTRICTION + CART
 function addToCart(product){
 
   let currentUser = localStorage.getItem("piUser");
 
-  if(product.sellerUsername && product.sellerUsername === currentUser){
+  if(product.sellerUsername === currentUser){
     alert("You cannot add your own product!");
     return;
   }
@@ -143,37 +142,10 @@ function addToCart(product){
   alert("Added to cart");
 }
 
-// 🔥 ADD PRODUCT (ADMIN / SELLER)
-async function addProduct(){
-
-  let currentUser = localStorage.getItem("piUser");
-
-  let name = prompt("Product name:");
-  let price = prompt("Price:");
-
-  if(!name || !price){
-    alert("Invalid input");
-    return;
-  }
-
-  await fetch('http://127.0.0.1:3000/add-product', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      name,
-      price,
-      sellerUsername: currentUser // ✅ VERY IMPORTANT
-    })
-  });
-
-  alert("Product added!");
-  loadProducts();
-}
-
-// AUTO LOAD
+// RUN
 window.onload = loadProducts;
 
-</script> 
+</script>
 
 <a href="../marketplace.html">
 ‎<button>Back to Marketplace</button>
