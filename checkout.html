@@ -1,150 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Checkout - Godomcoworld</title>
-
+<title>Checkout</title>
 <link rel="stylesheet" href="../css/style.css">
-
 <style>
-body{
-  background:#0d0d0d;
-  color:white;
-  font-family:Arial;
-}
-
-.container{
-  padding:20px;
-}
-
-input{
+input, select {
   width:100%;
-  padding:12px;
-  margin-top:5px;
+  padding:10px;
+  margin:5px 0;
   border-radius:8px;
   border:none;
-  background:#1a1a1a;
-  color:white;
-}
-
-input::placeholder{
-  color:#aaa;
-}
-
-button{
-  padding:12px;
-  width:100%;
-  border:none;
-  border-radius:8px;
-  background:#00bcd4;
-  color:white;
-  font-size:16px;
-  cursor:pointer;
-}
-
-.summary{
-  background:#111;
-  padding:15px;
-  border-radius:10px;
-  margin-top:20px;
 }
 </style>
-
 </head>
 
 <body>
 
-<header>
-  <div class="logo">
-  <img src="/images/logo.png" alt="Godomcoworld Logo" class="app-logo">
-  </div>
-</header>
+<h2>🛒 Checkout</h2>
 
-<div class="container">
+<!-- 👤 BUYER FORM -->
+<h3>Buyer Details</h3>
+<input type="text" id="name" placeholder="Full Name">
+<input type="text" id="phone" placeholder="Phone Number">
+<input type="text" id="address" placeholder="Delivery Address">
 
-<h2>Checkout</h2>
+<!-- 🚚 SHIPPING -->
+<h3>Shipping Method</h3>
+<select id="shipping">
+  <option value="1000">Standard Delivery - ₦1000</option>
+  <option value="2000">Express Delivery - ₦2000</option>
+</select>
 
-<input type="text" id="name" placeholder="Full Name"><br><br>
-<input type="text" id="street" placeholder="Street Address"><br><br>
-<input type="text" id="phone" placeholder="Phone Number"><br><br>
-<input type="email" id="email" placeholder="Email Address"><br><br>
+<hr>
 
-<div class="summary">
-  <h3>Order Summary</h3>
+<!-- 🛒 CART -->
+<div id="cartItems"></div>
 
-  <p id="productPrice"></p>
-  <p id="shippingFee"></p>
-  <p id="platformFee"></p>
-  <p><strong id="total"></strong></p>
-</div>
+<h3 id="subtotal"></h3>
+<h3 id="shippingFee"></h3>
+<h3 id="platformFee"></h3>
+<h2 id="total"></h2>
 
-<br>
-
-<button onclick="checkout()">Pay Now</button>
-
-</div>
-
-<!-- PI SDK (for future payment integration) -->
-<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<button onclick="checkout()">💳 Pay Now</button>
 
 <script>
 
-// GET PRODUCT PRICE
-let productPrice = localStorage.getItem("cart_price") || 0;
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-// SHIPPING
-let shipping = 5;
+let container = document.getElementById("cartItems");
 
-// PLATFORM FEE (5%)
-let platformFee = productPrice * 0.05;
+let subtotal = 0;
 
-// TOTAL
-let total = Number(productPrice) + shipping + platformFee;
+// 🛒 LOAD CART
+cart.forEach(item => {
+  subtotal += Number(item.price);
 
-// DISPLAY
-document.getElementById("productPrice").innerText = "Product: $" + productPrice;
-document.getElementById("shippingFee").innerText = "Shipping: $" + shipping;
-document.getElementById("platformFee").innerText = "Service Fee: $" + platformFee.toFixed(2);
-document.getElementById("total").innerText = "Total: $" + total.toFixed(2);
+  container.innerHTML += `
+    <div>
+      <h4>${item.name}</h4>
+      <p>₦${item.price}</p>
+    </div>
+  `;
+});
 
-// CHECKOUT FUNCTION
-function checkout(){
+// 💰 FEES
+function calculateTotal(){
 
-let name = document.getElementById("name").value;
-let street = document.getElementById("street").value;
-let phone = document.getElementById("phone").value;
-let email = document.getElementById("email").value;
+  let shipping = Number(document.getElementById("shipping").value);
 
-if(name === "" || street === "" || phone === "" || email === ""){
-  alert("Please fill all details");
-  return;
+  let platformFee = subtotal * 0.05; // 5%
+
+  let total = subtotal + shipping + platformFee;
+
+  document.getElementById("subtotal").innerText = "Subtotal: ₦" + subtotal;
+  document.getElementById("shippingFee").innerText = "Shipping: ₦" + shipping;
+  document.getElementById("platformFee").innerText = "Platform Fee (5%): ₦" + platformFee.toFixed(2);
+  document.getElementById("total").innerText = "Total: ₦" + total.toFixed(2);
+
+  return { total, shipping, platformFee };
 }
 
-// SAVE ORDER DETAILS
-localStorage.setItem("order_name", name);
-localStorage.setItem("order_address", street);
-localStorage.setItem("order_phone", phone);
-localStorage.setItem("order_email", email);
-localStorage.setItem("order_total", total);
-localStorage.setItem("order_status", "paid");
-localStorage.setItem("platform_fee", platformFee); 
+// Run initially
+calculateTotal();
 
-alert("Payment successful!");
+// Update when shipping changes
+document.getElementById("shipping").addEventListener("change", calculateTotal);
 
-// REDIRECT (optional)
-window.location.href = "success.html";
 
+// 💳 CHECKOUT
+async function checkout(){
+
+  let name = document.getElementById("name").value;
+  let phone = document.getElementById("phone").value;
+  let address = document.getElementById("address").value;
+
+  if(!name || !phone || !address){
+    alert("Please fill all details");
+    return;
+  }
+
+  let { total, shipping, platformFee } = calculateTotal();
+
+  try {
+
+    const res = await fetch('http://127.0.0.1:3000/checkout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        user: localStorage.getItem("piUser"),
+        cart: cart,
+        subtotal: subtotal,
+        shipping: shipping,
+        platformFee: platformFee,
+        total: total,
+        buyer: { name, phone, address }
+      })
+    });
+
+    const data = await res.json();
+
+    alert("Payment successful!");
+
+    // 🧾 SAVE HISTORY
+    let history = JSON.parse(localStorage.getItem("history")) || [];
+
+    history.push({
+      items: cart,
+      total: total,
+      buyer: { name, phone, address },
+      date: new Date().toLocaleString()
+    });
+
+    localStorage.setItem("history", JSON.stringify(history));
+
+    localStorage.removeItem("cart");
+
+    window.location.href = "history.html";
+
+  } catch(err){
+    alert("Payment failed");
+    console.error(err);
+  }
 }
 
 </script>
-  <script>
-document.querySelectorAll(".logo").forEach(el => {
-  el.innerHTML = '<img src="/images/logo.png" class="app-logo">';
-});
-  </script>
 
 </body>
-  </html>
+</html>
