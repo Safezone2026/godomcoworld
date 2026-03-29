@@ -100,6 +100,9 @@ async function loadBalance(){
     // ✅ Update Pi
     document.getElementById("piBalance").innerText =
       Number(user.walletPi).toFixed(6) + " π";
+    // ✅ Sync backend → localStorage
+localStorage.setItem("fiat_balance", user.walletFiat);
+localStorage.setItem("pi_balance", user.walletPi);
 
   } catch (err) {
     console.error("FULL ERROR:", err);
@@ -110,9 +113,7 @@ async function loadBalance(){
 function withdrawFiat(){
 let amount = prompt("Enter amount to withdraw:");
 
-if(amount > fiat){
-  alert("Insufficient balance");
-  return;
+  let fiat = parseFloat(localStorage.getItem("fiat_balance")) || 0;
 }
 
 fiat -= amount;
@@ -123,9 +124,7 @@ location.reload();
 function sendPi(){
 let amount = prompt("Enter Pi to send:");
 
-if(amount > pi){
-  alert("Insufficient Pi balance");
-  return;
+  let pi = parseFloat(localStorage.getItem("pi_balance")) || 0;
 }
 
 pi -= amount;
@@ -165,18 +164,13 @@ function showQRCode(){
 // Load saved wallet on page load
 window.onload = function(){
 
-  // Load wallet address
-  let saved = localStorage.getItem("pi_address");
-  if(saved){
-    document.getElementById("pi-address").innerText = saved;
-  }
-  window.onload = function(){
   loadBalance();
 
   let saved = localStorage.getItem("pi_address");
   if(saved){
     document.getElementById("pi-address").innerText = saved;
   }
+
   }
 
   // 🔥 Load real balance from backend
