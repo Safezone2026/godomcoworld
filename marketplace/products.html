@@ -95,7 +95,7 @@ function deleteProduct(index){
 
 async function loadProducts(){
   try {
-    const res = await fetch('http://127.0.0.1:3000/products');
+    const res = await fetch('http://10.11.173.37:3000/products')
     const data = await res.json();
 
     console.log("Loaded:", data); // 🔥 DEBUG
