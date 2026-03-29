@@ -74,37 +74,19 @@ button{
 <script>
 
 // LOAD BALANCES
-async function loadBalance(){
-  try {
-    console.log("Loading balance...");
+function loadBalance(){
 
-    const res = await fetch('http://127.0.0.1:3000/users');
-    const data = await res.json();
+  let fiat = parseFloat(localStorage.getItem("fiat_balance")) || 0;
+  let pi = parseFloat(localStorage.getItem("pi_balance")) || 0;
 
-    console.log("API DATA:", data);
+  document.getElementById("fiatBalance").innerText =
+    "₦" + fiat.toLocaleString();
 
-    if(!data.users || data.users.length === 0){
-      throw new Error("No users found");
-    }
-
-    const user = data.users.find(u => u.id === 1);
-
-    if(!user){
-      throw new Error("User not found");
-    }
-
-    // ✅ Update Fiat
-    document.getElementById("fiatBalance").innerText =
-      "₦" + Number(user.walletFiat).toLocaleString();
-
-    // ✅ Update Pi
-    document.getElementById("piBalance").innerText =
-      Number(user.walletPi).toFixed(6) + " π";
-    // ✅ Sync backend → localStorage
-localStorage.setItem("fiat_balance", user.walletFiat);
-localStorage.setItem("pi_balance", user.walletPi);
-
-  } catch (err) {
+  document.getElementById("piBalance").innerText =
+    pi.toFixed(6) + " π";
+}
+  
+  catch (err) {
     console.error("FULL ERROR:", err);
     alert("Failed to load balance from server");
   }
@@ -172,8 +154,7 @@ window.onload = function(){
   }
 
   }
-
-  // 🔥 Load real balance from backend
+  
   loadBalance();
   }
 
