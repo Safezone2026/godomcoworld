@@ -181,6 +181,70 @@ async function completeCheckout(method){
     alert("Payment failed");
   }
   }
+  // 🔥 BACKEND PAYMENT FUNCTION (WORKS FOR BOTH PI & FIAT)
+async function payWithBackend(type) {
+    // Get the last calculated amount
+    let key = type === "Pi" ? "last_amount_pi" : "last_amount_local";
+let amount = parseFloat(localStorage.getItem(key));
+
+if (!amount || isNaN(amount)) {
+    alert("Please click Calculate first!");
+    return;
+}
+
+    const userId = 1; // Example/mock user ID
+
+    try {
+        const response = await fetch("http://127.0.0.1:3000/pay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, amount, type })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`${type} payment successful!`);
+
+            // Update the displayed balance
+            if (type === "Pi") {
+                document.getElementById("pi-balance").innerText = data.newBalance.toFixed(8);
+            } else {
+                document.getElementById("fiat-balance").innerText = data.newBalance.toFixed(2);
+            }
+        } else {
+            alert(`Payment failed: ${data.message}`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error connecting to backend. Make sure Termux server is running!");
+    }
+}
+
+// Convenience buttons
+function payWithPi() { payWithBackend("Pi"); }
+function payWithFiat() { payWithBackend("Fiat"); }
+  
+  async function loadBalances() {
+  try {
+    const res = await fetch('http://127.0.0.1:3000/users');
+    const data = await res.json();
+
+    const user = data.users.find(u => u.id === 1);
+
+    if (user) {
+      document.getElementById("pi-balance").innerText = user.walletPi.toFixed(8);
+      document.getElementById("fiat-balance").innerText = user.walletFiat.toFixed(2);
+    }
+
+  } catch (err) {
+    console.error("Error loading balances:", err);
+  }
+}
+
+// Run when page loads
+window.onload = loadBalances();
+  
 
 </script>
 
