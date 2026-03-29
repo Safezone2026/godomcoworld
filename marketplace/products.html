@@ -18,10 +18,7 @@
   <h2>Available Products</h2>
   <div class="course-grid" id="productList"></div>
 </div>
-
-<a href="marketplace.html">
-  <button>Back to Marketplace</button>
-</a>
+  <button onclick="addProduct()">➕ Add Product</button>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
@@ -94,50 +91,46 @@ function deleteProduct(index){
   location.reload();
 }
 
-// ✅ LOAD FROM BACKEND
+// ✅ LOAD PRODUCT FROM BACKEND
 async function loadProducts(){
+  try {
+    const res = await fetch('http://127.0.0.1:3000/products');
+    const data = await res.json();
 
-  const res = await fetch('http://127.0.0.1:3000/products');
-  const data = await res.json();
+    let container = document.getElementById("productList");
+    container.innerHTML = "";
 
-  let container = document.getElementById("productList"); // ✅ CORRECT ID
-  container.innerHTML = "";
+    if(!data.products || data.products.length === 0){
+      container.innerHTML = "<p>No products available</p>";
+      return;
+    }
 
-  data.products.forEach((p, index) => {
+    data.products.forEach((p) => {
+      container.innerHTML += `
+        <div class="card">
+          <h3>${p.name}</h3>
+          <p>₦${p.price}</p>
 
-    container.innerHTML += `
-      <div class="card">
-        <h3>${p.name}</h3>
-        <p>₦${p.price}</p>
+          <button onclick='addToCart(${JSON.stringify(p)})'>
+            🛒 Add to Cart
+          </button>
+        </div>
+      `;
+    });
 
-        <button onclick='addToCart(${JSON.stringify(p)})'>
-          Add to Cart
-        </button>
-      </div>
-    `;
-  });
-
+  } catch(err){
+    console.error(err);
+    alert("Error loading products");
+  }
 }
-  // ADD PRODUCTS (ADMIN):
-  async function addProduct(){
-  let name = prompt("Product name");
-  let price = prompt("Price");
 
-  await fetch('http://127.0.0.1:3000/add-product', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ name, price })
-  });
-window.onload =loadProducts();
-     }
-  // ADD TO 🛒
-  function addToCart(product){
+// ADD TO CART (WITH SELLER PROTECTION)
+function addToCart(product){
 
   let currentUser = localStorage.getItem("piUser");
 
-  // 🚫 Prevent buying own product
   if(product.sellerUsername && product.sellerUsername === currentUser){
-    alert("You cannot add your own product to cart!");
+    alert("You cannot add your own product!");
     return;
   }
 
@@ -148,8 +141,40 @@ window.onload =loadProducts();
   localStorage.setItem("cart", JSON.stringify(cart));
 
   alert("Added to cart");
+}
+
+// 🔥 ADD PRODUCT (ADMIN / SELLER)
+async function addProduct(){
+
+  let currentUser = localStorage.getItem("piUser");
+
+  let name = prompt("Product name:");
+  let price = prompt("Price:");
+
+  if(!name || !price){
+    alert("Invalid input");
+    return;
   }
-</script>
+
+  await fetch('http://127.0.0.1:3000/add-product', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      name,
+      price,
+      sellerUsername: currentUser // ✅ VERY IMPORTANT
+    })
+  });
+
+  alert("Product added!");
+  loadProducts();
+}
+
+// AUTO LOAD
+window.onload = loadProducts;
+
+</script> 
+
 <a href="../marketplace.html">
 ‎<button>Back to Marketplace</button>
 ‎</a>
