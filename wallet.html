@@ -72,12 +72,11 @@ button{
 </main>
 
 <script>
+  let fiat = parseFloat(localStorage.getItem("fiat_balance")) || 0;
+let pi = parseFloat(localStorage.getItem("pi_balance")) || 0;
 
 // LOAD BALANCES
 function loadBalance(){
-
-  let fiat = parseFloat(localStorage.getItem("fiat_balance")) || 0;
-  let pi = parseFloat(localStorage.getItem("pi_balance")) || 0;
 
   document.getElementById("fiatBalance").innerText =
     "₦" + fiat.toLocaleString();
@@ -85,34 +84,58 @@ function loadBalance(){
   document.getElementById("piBalance").innerText =
     pi.toFixed(6) + " π";
 }
-  
-  catch (err) {
-    console.error("FULL ERROR:", err);
-    alert("Failed to load balance from server");
+  function depositFiat(){
+  let amount = prompt("Enter amount to deposit (₦):");
+
+  if(!amount) return;
+
+  fiat += parseFloat(amount);
+
+  localStorage.setItem("fiat_balance", fiat);
+
+  loadBalance(); // 🔥 update instantly
   }
+  function depositPi(){
+  let amount = prompt("Enter Pi amount:");
+
+  if(!amount) return;
+
+  pi += parseFloat(amount);
+
+  localStorage.setItem("pi_balance", pi);
+
+  loadBalance(); // 🔥 update instantly
   }
 
 function withdrawFiat(){
-let amount = prompt("Enter amount to withdraw:");
+  let amount = prompt("Enter amount to withdraw:");
 
-  let fiat = parseFloat(localStorage.getItem("fiat_balance")) || 0;
-}
+  if(amount > fiat){
+    alert("Insufficient balance");
+    return;
+  }
 
-fiat -= amount;
-localStorage.setItem("fiat_balance", fiat);
-location.reload();
-}
+  fiat -= amount;
+
+  localStorage.setItem("fiat_balance", fiat);
+
+  loadBalance();
+    }
 
 function sendPi(){
-let amount = prompt("Enter Pi to send:");
+  let amount = prompt("Enter Pi to send:");
 
-  let pi = parseFloat(localStorage.getItem("pi_balance")) || 0;
-}
+  if(amount > pi){
+    alert("Insufficient Pi balance");
+    return;
+  }
 
-pi -= amount;
-localStorage.setItem("pi_balance", pi);
-location.reload();
-}
+  pi -= amount;
+
+  localStorage.setItem("pi_balance", pi);
+
+  loadBalance();
+  }
 // CONNECT WALLET 
 
 function connectWallet(){
@@ -153,9 +176,6 @@ window.onload = function(){
     document.getElementById("pi-address").innerText = saved;
   }
 
-  }
-  
-  loadBalance();
   }
 
 </script>
