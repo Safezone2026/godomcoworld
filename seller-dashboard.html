@@ -10,20 +10,23 @@
 
 <h3 id="user"></h3>
 <h1 id="earnings">₦0</h1>
-
 <script>
 
-let currentUser = localStorage.getItem("piUser");
+async function loadEarnings(){
 
-document.getElementById("user").innerText =
-  "User: " + currentUser;
+  let user = localStorage.getItem("piUser");
 
-let sellers = JSON.parse(localStorage.getItem("sellers")) || {};
+  const res = await fetch('http://127.0.0.1:3000/sellers');
+  const data = await res.json();
 
-let earnings = sellers[currentUser] || 0;
+  let earnings = data.sellers[user] || 0;
 
-document.getElementById("earnings").innerText =
-  "₦" + earnings.toFixed(2);
+  document.getElementById("earnings").innerText =
+    "₦" + earnings.toFixed(2);
+
+}
+
+window.onload = loadEarnings;
 
 </script>
 
