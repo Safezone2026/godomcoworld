@@ -43,30 +43,40 @@ async function loadHistory(){
   try {
 
     const res = await fetch('http://127.0.0.1:3000/orders');
+    const data = await res.json();
 
-    console.log("STATUS:", res.status);
+    console.log("History:", data);
 
-    const text = await res.text();
-    console.log("RAW RESPONSE:", text);
+    let container = document.getElementById("historyContainer");
+    container.innerHTML = "";
 
-    const data = JSON.parse(text);
-
-    console.log("PARSED:", data);
-
-    let container = document.getElementById("productList") || document.body;
-    container.innerHTML = "<h2>🧾 Transaction History</h2>";
+    if(!data.orders || data.orders.length === 0){
+      container.innerHTML = "<p>No transactions yet</p>";
+      return;
+    }
 
     data.orders.forEach(order => {
+
       container.innerHTML += `
-        <div>
-          <p>${order.user}</p>
-          <p>₦${order.total}</p>
+        <div class="card">
+          <h3>🧾 Order</h3>
+          <p><b>User:</b> ${order.user}</p>
+          <p><b>Total:</b> ₦${order.total}</p>
+          <p><b>Method:</b> ${order.method}</p>
+          <p><b>Date:</b> ${order.date}</p>
+
+          <h4>Items:</h4>
+          ${order.items.map(item => `
+            <p>• ${item.name} - ₦${item.price}</p>
+          `).join("")}
+
+          <hr>
         </div>
       `;
     });
 
   } catch(err){
-    console.error("FULL ERROR:", err);
+    console.error("ERROR:", err);
     alert("Failed to load history");
   }
 }
