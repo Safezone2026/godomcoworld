@@ -163,15 +163,34 @@ async function completeCheckout(method){
 
     // SAVE HISTORY
     let history = JSON.parse(localStorage.getItem("history")) || [];
+let sellers = JSON.parse(localStorage.getItem("sellers")) || {};
 
-    history.push({
-      items: cart,
-      total: totalNaira,
-      method: method,
-      date: new Date().toLocaleString()
-    });
+// LOOP THROUGH CART
+cart.forEach(item => {
 
-    localStorage.setItem("history", JSON.stringify(history));
+  let seller = item.sellerUsername || "unknown";
+
+  let sellerAmount = item.price * 0.95; // 95% to seller
+
+  if(!sellers[seller]){
+    sellers[seller] = 0;
+  }
+
+  sellers[seller] += sellerAmount;
+});
+
+// SAVE SELLER EARNINGS
+localStorage.setItem("sellers", JSON.stringify(sellers));
+
+// SAVE TRANSACTION HISTORY
+history.push({
+  items: cart,
+  total: totalNaira,
+  method: method,
+  date: new Date().toLocaleString()
+});
+
+localStorage.setItem("history", JSON.stringify(history));
 
     localStorage.removeItem("cart");
 
