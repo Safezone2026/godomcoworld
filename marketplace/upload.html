@@ -25,56 +25,53 @@
   <input type="number" id="productPrice" placeholder="Price (USD)"><br><br>
   
   <button onclick="uploadProduct()">Upload Product</button>
-</div>
+ <script>
 
-<script>
-  // Current logged-in seller
-  let currentUser = localStorage.getItem("piUser") || "seller1"; // replace with real login
+function uploadProduct(){
 
-  function uploadProduct() {
-    const name = document.getElementById("productName").value.trim();
-    const desc = document.getElementById("productDesc").value.trim();
-    const priceUSD = parseFloat(document.getElementById("productPrice").value);
-    const imageInput = document.getElementById("productImage");
+  let name = document.getElementById("name").value;
+  let price = document.getElementById("price").value;
+  let file = document.getElementById("image").files[0];
 
-    if(!name || !desc || !priceUSD || !imageInput.files.length){
-      alert("Please fill all fields and select an image");
-      return;
-    }
+  let sellerUsername = localStorage.getItem("piUser") || "seller1";
 
-    // Convert image file to Base64 for localStorage
-    const reader = new FileReader();
-    reader.onload = function(event){
-      const imageData = event.target.result;
-      
-      // Convert USD to Pi
-      const pricePi = (priceUSD / 314159).toFixed(8); // 8 decimals
-
-      // Get existing products
-      let products = JSON.parse(localStorage.getItem("products")) || [];
-
-      // Add new product
-      products.push({
-        name: name,
-        desc: desc,
-        image: imageData,
-        priceUSD: priceUSD.toFixed(2),
-        pricePi: pricePi,
-        sellerUsername: currentUser
-      });
-
-      // Save to localStorage
-      localStorage.setItem("products", JSON.stringify(products));
-
-      alert("Product uploaded successfully!");
-
-      // Redirect to products page
-      window.location.href = "products.html";
-    };
-
-    reader.readAsDataURL(imageInput.files[0]);
+  if(!name || !price || !file){
+    alert("Fill all fields including image");
+    return;
   }
-</script>
+
+  let reader = new FileReader();
+
+  reader.onload = function(){
+
+    let base64Image = reader.result;
+
+    fetch('http://127.0.0.1:3000/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        price: Number(price),
+        sellerUsername,
+        image: base64Image // 🔥 IMAGE SAVED HERE
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert("Product uploaded with image!");
+      window.location.href = "products.html";
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Upload failed");
+    });
+
+  };
+
+  reader.readAsDataURL(file); // 🔥 converts to base64
+}
+
+ </script> 
 
 </body>
 </html>
