@@ -40,32 +40,33 @@
 <script>
 
 async function loadHistory(){
-
   try {
 
     const res = await fetch('http://127.0.0.1:3000/orders');
-    const data = await res.json();
 
-    let container = document.body;
+    console.log("STATUS:", res.status);
+
+    const text = await res.text();
+    console.log("RAW RESPONSE:", text);
+
+    const data = JSON.parse(text);
+
+    console.log("PARSED:", data);
+
+    let container = document.getElementById("productList") || document.body;
     container.innerHTML = "<h2>🧾 Transaction History</h2>";
 
     data.orders.forEach(order => {
-
-      let items = order.items.map(i => i.name).join(", ");
-
       container.innerHTML += `
         <div>
-          <h3>${order.user}</h3>
-          <p>${items}</p>
+          <p>${order.user}</p>
           <p>₦${order.total}</p>
-          <p>${order.method}</p>
-          <small>${order.date}</small>
-          <hr>
         </div>
       `;
     });
 
   } catch(err){
+    console.error("FULL ERROR:", err);
     alert("Failed to load history");
   }
 }
