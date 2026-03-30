@@ -39,31 +39,38 @@
 
 <script>
 
-let history = JSON.parse(localStorage.getItem("transactions") || "[]");
+async function loadHistory(){
 
-let container = document.getElementById("historyContainer");
+  try {
 
-if(history.length === 0){
-container.innerHTML = `<p class="empty">No transactions yet</p>`;
-} else {
+    const res = await fetch('http://127.0.0.1:3000/orders');
+    const data = await res.json();
 
-// SHOW LATEST FIRST
-history.reverse().forEach(tx => {
+    let container = document.body;
+    container.innerHTML = "<h2>🧾 Transaction History</h2>";
 
-container.innerHTML += `
-<div class="card">
+    data.orders.forEach(order => {
 
-<p><strong>Type:</strong> ${tx.type}</p>
-<p><strong>Amount:</strong> ${tx.amount}</p>
-<p><strong>Date:</strong> ${tx.date}</p>
-<p class="success"><strong>Status:</strong> ${tx.status || "SUCCESS"}</p>
+      let items = order.items.map(i => i.name).join(", ");
 
-</div>
-`;
+      container.innerHTML += `
+        <div>
+          <h3>${order.user}</h3>
+          <p>${items}</p>
+          <p>₦${order.total}</p>
+          <p>${order.method}</p>
+          <small>${order.date}</small>
+          <hr>
+        </div>
+      `;
+    });
 
-});
-
+  } catch(err){
+    alert("Failed to load history");
+  }
 }
+
+window.onload = loadHistory;
 
 </script>
 
