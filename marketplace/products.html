@@ -17,11 +17,17 @@
   <a href="marketplace.html"><button>Back</button></a>
 </header>
 
-<div class="container">
-  <h2>Available Products</h2>
-  <div class="course-grid" id="productList"></div>
-</div>
-  <button onclick="addProduct()">➕ Add Product</button>
+container.innerHTML += `
+  <div class="card">
+    <img src="${p.image}" style="width:100%; border-radius:10px;">
+    <h3>${p.name}</h3>
+    <p>₦${p.price}</p>
+
+    <button onclick='addToCart(${JSON.stringify(p)})'>
+      🛒 Add to Cart
+    </button>
+  </div>
+`;
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
