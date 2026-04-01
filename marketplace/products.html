@@ -5,124 +5,248 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marketplace Products</title>
 <link rel="stylesheet" href="../css/style.css">
+<style>
+  #productList { display: flex; flex-wrap: wrap; gap: 10px; }
+  .product-card { border: 1px solid #ccc; padding: 10px; width: 200px; display: flex; flex-direction: column; align-items: center; }
+  .product-card img { width: 180px; height: 180px; object-fit: cover; margin-bottom: 5px; }
+  .product-card button { margin-top: 5px; cursor: pointer; }
+  #cartList div { margin-bottom: 5px; }
+</style>
 </head>
-
 <body>
 
 <header>
   <div style="position:absolute; right:20px; top:10px;">
-  <button onclick="goToCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
+    <button onclick="goToCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
   </div>
   <div class="logo">Marketplace Products</div>
   <a href="marketplace.html"><button>Back</button></a>
 </header>
 
-container.innerHTML += `
-  <div class="card">
-    <img src="${p.image}" style="width:100%; border-radius:10px;">
-    <h3>${p.name}</h3>
-    <p>₦${p.price}</p>
+<!-- ======================= -->
+<!-- Product Upload Form (Seller only) -->
+<!-- ======================= -->
+<form id="productForm" style="display:none;">
+  <h2>Add New Product</h2>
+  <input type="text" name="name" placeholder="Product Name" required />
+  <input type="text" name="description" placeholder="Description" required />
+  <input type="number" name="price" placeholder="Price" required />
+  <select name="currency" required>
+    <option value="₦">₦ Naira</option>
+    <option value="$">$ Dollar</option>
+  </select>
+  <input type="text" name="sellerUsername" placeholder="Seller Username" required />
+  <input type="file" name="image" accept="image/*" required />
+  <select name="category" required>
+    <option value="">Select Category</option>
+    <option value="Vegetables">Vegetables</option>
+    <option value="Grains">Grains</option>
+    <option value="Tubers">Tubers</option>
+    <option value="Fruits">Fruits</option>
+    <option value="Livestock">Livestock</option>
+    <option value="Crafts">Craft Products</option>
+    <option value="Electronics">Electronics</option>
+    <option value="Automobile">Automobile</option>
+    <option value="Fashion">Fashion</option>
+    <option value="Home">Home & Kitchen</option>
+    <option value="Beauty">Beauty & Personal Care</option>
+    <option value="Services">Services</option>
+  </select>
+  <button type="submit">Add Product</button>
+</form>
 
-    <button onclick='addToCart(${JSON.stringify(p)})'>
-      🛒 Add to Cart
-    </button>
-  </div>
-`;
+<h2>Browse Products</h2>
+<input type="text" id="searchInput" placeholder="Search products..." style="padding:5px; width:200px;">
+<div style="margin-top:10px;">
+  <button onclick="filterCategory('All')">All</button>
+  <button onclick="filterCategory('Vegetables')">Vegetables</button>
+  <button onclick="filterCategory('Grains')">Grains</button>
+  <button onclick="filterCategory('Tubers')">Tubers</button>
+  <button onclick="filterCategory('Fruits')">Fruits</button>
+  <button onclick="filterCategory('Livestock')">Livestock</button>
+  <button onclick="filterCategory('Crafts')">Crafts</button>
+  <button onclick="filterCategory('Electronics')">Electronics</button>
+  <button onclick="filterCategory('Automobile')">Automobile</button>
+  <button onclick="filterCategory('Fashion')">Fashion</button>
+  <button onclick="filterCategory('Home')">Home</button>
+  <button onclick="filterCategory('Beauty')">Beauty</button>
+  <button onclick="filterCategory('Services')">Services</button>
+</div>
+<div id="status"></div>
 
+<h2>Products</h2>
+<div id="productList"></div>
+
+<h2>Cart</h2>
+<div id="cartList"></div>
+<div>
+  <button onclick="goToCheckout()">Go to Checkout</button>
+</div>
+
+<!-- ======================= -->
+<!-- SCRIPTS -->
+<!-- ======================= -->
+<!-- Pi SDK -->
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-
 <script>
-// ✅ Ensure user exists
+  Pi.init({
+    version: "2.0",
+    sandbox: true,
+    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+  });
+</script>
+
+<!-- Eruda for debugging -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
+<!-- Main JS -->
+<script>
+let allProducts = [];
+let currentCategory = 'All';
+const form = document.getElementById('productForm');
+const statusDiv = document.getElementById('status');
+const productList = document.getElementById('productList');
+const cartList = document.getElementById('cartList');
+const checkoutBtn = document.getElementById('checkoutBtn');
+let cart = [];
+
+// -------------------- SELLER CHECK --------------------
 let currentUser = localStorage.getItem("piUser");
 
-if(!currentUser){
-  currentUser = "seller1";
+// Create user if none exists
+if (!currentUser) {
+  currentUser = "user_" + Date.now();
   localStorage.setItem("piUser", currentUser);
 }
 
-// ✅ Initialize Pi
-Pi.init({
-  version: "2.0",
-  sandbox: true,
-  apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
+// Same user acts as seller
+let currentSellerUsername = currentUser;
+
+// Show upload form (for now allow all users during testing)
+form.style.display = 'block';
+document.querySelector('input[name="sellerUsername"]').value = currentSellerUsername;
+// -------------------- UPLOAD PRODUCT --------------------
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(form);
+  try {
+    const response = await fetch('/products', { method: 'POST', body: formData });
+    const result = await response.json();
+    statusDiv.textContent = result.message;
+    if (result.product) loadProducts();
+    form.reset();
+    document.querySelector('input[name="sellerUsername"]').value = currentSellerUsername;
+  } catch (err) { console.error(err); statusDiv.textContent = 'Upload failed'; }
 });
 
-// ✅ LOAD PRODUCT FROM BACKEND
-
-async function loadProducts(){
+// -------------------- LOAD & DISPLAY PRODUCTS --------------------
+async function loadProducts() {
   try {
-    const res = await fetch('http://127.0.0.1:3000/products')
-    const data = await res.json();
-
-    console.log("Loaded:", data); // 🔥 DEBUG
-
-    let container = document.getElementById("productList");
-    container.innerHTML = "";
-
-    data.products.forEach((p) => {
-
-      container.innerHTML += `
-        <div class="card">
-          <h3>${p.name}</h3>
-          <p>₦${p.price}</p>
-
-          <button onclick='addToCart(${JSON.stringify(p)})'>
-            🛒 Add to Cart
-          </button>
-        </div>
-      `;
-    });
-
-  } catch(err){
-    console.error("ERROR:", err);
-    alert("Failed to load products");
-  }
+    const response = await fetch('/products');
+    const data = await response.json();
+    allProducts = data.products;
+    displayProducts();
+  } catch (err) { console.error(err); }
 }
 
-// ✅ SELLER RESTRICTION + CART
-function addToCart(product){
+function displayProducts() {
+  productList.innerHTML = '';
+  let filtered = allProducts;
 
-  let currentUser = localStorage.getItem("piUser");
+  if (currentCategory !== 'All') filtered = filtered.filter(p => p.category === currentCategory);
+  const searchText = document.getElementById('searchInput').value.toLowerCase();
+  filtered = filtered.filter(p => p.name.toLowerCase().includes(searchText));
 
-  if(product.sellerUsername === currentUser){
-    alert("You cannot add your own product!");
-    return;
+  filtered.forEach(addProductToPage);
+}
+
+function filterCategory(category) {
+  currentCategory = category;
+  displayProducts();
+}
+document.getElementById('searchInput').addEventListener('input', displayProducts);
+
+// -------------------- ADD PRODUCT TO PAGE --------------------
+function addProductToPage(product) {
+  const div = document.createElement('div');
+  div.className = 'product-card';
+
+  if (product.imagePath) {
+    const img = document.createElement('img');
+    img.src = product.imagePath;
+    img.alt = product.name;
+    div.appendChild(img);
   }
 
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const name = document.createElement('h4'); name.textContent = product.name; div.appendChild(name);
+  const desc = document.createElement('p'); desc.textContent = product.description; div.appendChild(desc);
+  const price = document.createElement('strong'); price.textContent = (product.currency || '₦') + product.price; div.appendChild(price);
+  const category = document.createElement('p'); category.textContent = "Category: " + product.category; div.appendChild(category);
 
-  cart.push(product);
+  if (product.sellerUsername === currentSellerUsername) {
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Delete';
+    delBtn.style.backgroundColor = '#e74c3c';
+    delBtn.style.color = '#fff';
+    delBtn.addEventListener('click', async () => {
+      if (!confirm("Are you sure?")) return;
+      try {
+        const res = await fetch('/delete-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: product.id })
+        });
+        const result = await res.json();
+        alert(result.message);
+        loadProducts();
+      } catch (err) { console.error(err); alert('Failed to delete'); }
+    });
+    div.appendChild(delBtn);
+  }
 
+  const cartBtn = document.createElement('button');
+  cartBtn.textContent = 'Add to Cart';
+  cartBtn.addEventListener('click', () => { cart.push(product); renderCart(); });
+  div.appendChild(cartBtn);
+
+  productList.appendChild(div);
+}
+
+// -------------------- CART --------------------
+function renderCart() {
+  cartList.innerHTML = '';
+  cart.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.textContent = `${item.name} - ${item.currency || '₦'}${item.price}`;
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = 'Remove';
+    removeBtn.style.marginLeft = '5px';
+    removeBtn.addEventListener('click', () => { cart.splice(index, 1); renderCart(); });
+    div.appendChild(removeBtn);
+    cartList.appendChild(div);
+  });
+}
+
+// -------------------- CHECKOUT --------------------
+// GO TO CHECKOUT
+function goToCheckout() {
+  if (cart.length === 0) {
+    return alert("Cart is empty");
+  }
+
+  // Save cart to localStorage
   localStorage.setItem("cart", JSON.stringify(cart));
 
-  updateCartCount(); // 🔥 UPDATE ICON
-
-  alert("Added to cart");
+  // Go to checkout page
+  window.location.href = "checkout.html";
 }
-
-// RUN
-window.onload = loadProducts;
-  function updateCartCount(){
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
-  document.getElementById("cartCount").innerText = cart.length;
-}
-
-function goToCart(){
-  window.location.href = "/cart.html";
-}
-
-// Run on load
-updateCartCount();
-
+// -------------------- INITIAL LOAD --------------------
+loadProducts();
 </script>
 
-<a href="../marketplace.html">
-‎<button>Back to Marketplace</button>
-‎</a>
-  <a href="/seller-dashboard.html">
-  <button>💰 My Earnings</button>
-  </a>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
+<a href="marketplace.html"><button>Back to Marketplace</button></a>
+<a href="/seller-dashboard.html"><button>💰 My Earnings</button></a>
+
 </body>
 </html>
