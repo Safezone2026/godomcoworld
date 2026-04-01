@@ -68,6 +68,18 @@ button{
 
   <div id="qr-container" style="margin-top:15px;"></div>
 </div>
+  <h2>💱 Swap Currency</h2>
+
+<input type="number" id="swapAmount" placeholder="Enter amount" />
+
+<select id="swapType">
+  <option value="fiatToPi">Fiat → Pi</option>
+  <option value="piToFiat">Pi → Fiat</option>
+</select>
+
+<button onclick="performSwap()">Swap</button>
+
+<p id="swapResult"></p>
 
 </main>
 
@@ -177,6 +189,44 @@ window.onload = function(){
   }
 
   }
+  // SWAP LOGIC
+  // Example rate (you can change later)
+const PI_RATE = 450,000,0000; // 1 Pi = ₦450,000,000:00
+
+function performSwap() {
+  const amount = Number(document.getElementById('swapAmount').value);
+  const type = document.getElementById('swapType').value;
+  const resultDiv = document.getElementById('swapResult');
+
+  if (!amount || amount <= 0) {
+    return resultDiv.textContent = "Enter valid amount";
+  }
+
+  let result;
+
+  if (type === "fiatToPi") {
+    result = amount / PI_RATE;
+    resultDiv.textContent = `You get ${result.toFixed(2)} Pi`;
+  } else {
+    result = amount * PI_RATE;
+    resultDiv.textContent = `You get ₦${result.toFixed(2)}`;
+  }
+
+  saveSwapTransaction(amount, type, result);
+    }
+  // SAVE SWAP
+  function saveSwapTransaction(amount, type, result) {
+  let swaps = JSON.parse(localStorage.getItem("swaps")) || [];
+
+  swaps.push({
+    amount,
+    type,
+    result,
+    date: new Date().toLocaleString()
+  });
+
+  localStorage.setItem("swaps", JSON.stringify(swaps));
+    }
 
 </script>
   <!-- NAV -->
