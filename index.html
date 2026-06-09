@@ -286,25 +286,53 @@ alert("Pi = " + typeof Pi);
 
 async function loginPi(){
 
-  alert("Starting Pi login");
-
   try{
 
-    const auth = await Pi.authenticate(
-      ['username','payments']
-    );
+    alert("Step 1");
 
-    alert("Authenticated");
+    const scopes = ['username','payments'];
+
+    const auth = await Pi.authenticate(scopes);
+
+    alert("Step 2");
 
     console.log(auth);
 
+    if(!auth){
+      alert("No auth returned");
+      return;
+    }
+
+    alert("Username: " + auth.user.username);
+
+    const response = await fetch(
+      "https://YOUR-BACKEND-URL/api/pi-auth",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          accessToken: auth.accessToken
+        })
+      }
+    );
+
+    alert("Step 3");
+
+    const result = await response.json();
+
+    console.log(result);
+
   }catch(err){
 
-    alert("ERROR: " + err.message);
     console.error(err);
 
+    alert(
+      "ERROR: " +
+      JSON.stringify(err)
+    );
   }
-
 }
 
 </script>
