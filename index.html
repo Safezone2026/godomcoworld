@@ -274,8 +274,6 @@ document.querySelectorAll(".logo").forEach(el => {
 
 <script>
 
-const PI_API_KEY="qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h";
-
 const WALLET_ADDRESS="GDJIQMWBMXWMV2R4P4Z2KILJUS7VC4DHWXDT5AELWYNRABUJAHZSGLB2";
 
 Pi.init({
@@ -283,29 +281,31 @@ version:"2.0",
 sandbox:true
 });
 
+console.log("Pi =", Pi);
+alert("Pi = " + typeof Pi);
 
 async function loginPi(){
 
-try{
+  alert("Starting Pi login");
 
-const scopes=['username','payments'];
+  try{
 
-const auth=await Pi.authenticate(scopes);
+    const auth = await Pi.authenticate(
+      ['username','payments']
+    );
 
-console.log(auth);
+    alert("Authenticated");
 
-alert("Welcome "+auth.user.username);
+    console.log(auth);
 
-localStorage.setItem("piUser",auth.user.username);
+  }catch(err){
 
-}catch(e){
+    alert("ERROR: " + err.message);
+    console.error(err);
 
-console.error(e);
+  }
 
 }
-
-}
-
 
 </script>
 <!-- redeploy -->
