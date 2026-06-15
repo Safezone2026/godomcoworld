@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Login</title>
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.container{
+  max-width:400px;
+  margin:50px auto;
+  text-align:center;
+}
+input{
+  width:100%;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
+}
+button{
+  padding:10px;
+  width:100%;
+  background:#00c853;
+  color:white;
+  border:none;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>🔐 Admin Login</h2>
+
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+</div>
+
+<script>
+
+async function login(){
+
+  let username = document.getElementById("username").value;
+  let password = document.getElementById("password").value;
+
+  try {
+
+    let res = await fetch('http://127.0.0.1:3000/admin/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+
+    let data = await res.json();
+
+    if(data.success){
+
+      localStorage.setItem("adminToken", data.token);
+
+      alert("Login successful");
+
+      window.location.href = "admin-courses.html";
+
+    } else {
+      alert("Invalid login");
+    }
+
+  } catch(err){
+    console.error(err);
+    alert("Login failed");
+  }
+}
+
+</script>
+
+</body>
+</html>

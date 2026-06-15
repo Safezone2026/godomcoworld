@@ -317,4 +317,146 @@ background:linear-gradient(135deg,#ffa726,#ffd54f);
 .service-grid button:active{
 transform:scale(0.95);
 }
+/* Revenue Cards */
+.card {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
 
+/* Revenue Section */
+#revenueBox {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+#revenueList {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.card strong {
+  color: #27ae60; /* green money color */
+  font-size: 16px;
+}
+<style>
+/* 🔥 Bigger Eruda button */
+.eruda-entry-btn {
+  width: 70px !important;
+  height: 70px !important;
+  font-size: 20px !important;
+  bottom: 80px !important; /* move up */
+  right: 20px !important;
+  opacity: 1 !important;
+}
+</style>
+<style>
+.eruda-entry-btn {
+  top: 80px !important;
+  right: 20px !important;
+  bottom: auto !important;
+}
+</style>
+#revenueBreakdown .card {
+  background:#111;
+  color:#fff;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+}
+button {
+  margin: 5px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+button:first-of-type {
+  background: #6f42c1; /* Pi purple */
+  color: white;
+}
+
+button:last-of-type {
+  background: #28a745; /* Fiat green */
+  color: white;
+}
+.course-grid .card {
+  background: #ffffff;
+  color: #000000; /* 🔥 FIX: make text visible */
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.course-grid .card h3,
+.course-grid .card p {
+  color: #000000; /* 🔥 ensures all text shows */
+}
+.course-grid .card button {
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+body {
+  background: #0d0d0d;
+  color: white;
+}
+.card {
+  background: #1a1a1a;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+.container {
+  background: transparent;
+}
+h1, h2, h3, p, span {
+  color: white;
+}
+input, select, textarea {
+  background: #222;
+  color: white;
+  border: 1px solid #444;
+}
+button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+}
+.currency-toggle{
+  width:50px;
+  height:25px;
+  background:#ccc;
+  border-radius:20px;
+  position:relative;
+  cursor:pointer;
+}
+
+#toggleCircle{
+  width:22px;
+  height:22px;
+  background:white;
+  border-radius:50%;
+  position:absolute;
+  top:1.5px;
+  left:2px;
+  transition:0.3s;
+}
+#registerBtn {
+  opacity: 0.4;
+  filter: blur(1px);
+  pointer-events: none;
+  transition: 0.3s ease;
+}
+
+#registerBtn.active {
+  opacity: 1;
+  filter: blur(0);
+  pointer-events: auto;
+}

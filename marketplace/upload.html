@@ -5,78 +5,199 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Upload Product - Godomcoworld Marketplace</title>
 <link rel="stylesheet" href="../css/style.css">
+
+<style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
+form{
+  background:#111;
+  padding:20px;
+  border-radius:10px;
+  max-width:400px;
+  margin:20px auto;
+}
+
+input, select, button{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:none;
+}
+
+button{
+  background:#00c853;
+  color:white;
+  cursor:pointer;
+}
+
+#productsContainer{
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+  gap:10px;
+}
+
+.product{
+  background:#222;
+  padding:10px;
+  border-radius:8px;
+  text-align:center;
+}
+</style>
 </head>
+
 <body>
 
 <header>
   <div class="logo">Upload Product</div>
-  <a href="../marketplace.html"><button>Back</button></a>
+  <a href="../marketplace/marketplace.html"><button>Back</button></a>
 </header>
 
-<div class="container">
-  <h2>Upload Your Product</h2>
+<!-- ======================= -->
+<!-- PRODUCT FORM -->
+<!-- ======================= -->
+<form id="productForm">
+  <h2>Add New Product</h2>
 
-  <input type="text" id="productName" placeholder="Product Name"><br><br>
-  <textarea id="productDesc" placeholder="Product Description"></textarea><br><br>
+  <input type="text" name="name" placeholder="Product Name" required />
+  <input type="text" name="description" placeholder="Description" required />
+  <input type="number" name="price" placeholder="Price (₦)" required />
+
+  <!-- ✅ CATEGORY -->
+  <select name="category" required>
+    <option value="">Select Category</option>
+    <option value="Vegetables">Vegetables</option>
+    <option value="Grains">Grains</option>
+    <option value="Tubers">Tubers</option>
+    <option value="Fruits">Fruits</option>
+    <option value="Livestock">Livestock</option>
+    <option value="Crafts">Crafts</option>
+    <option value="Electronics">Electronics</option>
+    <option value="Automobile">Automobile</option>
+    <option value="Fashion">Fashion</option>
+    <option value="Home">Home</option>
+    <option value="Beauty">Beauty</option>
+    <option value="Services">Services</option>
+  </select>
+
+  <!-- ✅ WEIGHT -->
+  <input type="number" name="weight" placeholder="Weight (kg)" required />
+
+  <!-- ✅ SELLER AUTO -->
+  <input type="text" name="sellerUsername" id="sellerUsername" readonly />
+
+  <!-- IMAGE -->
+  <input type="file" name="image" accept="image/*" required />
   
-  <label>Product Image:</label>
-  <input type="file" id="productImage" accept="image/*"><br><br>
-  
-  <input type="number" id="productPrice" placeholder="Price (USD)"><br><br>
-  
-  <button onclick="uploadProduct()">Upload Product</button>
- <script>
+  <button type="submit">Add Product</button>
+</form>
 
-function uploadProduct(){
+<div id="status"></div>
 
-  let name = document.getElementById("name").value;
-  let price = document.getElementById("price").value;
-  let file = document.getElementById("image").files[0];
+<!-- OPTIONAL PRODUCT PREVIEW -->
+<div id="productsContainer"></div>
 
-  let sellerUsername = localStorage.getItem("piUser") || "seller1";
+<script>
+// ================= USER =================
+let username = localStorage.getItem("username");
 
-  if(!name || !price || !file){
-    alert("Fill all fields including image");
+if(!username){
+  username = prompt("Enter your username (e.g seller1)");
+  localStorage.setItem("username", username);
+}
+
+console.log("Current user:", username);
+
+// AUTO FILL SELLER
+document.getElementById("sellerUsername").value = username;
+
+const form = document.getElementById('productForm');
+const statusDiv = document.getElementById('status');
+
+// ================= SUBMIT =================
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(form);
+
+  // ✅ FIX WEIGHT
+  const weight = Number(formData.get("weight")) || 1;
+  formData.set("weight", weight);
+
+  // ✅ VALIDATE CATEGORY
+  const category = formData.get("category");
+  if (!category) {
+    alert("Please select a category");
     return;
   }
 
-  let reader = new FileReader();
-
-  reader.onload = function(){
-
-    let base64Image = reader.result;
-
-    fetch('http://127.0.0.1:3000/products', {
+  try {
+    const response = await fetch('http://127.0.0.1:3000/add-product', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        price: Number(price),
-        sellerUsername,
-        image: base64Image // 🔥 IMAGE SAVED HERE
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert("Product uploaded with image!");
-      window.location.href = "products.html";
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Upload failed");
+      body: formData
     });
 
-  };
+    const result = await response.json();
+    statusDiv.innerText = result.message;
 
-  reader.readAsDataURL(file); // 🔥 converts to base64
+    if (result.product) {
+      console.log("Added product:", result.product);
+      loadProducts();
+    }
+
+    form.reset();
+
+    // restore seller after reset
+    document.getElementById("sellerUsername").value = username;
+
+  } catch (err) {
+    console.error(err);
+    statusDiv.innerText = 'Upload failed';
+  }
+});
+
+// ================= LOAD PRODUCTS =================
+async function loadProducts() {
+  try {
+    const res = await fetch('products.json');
+    const products = await res.json();
+
+    const container = document.getElementById('productsContainer');
+    container.innerHTML = '';
+
+    products.forEach(product => {
+      const div = document.createElement('div');
+      div.className = 'product';
+
+      div.innerHTML = `
+        <h3>${product.name}</h3>
+        <p>${product.description}</p>
+        <p>₦${Number(product.price).toLocaleString()}</p>
+        <p>📦 ${product.category}</p>
+        <p>⚖️ ${product.weight || 1} kg</p>
+        <img src="${product.imagePath}" width="120"/>
+      `;
+
+      container.appendChild(div);
+    });
+
+  } catch(err){
+    console.error("Failed to load products:", err);
+  }
 }
 
- </script> 
+// INIT
+loadProducts();
+</script>
 
-</body>
-</html>
-<a href="../marketplace.html">
+<a href="../marketplace/marketplace.html">
 <button>Back to Marketplace</button>
 </a>
+
 </body>
 </html>

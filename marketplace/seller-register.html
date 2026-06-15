@@ -39,6 +39,41 @@
 <input type="text" placeholder="Phone Number" required><br><br>
 
 <input type="text" placeholder="Business Location" required><br><br>
+<h3>🏪 Shop Location</h3>
+
+<input type="text" id="shopAddress" placeholder="Shop Address (e.g Lagos, Ikeja)" required>
+<select id="shopCountry">
+<option value="Nigeria">🇳🇬 Nigeria</option>
+<option value="Ghana">🇬🇭 Ghana</option>
+<option value="Kenya">🇰🇪 Kenya</option>
+<option value="South Africa">🇿🇦 South Africa</option>
+<option value="Egypt">🇪🇬 Egypt</option>
+<option value="Cameroon">🇨🇲 Cameroon</option>
+<option value="Uganda">🇺🇬 Uganda</option>
+<option value="Tanzania">🇹🇿 Tanzania</option>
+<option value="Ethiopia">🇪🇹 Ethiopia</option>
+<option value="Rwanda">🇷🇼 Rwanda</option>
+<option value="Senegal">🇸🇳 Senegal</option>
+<option value="Ivory Coast">🇨🇮 Ivory Coast</option>
+<option value="Algeria">🇩🇿 Algeria</option>
+<option value="Morocco">🇲🇦 Morocco</option>
+<option value="Angola">🇦🇴 Angola</option>
+<option value="Zambia">🇿🇲 Zambia</option>
+<option value="Zimbabwe">🇿🇼 Zimbabwe</option>
+<option value="Malawi">🇲🇼 Malawi</option>
+<option value="Botswana">🇧🇼 Botswana</option>
+<option value="Namibia">🇳🇦 Namibia</option>
+<option value="Sierra Leone">🇸🇱 Sierra Leone</option>
+<option value="Liberia">🇱🇷 Liberia</option>
+<option value="Togo">🇹🇬 Togo</option>
+<option value="Benin">🇧🇯 Benin</option>
+<option value="Niger">🇳🇪 Niger</option>
+<option value="Mali">🇲🇱 Mali</option>
+<option value="Burkina Faso">🇧🇫 Burkina Faso</option>
+<option value="Gabon">🇬🇦 Gabon</option>
+<option value="Congo">🇨🇬 Congo</option>
+<option value="DR Congo">🇨🇩 DR Congo</option>
+</select>
 
 <h2>Seller Registration</h2>
 
@@ -71,8 +106,9 @@
 <p>4. Fraud Policy:</p>
 <p>Any fraudulent activity will result in account suspension.</p>
 <p>5. Platform Fees:</p>
-<p>A platform fee of 5% deduction is applicable to any product total price</p>
-  
+<p>A platform fee of 5% deduction of total product price will be applicable</p>
+
+
 </div>
 
 <br>
@@ -92,7 +128,25 @@
 
 </div>
 <script>
+  let username = localStorage.getItem("username");
+
+if(!username){
+  username = prompt("Enter your username (e.g seller1)");
+  localStorage.setItem("username", username);
+}
+
+console.log("Current user:", username);
+
 function registerSeller(){
+  fetch('/register-seller', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({
+    username: document.getElementById("username").value,
+    shopAddress: document.getElementById("shopAddress").value,
+    shopCountry: document.getElementById("shopCountry").value
+  })
+});
 
 let wallet = document.getElementById("wallet").value;
 let agree = document.getElementById("agree").checked;
@@ -115,7 +169,7 @@ localStorage.setItem("seller_wallet", wallet);
 }
 </script>
   
-<a href="../marketplace.html">
+<a href="../index.html">
 <button>Back to Marketplace</button>
 </a>
 </body>

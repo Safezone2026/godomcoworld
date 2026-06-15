@@ -27,7 +27,8 @@
 <p>AR fundamentals</p>
 <p>$20/month</p>
 <p id="basicPi"></p>
-<button onclick="payCourse(20,'Basic')">Pay with Pi</button>
+<button onclick="payCourse(20,'Basic','NG')">Pay with Fiat</button>
+<button onclick="payCourse(20,'Basic','PI')">Pay with Pi</button>
 </div>
 
 <div class="card">
@@ -35,6 +36,7 @@
 <p>AR development frameworks</p>
 <p>$50/month</p>
 <p id="proPi"></p>
+<button onclick="payCourse(50,'Professional')">Pay with Fiat</button>
 <button onclick="payCourse(50,'Professional')">Pay with Pi</button>
 </div>
 
@@ -43,15 +45,23 @@
 <p>AR design and immersive environments</p>
 <p>$100/month</p>
 <p id="premiumPi"></p>
+<button onclick="payCourse(100,'Premium')">Pay with Fiat</button>
 <button onclick="payCourse(100,'Premium')">Pay with Pi</button>
 </div>
 
 <div class="card">
-<h3>Practical</h3>
-<p>Create real AR applications</p>
-<p>$200/month</p>
-<p id="practicalPi"></p>
-<button onclick="payCourse(200,'Practical')">Pay with Pi</button>
+  <h3>Practical</h3>
+  <p>Create real AR applications</p>
+  <p>$200/month</p>
+
+  <!-- Dynamic Prices -->
+  <p id="practicalNG"></p>
+  <p id="practicalPi"></p>
+
+  <!-- Payment Buttons -->
+  <button onclick="payCourse(200,'Practical','FIAT')">💵 Pay with Fiat</button>
+  <button onclick="payCourse(200,'Practical','PI')">🪙 Pay with Pi</button>
+</div>
 </div>
 
 <!-- COURSE CONTENT -->
@@ -113,15 +123,29 @@ Verify this certificate at:
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script src="../js/payment.js"></script>
+<script src="../js/wallet-init.js"></script>
 
 <script>
+// INIT PI
 Pi.init({
   version:"2.0",
   sandbox:false,
   apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
 });
+let username = localStorage.getItem("username");
 
-// ✅ LOAD PI PRICES CORRECTLY
+if(!username){
+  username = prompt("Enter your username (e.g seller1)");
+  localStorage.setItem("username", username);
+}
+
+console.log("Current user:", username);
+
+// COURSE NAME
+let courseName = "Augmented Reality";
+
+// LOAD PI PRICES
 window.onload = function(){
 
   function setPiPrice(id, usd){
@@ -134,46 +158,101 @@ window.onload = function(){
   setPiPrice("premiumPi",100);
   setPiPrice("practicalPi",200);
 
+  checkAccess();
 };
 
-// COURSE NAME
-let courseName = "Augmented Reality";
+// CHECK ACCESS
+async function checkAccess(){
 
-// CHECK ACCESS ON LOAD
-let data = localStorage.getItem("plan_" + courseName);
+  let username = localStorage.getItem("piUser");
 
-if(data){
-  let parsed = JSON.parse(data);
-  let now = new Date().getTime();
+  if(!username) return;
 
-  if(now < parsed.expiry){
-    unlock();
-  } else {
-    localStorage.removeItem("plan_" + courseName);
+  try {
+
+    let res = await fetch(`http://127.0.0.1:3000/course-access?username=${username}&courseName=${courseName}`);
+    let data = await res.json();
+
+    if(data.access){
+      unlock();
+    } else if(data.expired){
+      document.getElementById("expiryMsg").innerText = "⚠️ Subscription expired";
+    }
+
+  } catch(err){
+    console.error(err);
   }
 }
 
-// PAYMENT FUNCTION
-function payCourse(usd, plan){
+const USD_RATE = 1500;
+const PI_RATE = 1500 * 314159;
 
-  let piAmount = (usd / 314159).toFixed(8);
+// ================= SHOW PRICES =================
+function updateCoursePrices(){
 
-  Pi.createPayment(
-  {amount:parseFloat(piAmount), memo:courseName, metadata:{plan}},
-  {
+  const courses = {
+    practical: 200
+  };
 
-    onReadyForServerCompletion:function(paymentId,txid){
+  Object.keys(courses).forEach(key => {
+    const usd = courses[key];
 
-      // SAVE SUBSCRIPTION (30 DAYS)
-      let expiryDate = new Date().getTime() + (30*24*60*60*1000);
+    const naira = usd * USD_RATE;
+    const pi = naira / PI_RATE;
 
-      let subscriptionData = {
-        plan: plan,
-        expiry: expiryDate
-      };
+    document.getElementById(key + "NG").innerText =
+      "≈ ₦" + naira.toLocaleString();
 
-      localStorage.setItem("plan_" + courseName, JSON.stringify(subscriptionData));
+    document.getElementById(key + "Pi").innerText =
+      "≈ " + pi.toFixed(6) + " π";
+  });
+}
 
+updateCoursePrices();
+
+
+// ================= PAYMENT =================
+function payCourse(usdPrice, courseName, method){
+
+  let amount, currency;
+
+  // 💵 FIAT (default NG wallet)
+  if(method === "FIAT"){
+    amount = usdPrice * USD_RATE; // convert USD → NG
+    currency = "NG"; // backend still uses NG internally
+  }
+
+  // 🪙 PI
+  else if(method === "PI"){
+    let naira = usdPrice * USD_RATE;
+    amount = naira / PI_RATE;
+    currency = "PI";
+  }
+
+  fetch("/wallet/pay", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      walletId: localStorage.getItem("walletId"),
+      amount,
+      currency,
+      type:"course",
+      courseName
+    })
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message));
+}
+
+// UNLOCK COURSE
+function unlock(){
+  document.getElementById("lockedMsg").style.display = "none";
+  document.getElementById("courseContent").style.display = "block";
+  document.getElementById("certBtn").style.display = "block";
+}
+
+// 🎓 CERTIFICATE FUNCTION
+function generateCertificate(){
 
   let data = localStorage.getItem("plan_" + courseName);
 
@@ -222,74 +301,65 @@ function payCourse(usd, plan){
 
   window.print();
 }
+
 // 🎤 SPEECH TO TEXT
 function startListening(){
 
-let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
-recognition.lang = "en-US";
+  recognition.lang = "en-US";
+  recognition.start();
 
-recognition.start();
+  recognition.onresult = function(event){
+    let text = event.results[0][0].transcript;
+    document.getElementById("aiQuestion").value = text;
+  };
 
-recognition.onresult = function(event){
-let text = event.results[0][0].transcript;
-document.getElementById("aiQuestion").value = text;
-};
-
-recognition.onerror = function(){
-alert("Voice recognition not supported on this device");
-};
-
+  recognition.onerror = function(){
+    alert("Voice recognition not supported");
+  };
 }
-
 
 // 🧠 AI RESPONSE
 function askAI(){
 
-let question = document.getElementById("aiQuestion").value;
+  let question = document.getElementById("aiQuestion").value;
 
-if(!question){
-alert("Ask a question");
-return;
-}
+  if(!question){
+    alert("Ask a question");
+    return;
+  }
 
-let response = "AI Tutor: ";
+  let response = "AI Tutor: ";
 
-if(question.toLowerCase().includes("blockchain")){
-  response += "Blockchain is a decentralized digital ledger that records transactions securely.";
-}
-else if(question.toLowerCase().includes("ar")){
-  response += "Augmented Reality blends digital elements with the real world.";
-}
-else if(question.toLowerCase().includes("welding")){
-  response += "Welding joins materials using heat and pressure.";
-}
-else{
-  response += "Great question! Real AI upgrade coming soon.";
-}
+  if(question.toLowerCase().includes("ar")){
+    response += "Augmented Reality blends digital elements with the real world.";
+  }
+  else if(question.toLowerCase().includes("blockchain")){
+    response += "Blockchain is a decentralized digital ledger.";
+  }
+  else{
+    response += "Great question! AI upgrade coming soon.";
+  }
 
-document.getElementById("aiResponse").innerText = response;
-
+  document.getElementById("aiResponse").innerText = response;
 }
-
 
 // 🔊 TEXT TO SPEECH
 function speakAnswer(){
 
-let text = document.getElementById("aiResponse").innerText;
+  let text = document.getElementById("aiResponse").innerText;
 
-if(!text){
-alert("No response to read");
-return;
-}
-
-let speech = new SpeechSynthesisUtterance(text);
-
-speech.lang = "en-US";
-
-window.speechSynthesis.speak(speech);
-
+  if(!text){
+    alert("No response to read");
+    return;
   }
+
+  let speech = new SpeechSynthesisUtterance(text);
+  speech.lang = "en-US";
+
+  window.speechSynthesis.speak(speech);
+}
 </script>
 
 <nav class="bottom-nav">

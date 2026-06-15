@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wallet - Godomcoworld</title>
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.balance-card{
+  background:#111;
+  padding:20px;
+  margin:15px 0;
+  border-radius:12px;
+  text-align:center;
+}
+
+button{
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  background:#00c853;
+  color:white;
+}
+#qr-container img{
+  border:2px solid #4CAF50;
+  padding:10px;
+  border-radius:10px;
+}
+select, input[type=number]{
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border:none;
+  width:100%;
+}
+.wallet-card h1{
+  font-size:32px;
+  font-weight:bold;
+  margin-top:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>💳 My Wallet</h1>
+<p id="walletIdDisplay" style="font-size:11px; color:#aaa;"></p>
+</header>
+
+<main>
+
+<!-- FIAT BALANCE -->
+<div class="balance-card">
+<div class="currency-toggle" onclick="toggleWalletCurrency()">
+  <div id="toggleCircle"></div>
+</div>
+
+<div class="wallet-card">
+
+  <span id="currencyLabel">USD</span>
+
+  <h3>💵 Fiat Balance</h3>
+
+  <h1 id="walletBalance">₦0</h1>
+
+</div>
+
+
+<button onclick="depositFiat()">Deposit</button>
+<button onclick="withdrawFiat()">Withdraw</button>
+
+
+<!-- PI BALANCE -->
+<div class="balance-card">
+<h2 id="piBalance">0 π</h2>
+
+
+<button onclick="depositPi()">Deposit Pi</button>
+<button onclick="sendPi()">Send Pi</button>
+<button onclick="addTestFund()">⚡ Add Test Funds</button>
+
+</div>
+<h2>💸 Withdraw Funds</h2>
+
+<input type="number" id="withdrawAmount" placeholder="Enter amount">
+
+<select id="withdrawCurrency">
+  <option value="NG">₦ Naira</option>
+  <option value="USD">$ USD</option>
+  <option value="PI">🪙 Pi</option>
+</select>
+
+<select id="withdrawMethod">
+  <option value="bank">🏦 Bank Transfer</option>
+  <option value="crypto">🔗 Crypto / Pi Wallet</option>
+</select>
+
+<input type="text" id="withdrawDetails" placeholder="Account No / Wallet Address">
+<select id="bankName">
+  <option value="">🏦 Select Bank</option>
+  <option>Access Bank</option>
+  <option>GTBank</option>
+  <option>First Bank</option>
+  <option>UBA</option>
+  <option>Zenith Bank</option>
+  <option>Opay</option>
+  <option>Palmpay</option>
+  <option>Kuda</option>
+</select>
+
+<input type="text" id="accountNumber" placeholder="Account Number">
+
+<input type="text" id="accountName" placeholder="Account Name">
+
+<button onclick="requestWithdrawal()">Submit Withdrawal</button>
+
+<p id="withdrawMsg"></p>
+</div>
+
+
+<h2>🪙 Pi Wallet</h2>
+
+<div>
+  <p><strong>Your Pi Address:</strong></p>
+  <p id="pi-address">Not connected</p>
+
+  <button onclick="connectWallet()">🔗 Connect Wallet</button>
+  <button onclick="showQRCode()">📥 Receive Pi</button>
+
+  <div id="qr-container" style="margin-top:15px;"></div>
+</div>
+
+<h2>💱 Swap Currency</h2>
+
+<input type="number" id="swapAmount" placeholder="Enter amount" />
+
+<select id="swapType">
+  <option value="fiatToPi">Fiat → Pi</option>
+  <option value="piToFiat">Pi → Fiat</option>
+</select>
+
+<select id="currencySelect">
+  <!-- Country options populated dynamically -->
+</select>
+
+<button onclick="performSwap()">Swap</button>
+
+<p id="swapResult"></p>
+
+<h2>🧾 Swap History</h2>
+<div id="swapHistory"></div>
+<h2>📜 Withdrawal History</h2>
+<div id="withdrawHistory"></div>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+<script src="../js/payment.js"></script>
+<script src="../js/wallet-init.js"></script>
+
+<script>
+  // ================= SWAP CONFIG =================
+const PI_RATE = 1500 * 314159; // ₦471,238,500
+const USD_RATE = 1500;
+const SWAP_FEE_PERCENT = 0.02; // 2%
+const GAS_FEE_NAIRA = 0.2 * USD_RATE;
+const DAILY_LIMIT_NAIRA = 10000 * USD_RATE; // ₦15,000,000
+// ====================== COUNTRY RATES ======================
+const countryRates = {
+  USD:{symbol:"$",rate:1},
+  NG:{symbol:"₦",rate:1500}, GH:{symbol:"₵",rate:12},
+  KE:{symbol:"KSh",rate:160}, ZA:{symbol:"R",rate:18},
+  EG:{symbol:"E£",rate:50}, CM:{symbol:"FCFA",rate:600},
+  UG:{symbol:"USh",rate:3800}, TZ:{symbol:"TSh",rate:2500},
+  ET:{symbol:"Br",rate:56}, RW:{symbol:"FRw",rate:1300},
+  SN:{symbol:"FCFA",rate:600}, CI:{symbol:"FCFA",rate:600},
+  DZ:{symbol:"DZD",rate:135}, MA:{symbol:"MAD",rate:10},
+  AO:{symbol:"Kz",rate:830}, ZM:{symbol:"ZK",rate:25},
+  ZW:{symbol:"ZWL",rate:6000}, MW:{symbol:"MK",rate:1700},
+  BW:{symbol:"P",rate:13}, NA:{symbol:"N$",rate:18},
+  SL:{symbol:"Le",rate:23000}, LR:{symbol:"L$",rate:190},
+  TG:{symbol:"FCFA",rate:600}, BJ:{symbol:"FCFA",rate:600},
+  NE:{symbol:"FCFA",rate:600}, ML:{symbol:"FCFA",rate:600},
+  BF:{symbol:"FCFA",rate:600}, GA:{symbol:"FCFA",rate:600},
+  CG:{symbol:"FCFA",rate:600}, CD:{symbol:"CDF",rate:2800}
+};
+
+
+// ================= USER =================
+let username = localStorage.getItem("username");
+
+if (!username) {
+  username = prompt("Enter your username (same every time)");
+  localStorage.setItem("username", username);
+}
+
+let walletId = localStorage.getItem("walletId");
+
+// ================= LOAD WALLET =================
+async function initWallet() {
+
+  walletId = localStorage.getItem("walletId"); // ✅ use global
+
+  // ✅ If wallet already exists → DO NOT create again
+  if (walletId) {
+    console.log("Using existing wallet:", walletId);
+
+    document.getElementById("walletIdDisplay").textContent =
+      "Wallet ID: " + walletId;
+
+    loadBalance();
+    return;
+  }
+
+  // ❗ Only create if no wallet exists
+  const res = await fetch(API + "/wallet/create", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ username })
+  });
+
+  const data = await res.json();
+
+  walletId = data.walletId;
+  localStorage.setItem("walletId", walletId);
+
+  console.log("Wallet created:", walletId);
+
+  document.getElementById("walletIdDisplay").textContent =
+    "Wallet ID: " + walletId;
+
+  loadBalance();
+}
+
+// ================= LOAD BALANCE =================
+async function loadBalance(){
+  const res = await fetch(API + "/wallet/" + walletId);
+  const wallet = await res.json();
+
+  // ONLY update Pi here
+  document.getElementById("piBalance").innerText =
+    (wallet.balances.PI || 0).toFixed(6) + " π";
+
+  // Let toggle system handle fiat display
+  updateWalletDisplay();
+
+  loadSwapHistory();
+}
+
+function connectWallet(){
+  alert("Wallet connected ✅\nWallet ID: " + walletId);
+}
+
+// ================= TEST FUND =================
+async function addTestFund() {
+  console.log("🔥 Button clicked"); // 👈 ADD THIS
+
+  const walletId = localStorage.getItem("walletId");
+
+  try {
+    const res = await fetch(API + "/wallet/test-fund", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ walletId })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    loadBalance(); // refresh UI
+
+  } catch (err) {
+    console.error("Test fund error:", err);
+  }
+}
+
+function depositFiat() {
+  alert("Fiat deposit coming soon");
+}
+
+function depositPi() {
+  alert("Pi deposit coming soon");
+}
+// updateWalletDisplay
+let walletCurrency = "USD";
+
+async function updateWalletDisplay(){
+
+  const walletId = localStorage.getItem("walletId");
+
+  const res = await fetch(`http://127.0.0.1:3000/wallet/${walletId}`);
+  const wallet = await res.json();
+
+  const usd = wallet.balances?.USD || 0;
+  const ngn = wallet.balances?.NG || 0;
+
+  const rate = 1500;
+
+  let display = 0;
+
+  if(walletCurrency === "USD"){
+
+    // 🔥 Convert NG → USD if no USD balance
+    display = usd > 0 ? usd : (ngn / rate);
+
+    document.getElementById("walletBalance").innerText =
+      "$" + display.toFixed(2);
+
+  } else {
+
+    // 🔥 Convert USD → NG if no NG balance
+    display = ngn > 0 ? ngn : (usd * rate);
+
+    document.getElementById("walletBalance").innerText =
+      "₦" + display.toLocaleString();
+  }
+}
+// TOGGLE currency
+function toggleWalletCurrency(){
+
+  walletCurrency = walletCurrency === "USD" ? "NGN" : "USD";
+
+  const circle = document.getElementById("toggleCircle");
+  circle.style.left = walletCurrency === "NGN" ? "26px" : "2px";
+
+  document.getElementById("currencyLabel").innerText = walletCurrency;
+
+  updateWalletDisplay();
+}
+
+// ================= TRANSFER PI =================
+async function sendPi(){
+  let toWalletId = prompt("Enter receiver wallet ID:");
+  let amount = Number(prompt("Enter Pi to send:"));
+
+  if(!amount || amount <= 0) return alert("Invalid amount");
+
+  const res = await fetch(API + "/wallet/transfer", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      fromWalletId: walletId,
+      toWalletId,
+      amount,
+      currency: "PI"
+    })
+  });
+
+  const data = await res.json();
+  alert(data.message);
+
+  loadBalance();
+}
+// LIVE SWAP PREVIEW
+function calculateSwapPreview(){
+  const amount = Number(document.getElementById("swapAmount").value);
+  const type = document.getElementById("swapType").value;
+  const resultDiv = document.getElementById("swapResult");
+
+  if(!amount || amount <= 0){
+    resultDiv.innerHTML = "";
+    return;
+  }
+
+  if(type === "piToFiat"){
+
+  let naira = amount * PI_RATE;
+  let fee = naira * SWAP_FEE_PERCENT;
+  let gas = 0.2 * USD_RATE; // ₦300
+
+  let final = naira - fee - gas;
+
+  resultDiv.innerHTML = `
+    <b>Preview:</b><br>
+    You send: ${amount} π<br>
+    Rate: ₦${PI_RATE.toLocaleString()} / π<br><br>
+
+    Swap Fee (2%): ₦${fee.toLocaleString()}<br>
+    Gas Fee: ₦${gas.toLocaleString()}<br><br>
+
+    <b>You receive: ₦${final.toLocaleString()}</b>
+  `;
+}
+
+  else if(type === "fiatToPi"){
+
+    let pi = amount / PI_RATE;
+    let fee = pi * SWAP_FEE_PERCENT;
+    let final = pi - fee;
+
+    resultDiv.innerHTML = `
+      <b>Preview:</b><br>
+      You send: ₦${amount.toLocaleString()}<br><br>
+
+      Swap Fee (2%): ${fee.toFixed(6)} π<br>
+      Gas Fee: ₦${GAS_FEE_NAIRA.toLocaleString()}<br><br>
+
+      <b>You receive: ${final.toFixed(6)} π</b>
+    `;
+  }
+}
+
+// ================= SWAP =================
+async function performSwap(){
+
+  const amount = Number(document.getElementById('swapAmount').value);
+  const type = document.getElementById('swapType').value;
+  const resultDiv = document.getElementById('swapResult');
+
+  if (!amount || amount <= 0) {
+    return resultDiv.textContent = "Enter valid amount";
+  }
+
+  // 🔥 GET WALLET
+  const resWallet = await fetch(API + "/wallet/" + walletId);
+  const wallet = await resWallet.json();
+
+  let today = new Date().toLocaleDateString();
+  let swapData = JSON.parse(localStorage.getItem("swapHistory")) || {};
+  if (!swapData[today]) swapData[today] = 0;
+
+  // ================= PI → FIAT =================
+  if(type === "piToFiat"){
+
+    let naira = amount * PI_RATE;
+    let fee = naira * SWAP_FEE_PERCENT;
+    let final = naira - fee;
+
+    let totalPiNeeded = amount;
+
+    // ❌ Balance check
+    if(wallet.balances.PI < amount){
+  return resultDiv.textContent = "❌ Insufficient Pi balance";
+}
+
+    // ❌ Daily limit
+    if((swapData[today] + naira) > DAILY_LIMIT_NAIRA){
+      return resultDiv.textContent = "❌ Daily limit exceeded ($10,000)";
+    }
+
+    // ✅ Update usage
+    swapData[today] += naira;
+    localStorage.setItem("swapHistory", JSON.stringify(swapData));
+
+  }
+
+  // ================= FIAT → PI =================
+  else {
+
+    let pi = amount / PI_RATE;
+    let fee = pi * SWAP_FEE_PERCENT;
+    let final = pi - fee;
+
+    let totalFiatNeeded = amount;
+
+    if(wallet.balances.NG < totalFiatNeeded){
+      return resultDiv.textContent = "❌ Insufficient Fiat balance";
+    }
+
+    let nairaValue = amount;
+
+    if((swapData[today] + nairaValue) > DAILY_LIMIT_NAIRA){
+      return resultDiv.textContent = "❌ Daily limit exceeded ($10,000)";
+    }
+
+    swapData[today] += nairaValue;
+    localStorage.setItem("swapHistory", JSON.stringify(swapData));
+  }
+
+  // ================= BACKEND CALL =================
+  let fromCurrency, toCurrency;
+
+if(type === "piToFiat"){
+  fromCurrency = "PI";
+  toCurrency = document.getElementById("currencySelect").value;
+} else {
+  fromCurrency = document.getElementById("currencySelect").value;
+  toCurrency = "PI";
+}
+
+const res = await fetch(API + "/wallet/swap", {
+  method:"POST",
+  headers:{ "Content-Type":"application/json" },
+  body: JSON.stringify({
+    walletId,
+    fromCurrency,
+    toCurrency,
+    amount
+  })
+});
+
+  const data = await res.json();
+
+  if(!data.success){
+    return resultDiv.textContent = data.message;
+  }
+
+  resultDiv.innerHTML = `
+  ✅ Swap successful<br>
+  Received: ₦${Number(data.receivedAmount).toLocaleString()}<br>
+  Fee: ₦${Number(data.fee).toLocaleString()}<br>
+  Gas: ₦${Number(data.gasFee).toLocaleString()}
+`;
+
+loadBalance();
+loadSwapHistory(); // ✅ ADD THIS
+}
+
+// ================= HISTORY =================
+async function loadSwapHistory(){
+  const res = await fetch(API + "/transactions/" + walletId);
+  const txs = await res.json();
+
+  const container = document.getElementById("swapHistory");
+
+  container.innerHTML = txs
+  .filter(t => t.type === "swap")
+  .map(t => `
+    <p>
+      ${t.fromCurrency} → ${t.toCurrency} <br>
+      Amount: ${Number(t.amount).toLocaleString()} <br>
+      Received: ${Number(t.received || 0).toLocaleString()} <br>
+      Fee: ${Number(t.fee).toLocaleString()} <br>
+      Gas: ${Number(t.gas).toLocaleString()} <br>
+      ${new Date(t.timestamp).toLocaleString()}
+    </p>
+  `).join('');
+}
+// WITHDRAW Fiat
+async function requestWithdrawal(){
+
+  const amount = Number(document.getElementById("withdrawAmount").value);
+  const currency = document.getElementById("withdrawCurrency").value;
+
+  const bankName = document.getElementById("bankName").value;
+  const accountNumber = document.getElementById("accountNumber").value;
+  const accountName = document.getElementById("accountName").value;
+
+  if(!amount || amount <= 0){
+    return alert("Enter valid amount");
+  }
+
+  if(currency === "NG"){
+    if(!bankName || !accountNumber || !accountName){
+      return alert("Fill bank details");
+    }
+  }
+
+  const walletId = localStorage.getItem("walletId");
+
+  const res = await fetch(API + "/wallet/withdraw", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      walletId,
+      amount,
+      currency,
+      method: "bank",
+      details: {
+        bankName,
+        accountNumber,
+        accountName
+      }
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+}
+
+// WITHDRAWAL HISTORY 
+async function loadWithdrawals(){
+
+  const walletId = localStorage.getItem("walletId");
+
+  const res = await fetch(API + "/withdrawals");
+  const data = await res.json();
+
+  const userData = data.filter(w => w.walletId === walletId);
+
+  document.getElementById("withdrawHistory").innerHTML =
+    userData.map(w => `
+      <p>
+💸 ${w.amount} ${w.currency}<br>
+Fee: ${w.fee}<br>
+Received: ${w.finalAmount}<br>
+Status: ${w.status}<br>
+${new Date(w.date).toLocaleString()}
+</p>
+    `).join('');
+}
+// ================= POPULATE COUNTRIES =================
+function populateCountries(){
+  const select = document.getElementById("currencySelect");
+
+  select.innerHTML = ""; // clear first
+
+  for(let code in countryRates){
+    let opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = `${code} (${countryRates[code].symbol})`;
+    select.appendChild(opt);
+  }
+}
+
+// ================= INIT =================
+window.onload = function(){
+  initWallet();
+  updateWalletDisplay();
+  loadWithdrawals();
+  populateCountries();
+  document.getElementById("swapAmount").addEventListener("input", calculateSwapPreview);
+document.getElementById("swapType").addEventListener("change", calculateSwapPreview);
+};
+</script>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+<a href="index.html"><span>🏠</span><p>Home</p></a>
+<a href="finance.html"><span>💰</span><p>Finance</p></a>
+<a href="wallet.html"><span>👛</span><p>Wallet</p></a>
+<a href="history.html"><span>🧾</span><p>History</p></a>
+<a href="support.html"><span>🆘</span><p>Support</p></a>
+<a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
+<a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
+</nav>
+
+</body>
+</html>

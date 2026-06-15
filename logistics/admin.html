@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin - Logistics</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<h2>🚚 Update Delivery Status</h2>
+
+<input type="text" id="orderId" placeholder="Enter Order ID"><br><br>
+
+<select id="status">
+  <option value="Pending">Pending</option>
+  <option value="In Transit">In Transit</option>
+  <option value="Delivered">Delivered</option>
+</select><br><br>
+
+<button onclick="updateStatus()">Update Status</button>
+
+<p id="result"></p>
+
+<script>
+async function updateStatus(){
+  let orderId = document.getElementById("orderId").value;
+  let status = document.getElementById("status").value;
+
+  let res = await fetch('http://127.0.0.1:3000/logistics/update', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ orderId, status })
+  });
+
+  let data = await res.json();
+
+  document.getElementById("result").innerText = data.message;
+}
+</script>
+
+</body>
+</html>

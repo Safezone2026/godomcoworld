@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistics Partner Registration</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<header>
+<div class="logo">Logistics Partner Registration</div>
+<a href="index.html">
+<button>Back</button>
+</a>
+</header>
+
+<div class="container">
+
+<h2>Register as Logistics Partner</h2>
+
+<form>
+
+<!-- EXISTING FIELDS (UNCHANGED) -->
+<input type="text" placeholder="Business Name" required><br><br>
+<input type="text" placeholder="Owner Name" required><br><br>
+<input type="email" placeholder="Email Address" required><br><br>
+<input type="text" placeholder="Phone Number" required><br><br>
+
+<!-- ✅ NEW: DELIVERY COVERAGE -->
+<h3>🌍 Delivery Coverage</h3>
+<select id="coverage">
+<option value="local">Local (Same State)</option>
+<option value="interstate">Interstate</option>
+<option value="international">International</option>
+</select><br><br>
+
+<!-- EXISTING LOCATION (UNCHANGED) -->
+<h3>📍 Base Location</h3>
+
+<input type="text" id="baseAddress" placeholder="Base Address (e.g Lagos, Ikeja)" required>
+
+<select id="baseCountry">
+<option value="Nigeria">🇳🇬 Nigeria</option>
+<option value="Ghana">🇬🇭 Ghana</option>
+<option value="Kenya">🇰🇪 Kenya</option>
+<option value="South Africa">🇿🇦 South Africa</option>
+<option value="Egypt">🇪🇬 Egypt</option>
+<option value="Cameroon">🇨🇲 Cameroon</option>
+<option value="Uganda">🇺🇬 Uganda</option>
+<option value="Tanzania">🇹🇿 Tanzania</option>
+<option value="Ethiopia">🇪🇹 Ethiopia</option>
+<option value="Rwanda">🇷🇼 Rwanda</option>
+<option value="Senegal">🇸🇳 Senegal</option>
+<option value="Ivory Coast">🇨🇮 Ivory Coast</option>
+<option value="Algeria">🇩🇿 Algeria</option>
+<option value="Morocco">🇲🇦 Morocco</option>
+<option value="Angola">🇦🇴 Angola</option>
+<option value="Zambia">🇿🇲 Zambia</option>
+<option value="Zimbabwe">🇿🇼 Zimbabwe</option>
+<option value="Malawi">🇲🇼 Malawi</option>
+<option value="Botswana">🇧🇼 Botswana</option>
+<option value="Namibia">🇳🇦 Namibia</option>
+<option value="Sierra Leone">🇸🇱 Sierra Leone</option>
+<option value="Liberia">🇱🇷 Liberia</option>
+<option value="Togo">🇹🇬 Togo</option>
+<option value="Benin">🇧🇯 Benin</option>
+<option value="Niger">🇳🇪 Niger</option>
+<option value="Mali">🇲🇱 Mali</option>
+<option value="Burkina Faso">🇧🇫 Burkina Faso</option>
+<option value="Gabon">🇬🇦 Gabon</option>
+<option value="Congo">🇨🇬 Congo</option>
+<option value="DR Congo">🇨🇩 DR Congo</option>
+</select>
+
+<br><br>
+<h3>🚚 Logistics Details</h3>
+
+<input type="text" id="companyName" placeholder="Logistics Company Name" required><br><br>
+
+<select id="transportType">
+  <option value="">Select Transport Type</option>
+  <option value="Bike">🏍 Bike</option>
+  <option value="Car">🚗 Car</option>
+  <option value="Van">🚐 Van</option>
+  <option value="Truck">🚚 Truck</option>
+</select><br><br>
+
+<input type="number" id="capacity" placeholder="Max Weight Capacity (kg)" required><br><br>
+
+<input type="number" id="baseFee" placeholder="Base Delivery Fee (₦)" required><br><br>
+
+<input type="number" id="perKm" placeholder="Fee per KM (₦)" required><br><br>
+
+<input type="number" id="coverageKm" placeholder="Max Coverage Distance (KM)" required><br><br>
+<input id="lat" placeholder="Latitude">
+<input id="lng" placeholder="Longitude">
+
+<!-- ✅ NEW: PRICE CONFIG -->
+<h3>💰 Delivery Pricing</h3>
+<input type="number" id="pricePerKm" placeholder="Price per KM (₦)" required><br><br>
+<input type="number" id="pricePerKg" placeholder="Price per KG (₦)" required><br><br>
+
+<!-- WALLET -->
+<h3>Wallet Address</h3>
+<input type="text" id="wallet" placeholder="Enter your Pi Wallet Address"><br><br>
+<select id="availability">
+  <option value="online">Online</option>
+  <option value="offline">Offline</option>
+</select>
+<button type="button" onclick="getLocation()">📍 Use My Location</button>
+<input type="number" id="speed" placeholder="Average Speed (km/h)">
+
+<!-- TERMS (UNCHANGED – INCLUDING YOUR 10% LINE) -->
+<h3>Terms & Agreement</h3>
+
+<div style="background:#111; padding:15px; border-radius:10px; font-size:14px; max-height:200px; overflow:auto;">
+
+<p><strong>Godomcoworld Logistics Partner Agreement</strong></p>
+
+<p>1. Delivery Responsibility:</p>
+<p>Partners must ensure safe and timely delivery of all assigned orders.</p>
+
+<p>2. Payment Structure:</p>
+<p>Logistics partners earn delivery fees per completed shipment.</p>
+
+<p>3. Platform Commission:</p>
+<p>A 10% platform fee will be deducted from each delivery fee.</p>
+
+<p>4. Conduct Policy:</p>
+<p>Misconduct, delays, or fraud will lead to account suspension.</p>
+
+<p>5. Tracking Requirement:</p>
+<p>Partners must update delivery status in real time.</p>
+
+</div>
+
+<br>
+
+<label>
+<input type="checkbox" id="agree"> I agree to the Terms & Conditions
+</label>
+
+<br><br>
+
+<button id="registerBtn" onclick="registerLogistics()">Register as Logistics Partner</button>
+
+</form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>
+  eruda.init();
+</script>
+
+<script>
+let username = localStorage.getItem("username");
+
+if(!username){
+  username = prompt("Enter your username (e.g rider1)");
+  localStorage.setItem("username", username);
+}
+const existingUser = localStorage.getItem("logistics_username");
+
+if(existingUser){
+  window.location.href = "logistics-home.html";
+}
+function getLocation(){
+  navigator.geolocation.getCurrentPosition(pos => {
+    localStorage.setItem("rider_lat", pos.coords.latitude);
+    localStorage.setItem("rider_lng", pos.coords.longitude);
+    alert("Location captured");
+  });
+}
+
+const registerBtn = document.getElementById("registerBtn");
+const agreeCheckbox = document.getElementById("agree");
+
+// 🔥 ALL REQUIRED FIELDS
+const fields = [
+  "companyName",
+  "transportType",
+  "capacity",
+  "baseFee",
+  "coverageKm",
+  "pricePerKm",
+  "pricePerKg",
+  "baseAddress",
+  "baseCountry",
+  "wallet"
+];
+
+// run on load
+validateForm();
+
+// listen to all inputs
+fields.forEach(id => {
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener("input", validateForm);
+    el.addEventListener("change", validateForm);
+  }
+});
+
+// checkbox listener
+agreeCheckbox.addEventListener("change", validateForm);
+
+// 🔥 VALIDATION FUNCTION
+function validateForm(){
+
+  let allFilled = true;
+
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+
+    if(!el || el.value.trim() === ""){
+      allFilled = false;
+    }
+  });
+
+  if(allFilled && agreeCheckbox.checked){
+    registerBtn.classList.add("active");
+  } else {
+    registerBtn.classList.remove("active");
+  }
+}
+
+function registerLogistics(){
+
+  const wallet = document.getElementById("wallet").value;
+  const agree = document.getElementById("agree").checked;
+
+  if(wallet === ""){
+    alert("Enter wallet address");
+    return;
+  }
+
+  if(!agree){
+    alert("You must agree to terms");
+    return;
+  }
+
+  const payload = {
+  username: username,
+  companyName: document.getElementById("companyName").value,
+  transportType: document.getElementById("transportType").value,
+  capacity: Number(document.getElementById("capacity").value),
+  baseFee: Number(document.getElementById("baseFee").value),
+  perKm: Number(document.getElementById("perKm").value),
+  coverageKm: Number(document.getElementById("coverageKm").value),
+
+  address: document.getElementById("baseAddress").value,
+  country: document.getElementById("baseCountry").value,
+
+  wallet, // ✅ FIXED (comma added)
+
+  availability: document.getElementById("availability").value,
+  speed: Number(document.getElementById("speed").value) || 40,
+
+  // 🔥 VERY IMPORTANT (convert to number)
+  lat: Number(localStorage.getItem("rider_lat")),
+  lng: Number(localStorage.getItem("rider_lng"))
+};
+
+console.log("🚚 SENDING DATA:", payload);
+
+  fetch('/register-logistics', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+  alert(data.message || "Registration successful");
+
+  // ✅ Save identity
+  localStorage.setItem("logistics_wallet", wallet);
+  localStorage.setItem("logistics_username", username);
+
+  // ✅ Redirect to logistics home
+  window.location.href = "logistics-home.html";
+})
+  .catch(err => {
+    console.error(err);
+    alert("Registration failed");
+  });
+
+}
+</script>
+
+</body>
+</html>

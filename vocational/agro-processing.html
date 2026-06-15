@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,41 +8,53 @@
 </head>
 
 <body>
+
 <header>
 <div class="logo">🌍 Godomcoworld</div>
 <a href="index.html"><button>Back</button></a>
 </header>
 
 <div class="container">
+
 <h2>Agricultural Processing</h2>
 <p>Learn food processing, packaging, and preservation.</p>
 
-<div id="lockedContent">
-<p style="color:red;">🔒 Subscribe to unlock this course</p>
-  <p id="expiryMsg" style="color:orange;"></p>
-</div>
+<!-- LOCK -->
+<p id="lockedMsg" style="color:red;">🔒 Subscribe to unlock this course</p>
+<p id="expiryMsg" style="color:orange;"></p>
 
 <h3>Choose Plan</h3>
 
 <div class="course-grid">
 
 <div class="card">
-<h3>Basic</h3><p>$10/month</p><p id="basicPi"></p>
-<button onclick="pay('basic',10)">Subscribe</button>
+<h3>Basic</h3>
+<p>$10/month</p>
+<p id="basicPi"></p>
+<button onclick="payCourse(10,'Basic')">Pay with Pi</button>
 </div>
 
 <div class="card">
-<h3>Intermediate</h3><p>$20/month</p><p id="interPi"></p>
-<button onclick="pay('intermediate',20)">Subscribe</button>
+<h3>Intermediate</h3>
+<p>$20/month</p>
+<p id="interPi"></p>
+<button onclick="payCourse(20,'Intermediate')">Pay with Pi</button>
 </div>
 
 <div class="card">
-<h3>Professional</h3><p>$30/month</p><p id="proPi"></p>
-<button onclick="pay('pro',30)">Subscribe</button>
+<h3>Professional</h3>
+<p>$30/month</p>
+<p id="proPi"></p>
+<button onclick="payCourse(30,'Professional')">Pay with Pi</button>
 </div>
 
 </div>
-// COURSE CONTENT
+
+<!-- COURSE CONTENT -->
+<div id="courseContent" style="display:none; margin-top:30px;">
+
+<h3>📚 Course Content</h3>
+
 <ul>
 <li>Introduction to Agro Processing Industry</li>
 <li>Crop to Product Transformation</li>
@@ -50,9 +62,9 @@
 <li>Packaging, Branding & Export Standards</li>
 <li>Agro-Business Setup & Profit Strategy</li>
 <li>Hands-on Practical Training</li>
-  </ul>
-  // AI TUTOR 
-  <hr>
+</ul>
+
+<hr>
 
 <h3>🤖 AI Tutor (Voice Enabled)</h3>
 
@@ -65,102 +77,139 @@
 <button onclick="speakAnswer()">🔊 Listen</button>
 
 <p id="aiResponse" style="margin-top:15px;"></p>
-  <button id="certBtn" onclick="generateCertificate()" style="display:none; margin-top:15px;">
-  🎓 Get Certificate
-  </button>
+
+<button id="certBtn" onclick="generateCertificate()" style="display:none; margin-top:15px;">
+🎓 Get Certificate
+</button>
+
 </div>
-  <!-- CERTIFICATE -->
-  <div id="certificate" style="display:none; padding:30px; background:white; color:black; text-align:center; border:8px solid gold; margin-top:20px;">
 
-  <h1 style="color:darkblue;">🏆 Certificate of Completion</h1>
+</div>
 
-  <p>This certifies that</p>
+<!-- CERTIFICATE -->
+<div id="certificate" style="display:none; padding:30px; background:white; color:black; text-align:center; border:8px solid gold; margin-top:20px;">
 
-  <h2 id="studentName" style="margin:10px 0;"></h2>
+<h1 style="color:darkblue;">🏆 Certificate of Completion</h1>
 
-  <p>has successfully completed</p>
+<p>This certifies that</p>
 
-  <h2 id="courseTitle"></h2>
+<h2 id="studentName"></h2>
 
-  <p>on Godomcoworld Technology Platform</p>
+<p>has successfully completed</p>
 
-  <p id="date"></p>
+<h2 id="courseTitle"></h2>
 
-  <p><strong>Certificate ID:</strong> <span id="certId"></span></p>
+<p>on Godomcoworld Technology Platform</p>
 
-  <p style="margin-top:30px;">________________________</p>
-  <p>Authorized Signature</p>
-    <p>
-‎Verify this certificate at:
-‎<br>
-‎<strong>godomcoworld.netlify.app/verify.html</strong>
-‎</p>
-  <div id="qrcode" style="margin-top:20px;"></div>
+<p id="date"></p>
 
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<p><strong>Certificate ID:</strong> <span id="certId"></span></p>
 
+<p style="margin-top:30px;">________________________</p>
+<p>Authorized Signature</p>
+
+<p>
+Verify at:<br>
+<strong>godomcoworld.netlify.app/verify.html</strong>
+</p>
+
+<div id="qrcode" style="margin-top:20px;"></div>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script src="../js/payment.js"></script>
+<script src="../js/wallet-init.js"></script>
 
-  <script>
+<script>
+  let username = localStorage.getItem("username");
+
+if(!username){
+  username = prompt("Enter your username (e.g seller1)");
+  localStorage.setItem("username", username);
+}
+
+console.log("Current user:", username);
+
+// INIT PI
 Pi.init({
   version:"2.0",
   sandbox:false,
   apiKey:"qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
 });
 
-// ✅ LOAD PI PRICES CORRECTLY
+// COURSE NAME
+let courseName = "Agricultural Processing";
+
+// LOAD PRICES + CHECK ACCESS
 window.onload = function(){
 
   function setPiPrice(id, usd){
     document.getElementById(id).innerText =
-    (usd / 314159).toFixed(8) + " π";
+      (usd / 314159).toFixed(8) + " π";
   }
 
   setPiPrice("basicPi",10);
   setPiPrice("interPi",20);
   setPiPrice("proPi",30);
-  
 
+  checkAccess();
 };
 
-// COURSE NAME
-let courseName = "Agricultural Processing";
+// CHECK ACCESS
+async function checkAccess(){
 
-// CHECK ACCESS ON LOAD
-let data = localStorage.getItem("plan_" + courseName);
+  let username = localStorage.getItem("piUser");
 
-if(data){
-  let parsed = JSON.parse(data);
-  let now = new Date().getTime();
+  if(!username) return;
 
-  if(now < parsed.expiry){
-    unlock();
-  } else {
-    localStorage.removeItem("plan_" + courseName);
+  try {
+
+    let res = await fetch(`http://127.0.0.1:3000/course-access?username=${username}&courseName=${courseName}`);
+    let data = await res.json();
+
+    if(data.access){
+      unlock();
+    } else if(data.expired){
+      document.getElementById("expiryMsg").innerText = "⚠️ Subscription expired";
+    }
+
+  } catch(err){
+    console.error(err);
   }
 }
 
-// PAYMENT FUNCTION
-function payCourse(usd, plan){
+// PAYMENT
+async function payCourse(price, plan){
 
-  let piAmount = (usd / 314159).toFixed(8);
+  let username = localStorage.getItem("piUser");
+
+  if(!username){
+    alert("Login required");
+    return;
+  }
+
+  let piAmount = (price / 314159).toFixed(8);
 
   Pi.createPayment(
   {amount:parseFloat(piAmount), memo:courseName, metadata:{plan}},
   {
 
-    onReadyForServerCompletion:function(paymentId,txid){
+    onReadyForServerCompletion: async function(){
 
-      // SAVE SUBSCRIPTION (30 DAYS)
-      let expiryDate = new Date().getTime() + (30*24*60*60*1000);
-
-      let subscriptionData = {
-        plan: plan,
-        expiry: expiryDate
-      };
-
-      localStorage.setItem("plan_" + courseName, JSON.stringify(subscriptionData));
+      // 🔥 SAVE TO BACKEND
+      await fetch('http://127.0.0.1:3000/subscribe-course', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          username,
+          courseName,
+          plan,
+          price
+        })
+      });
 
       alert("Payment successful!");
       unlock();
@@ -178,14 +227,14 @@ function payCourse(usd, plan){
   });
 }
 
-// UNLOCK COURSE
+// UNLOCK
 function unlock(){
   document.getElementById("lockedMsg").style.display = "none";
   document.getElementById("courseContent").style.display = "block";
   document.getElementById("certBtn").style.display = "block";
 }
 
-// CERTIFICATE FUNCTION (SECURED)
+// CERTIFICATE
 function generateCertificate(){
 
   let data = localStorage.getItem("plan_" + courseName);
@@ -207,18 +256,13 @@ function generateCertificate(){
 
   let certId = "GODO-" + Date.now();
 
-  let certData = {
-    name: name,
-    course: courseName,
-    date: new Date().toDateString(),
-    id: certId
-  };
-
-  localStorage.setItem("cert_" + certId, JSON.stringify(certData));
+  localStorage.setItem("cert_" + certId, JSON.stringify({
+    name, course: courseName, date: new Date().toDateString(), id: certId
+  }));
 
   document.getElementById("studentName").innerText = name;
   document.getElementById("courseTitle").innerText = courseName;
-  document.getElementById("date").innerText = certData.date;
+  document.getElementById("date").innerText = new Date().toDateString();
   document.getElementById("certId").innerText = certId;
 
   let verifyURL = window.location.origin + "/verify.html?id=" + certId;
@@ -235,74 +279,62 @@ function generateCertificate(){
 
   window.print();
 }
-  // 🎤 SPEECH TO TEXT
+
+// 🎤 VOICE INPUT
 function startListening(){
 
-let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = "en-US";
+  recognition.start();
 
-recognition.lang = "en-US";
+  recognition.onresult = function(event){
+    document.getElementById("aiQuestion").value =
+      event.results[0][0].transcript;
+  };
 
-recognition.start();
-
-recognition.onresult = function(event){
-let text = event.results[0][0].transcript;
-document.getElementById("aiQuestion").value = text;
-};
-
-recognition.onerror = function(){
-alert("Voice recognition not supported on this device");
-};
-
+  recognition.onerror = function(){
+    alert("Voice not supported");
+  };
 }
 
-
-// 🧠 AI RESPONSE (TEMP LOGIC)
+// 🤖 AI RESPONSE
 function askAI(){
 
-let question = document.getElementById("aiQuestion").value;
+  let q = document.getElementById("aiQuestion").value;
 
-if(!question){
-alert("Ask a question");
-return;
+  if(!q){
+    alert("Ask a question");
+    return;
+  }
+
+  let res = "AI Tutor: ";
+
+  if(q.toLowerCase().includes("agro")){
+    res += "Agro-processing converts raw farm products into consumable goods.";
+  } else {
+    res += "Good question! More AI features coming soon.";
+  }
+
+  document.getElementById("aiResponse").innerText = res;
 }
 
-let response = "AI Tutor: ";
-
-if(question.toLowerCase().includes("blockchain")){
-  response += "Blockchain is a decentralized digital ledger that records transactions securely.";
-}
-else if(question.toLowerCase().includes("ar")){
-  response += "Augmented Reality blends digital elements with the real world.";
-}
-else if(question.toLowerCase().includes("welding")){
-  response += "Welding joins materials using heat and pressure.";
-}
-else{
-  response += "Great question! Real AI upgrade coming soon.";
-}
-
-document.getElementById("aiResponse").innerText = response;
-
-}
-
-
-// 🔊 TEXT TO SPEECH
+// 🔊 SPEAK
 function speakAnswer(){
 
-let text = document.getElementById("aiResponse").innerText;
+  let text = document.getElementById("aiResponse").innerText;
 
-if(!text){
-alert("No response to read");
-return;
+  if(!text){
+    alert("No response");
+    return;
+  }
+
+  let speech = new SpeechSynthesisUtterance(text);
+  speech.lang = "en-US";
+
+  window.speechSynthesis.speak(speech);
 }
 
-let speech = new SpeechSynthesisUtterance(text);
+</script>
 
-speech.lang = "en-US";
-
-window.speechSynthesis.speak(speech);
-
-    }
-  </script>
 </body>
 </html>

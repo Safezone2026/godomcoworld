@@ -6,27 +6,77 @@
 <title>Marketplace Products</title>
 <link rel="stylesheet" href="../css/style.css">
 <style>
-  #productList { display: flex; flex-wrap: wrap; gap: 10px; }
-  .product-card { border: 1px solid #ccc; padding: 10px; width: 200px; display: flex; flex-direction: column; align-items: center; }
-  .product-card img { width: 180px; height: 180px; object-fit: cover; margin-bottom: 5px; }
-  .product-card button { margin-top: 5px; cursor: pointer; }
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a; /* dark background */
+    color: #fff;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #444;
+    background-color: #222;
+  }
+  .logo { font-size: 20px; font-weight: bold; }
+  #productList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px;
+  }
+  .product-card {
+    background-color: #333;
+    border: 1px solid #555;
+    padding: 10px;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #fff;
+  }
+  .product-card img {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    margin-bottom: 5px;
+  }
+  .product-card button {
+    margin-top: 5px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+  }
   #cartList div { margin-bottom: 5px; }
+  form {
+    margin: 10px;
+    background: #222;
+    padding: 10px;
+    border: 1px solid #444;
+    width: 400px;
+  }
+  input, select { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: none; }
 </style>
 </head>
 <body>
 
 <header>
-  <div style="position:absolute; right:20px; top:10px;">
-    <button onclick="goToCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
-  </div>
   <div class="logo">Marketplace Products</div>
-  <a href="marketplace.html"><button>Back</button></a>
+  <div>
+    <button onclick="goToCheckout()">🛒 Cart (<span id="cartCount">0</span>)</button>
+    <a href="index.html"><button>Back</button></a>
+    <a href="../seller-dashboard.html">
+  <button>📊 Seller Earnings</button>
+</a>
+  </div>
 </header>
 
-<!-- ======================= -->
-<!-- Product Upload Form (Seller only) -->
-<!-- ======================= -->
-<form id="productForm" style="display:none;">
+<form id="productForm">
   <h2>Add New Product</h2>
   <input type="text" name="name" placeholder="Product Name" required />
   <input type="text" name="description" placeholder="Description" required />
@@ -37,6 +87,7 @@
   </select>
   <input type="text" name="sellerUsername" placeholder="Seller Username" required />
   <input type="file" name="image" accept="image/*" required />
+  <input type="number" id="weight" placeholder="Weight (kg)">
   <select name="category" required>
     <option value="">Select Category</option>
     <option value="Vegetables">Vegetables</option>
@@ -56,8 +107,9 @@
 </form>
 
 <h2>Browse Products</h2>
-<input type="text" id="searchInput" placeholder="Search products..." style="padding:5px; width:200px;">
-<div style="margin-top:10px;">
+<input type="text" id="searchInput" placeholder="Search products..." style="padding:5px; width:200px; margin:10px 0;">
+
+<div style="margin:10px 0;">
   <button onclick="filterCategory('All')">All</button>
   <button onclick="filterCategory('Vegetables')">Vegetables</button>
   <button onclick="filterCategory('Grains')">Grains</button>
@@ -72,181 +124,275 @@
   <button onclick="filterCategory('Beauty')">Beauty</button>
   <button onclick="filterCategory('Services')">Services</button>
 </div>
-<div id="status"></div>
 
+<div id="status"></div>
 <h2>Products</h2>
 <div id="productList"></div>
 
 <h2>Cart</h2>
 <div id="cartList"></div>
-<div>
-  <button onclick="goToCheckout()">Go to Checkout</button>
-</div>
 
-<!-- ======================= -->
-<!-- SCRIPTS -->
-<!-- ======================= -->
-<!-- Pi SDK -->
-<script src="https://sdk.minepi.com/pi-sdk.js"></script>
-<script>
-  Pi.init({
-    version: "2.0",
-    sandbox: true,
-    apiKey: "qc4ufrjtkej5vt51xmoljidnzyrjfdghxr3mzd8s0h14qf7qybebv6kehyqudl7h"
-  });
-</script>
-
-<!-- Eruda for debugging -->
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 
-<!-- Main JS -->
 <script>
-let allProducts = [];
-let currentCategory = 'All';
+const API_URL = 'http://127.0.0.1:3000'; // change if needed
+const nairaToUSD = 1500;
+const PI_RATE = 471238500;
+console.log("SCRIPT START");
+
+let currentUser = localStorage.getItem("username") || prompt("Enter your username (e.g seller1)");
+localStorage.setItem("username", currentUser);
+let currentSellerUsername = currentUser;
+
 const form = document.getElementById('productForm');
 const statusDiv = document.getElementById('status');
 const productList = document.getElementById('productList');
 const cartList = document.getElementById('cartList');
-const checkoutBtn = document.getElementById('checkoutBtn');
-let cart = [];
 
-// -------------------- SELLER CHECK --------------------
-let currentUser = localStorage.getItem("piUser");
+let allProducts = [];
+let currentCategory = 'All';
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+renderCart();
 
-// Create user if none exists
-if (!currentUser) {
-  currentUser = "user_" + Date.now();
-  localStorage.setItem("piUser", currentUser);
-}
-
-// Same user acts as seller
-let currentSellerUsername = currentUser;
-
-// Show upload form (for now allow all users during testing)
 form.style.display = 'block';
 document.querySelector('input[name="sellerUsername"]').value = currentSellerUsername;
-// -------------------- UPLOAD PRODUCT --------------------
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const formData = new FormData(form);
-  try {
-    const response = await fetch('/products', { method: 'POST', body: formData });
-    const result = await response.json();
-    statusDiv.textContent = result.message;
-    if (result.product) loadProducts();
-    form.reset();
-    document.querySelector('input[name="sellerUsername"]').value = currentSellerUsername;
-  } catch (err) { console.error(err); statusDiv.textContent = 'Upload failed'; }
-});
 
-// -------------------- LOAD & DISPLAY PRODUCTS --------------------
+// -------------------- LOAD PRODUCTS --------------------
 async function loadProducts() {
   try {
-    const response = await fetch('/products');
+    const response = await fetch(`${API_URL}/products`);
     const data = await response.json();
-    allProducts = data.products;
+    allProducts = Array.isArray(data) ? data : data.products || [];
+    console.log("LOADING PRODUCTS...");
+    console.log("Loaded products:", allProducts);
     displayProducts();
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    console.error("Failed to load products:", err);
+    statusDiv.textContent = 'Failed to load products';
+  }
 }
 
+// -------------------- DISPLAY PRODUCTS --------------------
 function displayProducts() {
   productList.innerHTML = '';
-  let filtered = allProducts;
 
-  if (currentCategory !== 'All') filtered = filtered.filter(p => p.category === currentCategory);
-  const searchText = document.getElementById('searchInput').value.toLowerCase();
-  filtered = filtered.filter(p => p.name.toLowerCase().includes(searchText));
+  const searchText = document.getElementById('searchInput')?.value.toLowerCase() || '';
 
-  filtered.forEach(addProductToPage);
+  const filtered = allProducts
+    .filter(p => (currentCategory === 'All' || p.category === currentCategory))
+    .filter(p => (p.name || '').toLowerCase().includes(searchText));
+
+  if (filtered.length === 0) {
+    productList.innerHTML = "<p>No products found</p>";
+    return;
+  }
+
+  filtered.forEach(product => {
+
+    const naira = Number(product.price);
+    const usd = naira / nairaToUSD;
+    const pi = naira / PI_RATE;
+
+    const div = document.createElement('div');
+    div.className = 'product-card';
+console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
+    div.innerHTML = `
+      <img src="${API_URL}${product.imagePath}" alt="${product.name}">
+      <h4>${product.name}</h4>
+      <p>${product.description}</p>
+
+      <strong>₦${naira.toLocaleString()}</strong>
+
+      <div style="margin-top:5px; font-size:13px; color:#ccc;">
+        <div>$${usd.toFixed(2)}</div>
+        <div>${pi.toFixed(8)} π</div>
+      </div>
+
+      <p>Category: ${product.category || 'N/A'}</p>
+    `;
+
+    // 🗑️ DELETE BUTTON
+    if (product.sellerUsername === currentSellerUsername) {
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Delete';
+      delBtn.style.backgroundColor = '#e74c3c';
+      delBtn.style.color = '#fff';
+
+      delBtn.onclick = async () => {
+        if (!confirm("Are you sure?")) return;
+
+        try {
+          const res = await fetch(`${API_URL}/delete-product`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: product.id })
+          });
+
+          const result = await res.json();
+          alert(result.message);
+          loadProducts();
+
+        } catch (err) {
+          console.error(err);
+          alert('Delete failed');
+        }
+      };
+
+      div.appendChild(delBtn);
+    }
+
+   // 🛒 ADD TO CART
+const cartBtn = document.createElement('button');
+cartBtn.textContent = 'Add to Cart';
+
+cartBtn.onclick = () => {
+
+  const cleanProduct = {
+    id: product.id,
+    name: product.name,
+    price: Number(product.price),
+    description: product.description,
+    imagePath: product.imagePath,
+    weight: Number(product.weight) || 1,
+    category: product.category || "General",
+    sellerAddress: product.sellerAddress || "",
+    sellerCountry: product.sellerCountry || "",
+    sellerUsername: product.sellerUsername
+  };
+
+  // ✅ DEBUG (SAFE HERE)
+  console.log("🛒 CLEAN PRODUCT:", JSON.stringify(cleanProduct, null, 2));
+
+  let freshCart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  freshCart.push(cleanProduct);
+
+  localStorage.setItem("cart", JSON.stringify(freshCart));
+
+  // 🔥 SYNC GLOBAL CART
+  cart = freshCart;
+
+  updateCartCount();
+  renderCart();
+};
+
+// ✅ DON'T MISS THESE
+div.appendChild(cartBtn);
+productList.appendChild(div);
+
+  }); // ✅ CLOSE
+} // ✅ CLOSE FUNCTION
+
+function updateCartCount(){
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  const counter = document.getElementById("cartCount");
+
+  if (!counter) return;
+
+  counter.textContent = cart.length;
 }
 
-function filterCategory(category) {
-  currentCategory = category;
-  displayProducts();
-}
+// -------------------- FILTER & SEARCH --------------------
+function filterCategory(category) { currentCategory = category; displayProducts(); }
 document.getElementById('searchInput').addEventListener('input', displayProducts);
-
-// -------------------- ADD PRODUCT TO PAGE --------------------
-function addProductToPage(product) {
-  const div = document.createElement('div');
-  div.className = 'product-card';
-
-  if (product.imagePath) {
-    const img = document.createElement('img');
-    img.src = product.imagePath;
-    img.alt = product.name;
-    div.appendChild(img);
-  }
-
-  const name = document.createElement('h4'); name.textContent = product.name; div.appendChild(name);
-  const desc = document.createElement('p'); desc.textContent = product.description; div.appendChild(desc);
-  const price = document.createElement('strong'); price.textContent = (product.currency || '₦') + product.price; div.appendChild(price);
-  const category = document.createElement('p'); category.textContent = "Category: " + product.category; div.appendChild(category);
-
-  if (product.sellerUsername === currentSellerUsername) {
-    const delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete';
-    delBtn.style.backgroundColor = '#e74c3c';
-    delBtn.style.color = '#fff';
-    delBtn.addEventListener('click', async () => {
-      if (!confirm("Are you sure?")) return;
-      try {
-        const res = await fetch('/delete-product', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: product.id })
-        });
-        const result = await res.json();
-        alert(result.message);
-        loadProducts();
-      } catch (err) { console.error(err); alert('Failed to delete'); }
-    });
-    div.appendChild(delBtn);
-  }
-
-  const cartBtn = document.createElement('button');
-  cartBtn.textContent = 'Add to Cart';
-  cartBtn.addEventListener('click', () => { cart.push(product); renderCart(); });
-  div.appendChild(cartBtn);
-
-  productList.appendChild(div);
-}
 
 // -------------------- CART --------------------
 function renderCart() {
+  let storedCart = JSON.parse(localStorage.getItem("cart")) || [];
+
   cartList.innerHTML = '';
-  cart.forEach((item, index) => {
+
+  storedCart.forEach((item, index) => {
     const div = document.createElement('div');
-    div.textContent = `${item.name} - ${item.currency || '₦'}${item.price}`;
+    div.textContent = `${item.name} - ₦${Number(item.price).toLocaleString()}`;
+
     const removeBtn = document.createElement('button');
     removeBtn.textContent = 'Remove';
-    removeBtn.style.marginLeft = '5px';
-    removeBtn.addEventListener('click', () => { cart.splice(index, 1); renderCart(); });
+
+    removeBtn.onclick = () => {
+      storedCart.splice(index, 1);
+      localStorage.setItem("cart", JSON.stringify(storedCart));
+      renderCart();
+    };
+    
+
     div.appendChild(removeBtn);
     cartList.appendChild(div);
   });
+
+  document.getElementById('cartCount').textContent = storedCart.length;
+
+
+  // ✅ FORCE REMOVE OLD BUTTON (important)
+  const oldBtn = document.getElementById("checkoutBtn");
+  if (oldBtn) oldBtn.remove();
+
+  // ✅ ALWAYS RECREATE BUTTON (no condition delay)
+  const checkoutBtn = document.createElement('button');
+  checkoutBtn.id = "checkoutBtn";
+  checkoutBtn.textContent = "Proceed to Checkout";
+  checkoutBtn.style.marginTop = "10px";
+  checkoutBtn.style.backgroundColor = "#4CAF50";
+  checkoutBtn.style.color = "#fff";
+
+  checkoutBtn.onclick = goToCheckout;
+
+  cartList.appendChild(checkoutBtn);
+
+  // ✅ update counter
+  document.getElementById('cartCount').textContent = cart.length;
 }
 
 // -------------------- CHECKOUT --------------------
-// GO TO CHECKOUT
 function goToCheckout() {
   if (cart.length === 0) {
-    return alert("Cart is empty");
+    alert("Cart is empty");
+    return;
   }
 
-  // Save cart to localStorage
+  // ✅ ENSURE cart is saved
   localStorage.setItem("cart", JSON.stringify(cart));
 
-  // Go to checkout page
   window.location.href = "checkout.html";
 }
-// -------------------- INITIAL LOAD --------------------
+
+// -------------------- UPLOAD PRODUCT --------------------
+if (form) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      statusDiv.textContent = result.message;
+
+      if (result.product) loadProducts();
+
+      form.reset();
+      document.querySelector('input[name="sellerUsername"]').value = currentSellerUsername;
+
+    } catch (err) {
+      console.error(err);
+      statusDiv.textContent = 'Upload failed';
+    }
+  });
+}
+
+// ✅ STORAGE LISTENER (CORRECT)
+window.addEventListener("storage", () => {
+  updateCartCount();
+});
+
+// ✅ LOAD PRODUCTS
 loadProducts();
 </script>
-
-<a href="marketplace.html"><button>Back to Marketplace</button></a>
-<a href="/seller-dashboard.html"><button>💰 My Earnings</button></a>
-
 </body>
 </html>

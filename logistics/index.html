@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Logistics Dashboard - Godomcoworld</title>
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+body {
+  background:#0b0b0b;
+  color:white;
+  font-family:sans-serif;
+  padding:20px;
+}
+
+.card {
+  background:#111;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:15px;
+}
+
+button {
+  background:orange;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  margin-top:10px;
+  width:100%;
+  cursor:pointer;
+}
+
+.delivery {
+  background:#1a1a1a;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
+}
+
+.small-btn{
+  width:auto;
+  margin:5px;
+  padding:6px 10px;
+  font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🚚 Logistics Dashboard</h2>
+
+<div class="card">
+  <h3 id="riderName">Welcome</h3>
+
+  <h3>💰 Total Earnings</h3>
+  <h2 id="earnings">₦0</h2>
+
+  <h3>⏳ Pending Balance</h3>
+  <h2 id="pendingBalance">₦0</h2>
+
+  <h3>💵 Available Balance</h3>
+  <h2 id="availableBalance">₦0</h2>
+
+  <h3>📦 Deliveries Completed</h3>
+  <h2 id="completed">0</h2>
+</div>
+
+<div class="card">
+  <h3>📋 Assigned Deliveries</h3>
+  <div id="deliveryList">Loading...</div>
+</div>
+
+<div class="card">
+  <h3>📦 Track Shipment</h3>
+  <a href="track.html">
+    <button>Track Now</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>🏠 Back to Logistics Home</h3>
+  <a href="logistics-home.html">
+    <button>Go Back</button>
+  </a>
+</div>
+<a href="logistics-partner-registration.html">
+  <button>🚚 Become a Logistics Partner</button>
+</a>
+
+<script>
+
+// ================= USER =================
+let rider = localStorage.getItem("logisticsName");
+
+if(!rider){
+  rider = prompt("Enter logistics name (e.g Godomco Rider)");
+  localStorage.setItem("logisticsName", rider);
+}
+
+document.getElementById("riderName").innerText = "Rider: " + rider;
+
+
+// ================= LOAD DASHBOARD =================
+async function loadDashboard(){
+
+  try {
+
+    const res = await fetch(`http://127.0.0.1:3000/logistics-dashboard/${rider}`);
+    const data = await res.json();
+
+    console.log("LOGISTICS DATA:", data);
+
+    // 💰 TOTAL
+    document.getElementById("earnings").innerText =
+      "₦" + Number(data.totalEarnings || 0).toLocaleString();
+
+    // ⏳ PENDING
+    document.getElementById("pendingBalance").innerText =
+      "₦" + Number(data.pendingBalance || 0).toLocaleString();
+
+    // 💵 AVAILABLE
+    document.getElementById("availableBalance").innerText =
+      "₦" + Number(data.availableBalance || 0).toLocaleString();
+
+    // 📦 COMPLETED
+    document.getElementById("completed").innerText =
+      data.completed || 0;
+
+    renderDeliveries(data.deliveries || []);
+
+  } catch(err){
+    console.error(err);
+    document.getElementById("deliveryList").innerHTML = "Failed to load";
+  }
+}
+
+
+// ================= RENDER DELIVERIES =================
+function renderDeliveries(deliveries){
+
+  let container = document.getElementById("deliveryList");
+
+  if(deliveries.length === 0){
+    container.innerHTML = "No deliveries assigned";
+    return;
+  }
+
+  container.innerHTML = "";
+
+  deliveries.forEach(d => {
+
+    container.innerHTML += `
+      <div class="delivery">
+        <b>Order:</b> ${d.orderId} <br>
+        <b>Status:</b> ${d.status} <br>
+        <b>Distance:</b> ${d.distance || 0} km <br>
+        <b>Fee:</b> ₦${Number(d.fee || 0).toLocaleString()} <br>
+
+        ${renderButtons(d)}
+      </div>
+    `;
+  });
+}
+
+
+// ================= STATUS BUTTONS =================
+function renderButtons(d){
+
+  if(d.status === "pending"){
+    return `
+      <button class="small-btn" onclick="updateStatus('${d.orderId}','in_transit')">
+        🚚 Start Delivery
+      </button>
+    `;
+  }
+
+  if(d.status === "in_transit"){
+    return `
+      <button class="small-btn" onclick="updateStatus('${d.orderId}','delivered_pending')">
+        📦 Mark Delivered (Await Buyer)
+      </button>
+    `;
+  }
+
+  if(d.status === "delivered_pending"){
+    return `<small>Waiting for buyer confirmation</small>`;
+  }
+
+  if(d.status === "delivered"){
+    return `<small>✅ Completed</small>`;
+  }
+
+  return "";
+}
+
+
+// ================= UPDATE STATUS =================
+async function updateStatus(orderId, status){
+
+  const res = await fetch('http://127.0.0.1:3000/update-delivery-status', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ orderId, status })
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+
+  loadDashboard();
+}
+
+
+// ================= AUTO LOAD =================
+window.onload = function(){
+  loadDashboard();
+};
+
+// 🔄 refresh every 5s
+setInterval(loadDashboard, 5000);
+
+</script>
+
+</body>
+</html>

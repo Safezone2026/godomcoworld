@@ -7,6 +7,8 @@
 
 <title>Activity Log</title>
 
+<link rel="stylesheet" href="../css/style.css">
+
 <style>
 body{
   background:#0d0d0d;
@@ -23,6 +25,15 @@ body{
   padding:15px;
   border-radius:10px;
   margin-top:10px;
+  border-left:5px solid #00c853;
+}
+.type{
+  font-weight:bold;
+  color:#00c853;
+}
+.date{
+  font-size:12px;
+  color:gray;
 }
 </style>
 
@@ -32,27 +43,51 @@ body{
 
 <div class="container">
 
-<h2>Activity Log</h2>
+<h2>📊 Activity Log</h2>
 
-<div class="log" id="log"></div>
+<div id="log"></div>
 
 </div>
 
 <script>
 
-let log = `
-Order Status: ${localStorage.getItem("order_status")} <br><br>
+async function loadActivities(){
 
-Product Price: $${localStorage.getItem("cart_price")} <br><br>
+  try {
 
-Platform Fee: $${localStorage.getItem("platform_fee")} <br><br>
+    const res = await fetch('http://127.0.0.1:3000/activity');
+    const data = await res.json();
 
-Customer: ${localStorage.getItem("order_name")} <br><br>
+    const container = document.getElementById("log");
 
-Address: ${localStorage.getItem("order_address")}
-`;
+    if(!data.activities || data.activities.length === 0){
+      container.innerHTML = "<p>No activity yet</p>";
+      return;
+    }
 
-document.getElementById("log").innerHTML = log;
+    container.innerHTML = "";
+
+    data.activities.forEach(a => {
+
+      container.innerHTML += `
+        <div class="log">
+          <div class="type">${a.type}</div>
+          <div>${a.message}</div>
+          <div class="date">${a.date}</div>
+        </div>
+      `;
+
+    });
+
+  } catch(err){
+    console.error(err);
+    document.getElementById("log").innerHTML = "⚠️ Failed to load activity";
+  }
+
+}
+
+// AUTO LOAD
+window.onload = loadActivities;
 
 </script>
 

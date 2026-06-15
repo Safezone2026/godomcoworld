@@ -6,6 +6,12 @@
 <link rel="stylesheet" href="css/style.css">
 
 <style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
 .service-grid button{
   background:#4CAF50;
   color:white;
@@ -13,6 +19,7 @@
   margin:5px;
   border:none;
   border-radius:5px;
+  cursor:pointer;
 }
 
 .pay-btn{
@@ -21,17 +28,12 @@
   margin-top:5px;
 }
 </style>
-
 </head>
 
 <body>
 
 <header>
 <h1>💰 Financial Services</h1>
-  <div>
-  <p>🪙 Pi Balance: <span id="pi-balance">0</span> π</p>
-  <p>💵 Fiat Balance: <span id="fiat-balance">0</span></p>
-  </div>
 </header>
 
 <main>
@@ -91,363 +93,270 @@
 </div>
 
 </main>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
+<script src="../js/payment.js"></script>
+<script src="../js/wallet-init.js"></script>
 
 <script>
-  // Mock user wallet (replace with backend data later)
-let wallet = {
-  pi: 50.0,       // initial Pi balance
-  fiat: 5000      // initial Fiat balance
-};
+  let username = localStorage.getItem("username");
 
-// Function to refresh wallet display
-function updateWalletDisplay() {
-  document.getElementById("pi-balance").innerText = wallet.pi.toFixed(8);
-  document.getElementById("fiat-balance").innerText = wallet.fiat.toFixed(2);
+if(!username){
+  username = prompt("Enter your username (e.g seller1)");
+  localStorage.setItem("username", username);
 }
 
-// Initial display
-updateWalletDisplay();
+console.log("Current user:", username);
+let currentService = "";
 
+// ================= COUNTRY RATES =================
 const countryRates = {
-NG: { symbol: "₦", rate: 1500 },
-GH: { symbol: "₵", rate: 12 },
-KE: { symbol: "KSh", rate: 160 },
-ZA: { symbol: "R", rate: 18 },
-EG: { symbol: "E£", rate: 50 },
-CM: { symbol: "FCFA", rate: 600 },
-UG: { symbol: "USh", rate: 3800 },
-TZ: { symbol: "TSh", rate: 2500 },
-ET: { symbol: "Br", rate: 56 },
-RW: { symbol: "FRw", rate: 1300 },
-SN: { symbol: "FCFA", rate: 600 },
-CI: { symbol: "FCFA", rate: 600 },
-DZ: { symbol: "DZD", rate: 135 },
-MA: { symbol: "MAD", rate: 10 },
-AO: { symbol: "Kz", rate: 830 },
-ZM: { symbol: "ZK", rate: 25 },
-ZW: { symbol: "ZWL", rate: 6000 },
-MW: { symbol: "MK", rate: 1700 },
-BW: { symbol: "P", rate: 13 },
-NA: { symbol: "N$", rate: 18 },
-SL: { symbol: "Le", rate: 23000 },
-LR: { symbol: "L$", rate: 190 },
-TG: { symbol: "FCFA", rate: 600 },
-BJ: { symbol: "FCFA", rate: 600 },
-NE: { symbol: "FCFA", rate: 600 },
-ML: { symbol: "FCFA", rate: 600 },
-BF: { symbol: "FCFA", rate: 600 },
-GA: { symbol: "FCFA", rate: 600 },
-CG: { symbol: "FCFA", rate: 600 },
-CD: { symbol: "CDF", rate: 2800 }
+  NG:{symbol:"₦",rate:1500}, GH:{symbol:"₵",rate:12},
+  KE:{symbol:"KSh",rate:160}, ZA:{symbol:"R",rate:18},
+  EG:{symbol:"E£",rate:50}, CM:{symbol:"FCFA",rate:600},
+  UG:{symbol:"USh",rate:3800}, TZ:{symbol:"TSh",rate:2500},
+  ET:{symbol:"Br",rate:56}, RW:{symbol:"FRw",rate:1300},
+  SN:{symbol:"FCFA",rate:600}, CI:{symbol:"FCFA",rate:600},
+  DZ:{symbol:"DZD",rate:135}, MA:{symbol:"MAD",rate:10},
+  AO:{symbol:"Kz",rate:830}, ZM:{symbol:"ZK",rate:25},
+  ZW:{symbol:"ZWL",rate:6000}, MW:{symbol:"MK",rate:1700},
+  BW:{symbol:"P",rate:13}, NA:{symbol:"N$",rate:18},
+  SL:{symbol:"Le",rate:23000}, LR:{symbol:"L$",rate:190},
+  TG:{symbol:"FCFA",rate:600}, BJ:{symbol:"FCFA",rate:600},
+  NE:{symbol:"FCFA",rate:600}, ML:{symbol:"FCFA",rate:600},
+  BF:{symbol:"FCFA",rate:600}, GA:{symbol:"FCFA",rate:600},
+  CG:{symbol:"FCFA",rate:600}, CD:{symbol:"CDF",rate:2800}
 };
 
-// 📱 NETWORK PROVIDERS
-const providers = {
-
-NG: ["MTN", "Airtel", "Glo", "9mobile"],
-GH: ["MTN", "Vodafone", "AirtelTigo"],
-KE: ["Safaricom", "Airtel"],
-ZA: ["Vodacom", "MTN", "Cell C", "Telkom"],
-
-EG: ["Vodafone Egypt", "Orange Egypt", "Etisalat"],
-CM: ["MTN", "Orange"],
-UG: ["MTN", "Airtel"],
-TZ: ["Vodacom", "Airtel", "Tigo"],
-ET: ["Ethio Telecom"],
-RW: ["MTN", "Airtel"],
-
-SN: ["Orange", "Free", "Expresso"],
-CI: ["MTN", "Orange", "Moov"],
-DZ: ["Djezzy", "Mobilis", "Ooredoo"],
-MA: ["Maroc Telecom", "Orange", "Inwi"],
-AO: ["Unitel", "Movicel"],
-
-ZM: ["MTN", "Airtel", "Zamtel"],
-ZW: ["Econet", "NetOne", "Telecel"],
-MW: ["TNM", "Airtel"],
-BW: ["Mascom", "Orange", "BTC"],
-NA: ["MTC", "TN Mobile"],
-
-SL: ["Africell", "Orange"],
-LR: ["Lonestar", "Orange"],
-TG: ["Togocom", "Moov"],
-BJ: ["MTN", "Moov"],
-NE: ["Airtel", "Moov"],
-
-ML: ["Orange", "Malitel"],
-BF: ["Orange", "Moov"],
-GA: ["Airtel", "Moov"],
-CG: ["MTN", "Airtel"],
-CD: ["Vodacom", "Airtel", "Orange"]
-
-};
-
-// LOAD SERVICES
+// ================= LOAD SERVICES =================
 function loadServices(){
-let country = document.getElementById("country").value;
-document.getElementById("servicesSection").style.display =
-country ? "block" : "none";
+  let country = document.getElementById("country").value;
+  document.getElementById("servicesSection").style.display =
+    country ? "block" : "none";
 }
 
-// OPEN SERVICES 
+// ================= OPEN SERVICE =================
 function openService(type){
-
-let country = document.getElementById("country").value;
-
-let nets = providers[country] || ["MTN", "Airtel"];
-let networkOptions = nets.map(n => `<option>${n}</option>`).join("");
-
-let html = "";
-
-// 📱 AIRTIME
-if(type === "airtime"){
-html = `
-<h3>📱 Airtime Recharge</h3>
-
-<label>Network</label><br>
-<select id="network">${networkOptions}</select><br><br>
-
-<label>Phone Number</label><br>
-<input type="tel" id="phone" placeholder="Enter phone number"><br><br>
-
-<label>Amount</label><br>
-<input type="number" id="amount" placeholder="Enter amount"><br><br>
-
-<div id="result"></div><br>
-
-<button onclick="calculate()">Calculate</button>
-<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
-<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
-`;
-}
-
-// 🌐 DATA
-else if(type === "data"){
-html = `
-<h3>🌐 Data Top-Up</h3>
-
-<label>Network</label><br>
-<select id="network">${networkOptions}</select><br><br>
-
-<label>Phone Number</label><br>
-<input type="tel" id="phone" placeholder="Enter phone number"><br><br>
-
-<label>Select Plan</label><br>
-<select id="plan">
-<option value="500">1GB - 500</option>
-<option value="1000">2GB - 1000</option>
-<option value="2000">5GB - 2000</option>
-</select><br><br>
-
-<div id="result"></div><br>
-
-<button onclick="calculateData()">Calculate</button>
-<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
-<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
-`;
-}
-
-// 📺 TV
-else if(type === "tv"){
-html = `
-<h3>📺 TV Subscription</h3>
-
-<select>
-<option>DSTV</option>
-<option>GOTV</option>
-<option>Startimes</option>
-</select><br><br>
-
-<label>Smart Card Number</label><br>
-<input type="text" placeholder="Enter smart card number"><br><br>
-
-<label>Amount</label><br>
-<input type="number" id="amount" placeholder="Enter amount"><br><br>
-
-<div id="result"></div><br>
-
-<button onclick="calculate()">Calculate</button>
-<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
-<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
-`;
-}
-
-// 💡 ELECTRICITY
-else if(type === "electricity"){
-html = `
-<h3>💡 Electricity Bill</h3>
-
-<label>Meter Number</label><br>
-<input type="text" placeholder="Enter meter number"><br><br>
-
-<label>Amount</label><br>
-<input type="number" id="amount" placeholder="Enter amount"><br><br>
-
-<div id="result"></div><br>
-
-<button onclick="calculate()">Calculate</button>
-<button class="pay-btn" onclick="payWithPi()">🪙 Pay with Pi</button>
-<button class="pay-btn" onclick="payWithFiat()">💵 Pay with Fiat</button>
-`;
-}
-
-document.getElementById("serviceContainer").innerHTML = html;
-
-  }  
-  function calculateData(){
-
-let amount = parseFloat(document.getElementById("plan").value);
-let country = document.getElementById("country").value;
-
-let selected = countryRates[country];
-
-if(!selected){
-    alert("Country not supported");
+  currentService = type;
+  let country = document.getElementById("country").value;
+  if(!country){
+    alert("Select country first");
     return;
-}
-
-let usd = amount / selected.rate;
-let pi = usd / 314159;
-
-// SAVE (same keys as others)
-localStorage.setItem("last_amount_local", amount);
-localStorage.setItem("last_amount_pi", pi);
-
-// DISPLAY
-document.getElementById("result").innerHTML =
-`💰 Local: ${symbol}${amount}<br>
-💱 USD Equivalent: $${usd.toFixed(2)}<br>
-🪙 Pi Equivalent: ${pi.toFixed(8)} π`;
-
   }
 
-// CALCULATE
-function calculate(){
+  let html = "";
 
-let amount = parseFloat(document.getElementById("amount").value);
-let country = document.getElementById("country").value;
+  switch(type){
+    case "airtime":
+      html=`
+        <h3>📱 Airtime Recharge</h3>
+        <label>Phone Number</label><br>
+        <input type="tel" id="phone" placeholder="Enter phone number"><br><br>
 
-if(!amount || amount <= 0){
-    alert("Enter valid amount");
-    return;
-}
+        <label>Amount</label><br>
+        <input type="number" id="amount" placeholder="Enter amount"><br><br>
 
-let selected = countryRates[country];
+        <div id="result"></div><br>
 
-if(!selected){
-    alert("Country not supported");
-    return;
-}
+        <button onclick="calculate('amount')">Calculate</button>
 
-let symbol = selected.symbol;
-let rate = selected.rate;
+        <div id="payButtons" style="display:none;">
+          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
+          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
+        </div>
+      `;
+      break;
 
-// CONVERSIONS
-let usd = amount / rate;
-let pi = usd / 314159;
+    case "data":
+      html=`
+        <h3>🌐 Data Subscription</h3>
+        <label>Phone Number</label><br>
+        <input type="tel" id="phone" placeholder="Enter phone number"><br><br>
 
-// SAVE (VERY IMPORTANT)
-localStorage.setItem("last_amount_local", amount);
-localStorage.setItem("last_amount_pi", pi);
+        <label>Select Plan</label><br>
+        <select id="plan">
+          <option value="500">1GB - 500</option>
+          <option value="1000">2GB - 1000</option>
+          <option value="2000">5GB - 2000</option>
+        </select><br><br>
 
-// DISPLAY
-document.getElementById("result").innerHTML =
-`💰 Local: ${symbol}${amount}<br>
-💱 USD Equivalent: $${usd.toFixed(2)}<br>
-🪙 Pi Equivalent: ${pi.toFixed(8)} π`;
+        <div id="result"></div><br>
+
+        <button onclick="calculate('plan')">Calculate</button>
+
+        <div id="payButtons" style="display:none;">
+          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
+          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
+        </div>
+      `;
+      break;
+
+    case "tv":
+      html=`
+        <h3>📺 TV Subscription</h3>
+        <label>Provider</label><br>
+        <select id="tvProvider">
+          <option>DSTV</option>
+          <option>GOTV</option>
+          <option>Startimes</option>
+        </select><br><br>
+
+        <label>Smart Card Number</label><br>
+        <input type="text" id="smartcard" placeholder="Enter smart card number"><br><br>
+
+        <label>Amount</label><br>
+        <input type="number" id="amount" placeholder="Enter amount"><br><br>
+
+        <div id="result"></div><br>
+
+        <button onclick="calculate('amount')">Calculate</button>
+
+        <div id="payButtons" style="display:none;">
+          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
+          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
+        </div>
+      `;
+      break;
+
+    case "electricity":
+      html=`
+        <h3>💡 Electricity Bill</h3>
+        <label>Meter Number</label><br>
+        <input type="text" id="meter" placeholder="Enter meter number"><br><br>
+
+        <label>Amount</label><br>
+        <input type="number" id="amount" placeholder="Enter amount"><br><br>
+
+        <div id="result"></div><br>
+
+        <button onclick="calculate('amount')">Calculate</button>
+
+        <div id="payButtons" style="display:none;">
+          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
+          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
+        </div>
+      `;
+      break;
   }
-// 🔥 BACKEND PAYMENT FUNCTION (WORKS FOR BOTH PI & FIAT)
-async function payWithBackend(type) {
-    // Get the last calculated amount
-    let key = type === "Pi" ? "last_amount_pi" : "last_amount_local";
-let amount = parseFloat(localStorage.getItem(key));
 
-if (!amount || isNaN(amount)) {
-    alert("Please click Calculate first!");
-    return;
+  document.getElementById("serviceContainer").innerHTML = html;
 }
 
-    const userId = 1; // Example/mock user ID
+// ================= CALCULATE =================
+function calculate(fieldId){
+  let country = document.getElementById("country").value;
+  let amountInput = document.getElementById(fieldId);
 
-    try {
-        const response = await fetch("http://127.0.0.1:3000/pay", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, amount, type })
-        });
+  if(!amountInput) return alert("Amount field not found");
 
-        const data = await response.json();
+  let amount = parseFloat(amountInput.value);
+  if(!amount) return alert("Enter amount");
 
-        if (data.success) {
-            alert(`${type} payment successful!`);
+  let {symbol,rate} = countryRates[country];
 
-            // Update the displayed balance
-            if (type === "Pi") {
-                document.getElementById("pi-balance").innerText = data.newBalance.toFixed(8);
-            } else {
-                document.getElementById("fiat-balance").innerText = data.newBalance.toFixed(2);
-            }
-        } else {
-            alert(`Payment failed: ${data.message}`);
-        }
-    } catch (err) {
-        console.error(err);
-        alert("Error connecting to backend. Make sure Termux server is running!");
-    }
+  let usd = amount / rate;
+  let pi = usd / 314159;
+
+  localStorage.setItem("last_amount_local", amount);
+  localStorage.setItem("last_amount_pi", pi);
+
+  document.getElementById("result").innerHTML =
+    `💰 ${symbol}${amount}<br>💱 $${usd.toFixed(2)}<br>🪙 ${pi.toFixed(8)} π`;
+
+  // Show pay buttons
+  let btn = document.getElementById("payButtons");
+  if(btn) btn.style.display = "block";
 }
 
-// Convenience buttons
-function payWithPi() { payWithBackend("Pi"); }
-function payWithFiat() { payWithBackend("Fiat"); }
-  
-  async function loadBalances() {
-  try {
-    const res = await fetch('http://127.0.0.1:3000/users');
+// ================= PAYMENT =================
+async function payWithBackend(method){
+
+  const walletId = localStorage.getItem("walletId");
+
+  if(!walletId){
+    return alert("Wallet not found. Open wallet page first.");
+  }
+
+  let phone = document.getElementById("phone")?.value;
+  let meter = document.getElementById("meter")?.value;
+  let card = document.getElementById("smartcard")?.value;
+
+  if(!phone && !meter && !card){
+    return alert("Please fill required details");
+  }
+
+  // ✅ GET AMOUNT
+  let key = method === "Pi" ? "last_amount_pi" : "last_amount_local";
+  let amount = parseFloat(localStorage.getItem(key));
+
+  if(!amount){
+    return alert("Click calculate first");
+  }
+
+  // ✅ DETERMINE CURRENCY
+  let currency = method === "Pi" ? "PI" : "NG";
+
+  try{
+
+    const res = await fetch("http://127.0.0.1:3000/wallet/pay", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        walletId,
+        amount,
+        currency,
+        type: currentService // 🔥 dynamic later
+      })
+    });
+
     const data = await res.json();
 
-    const user = data.users.find(u => u.id === 1);
+    if(data.success){
+      alert("✅ Payment successful");
 
-    if (user) {
-      document.getElementById("pi-balance").innerText = user.walletPi.toFixed(8);
-      document.getElementById("fiat-balance").innerText = user.walletFiat.toFixed(2);
+      // 🔥 REFRESH WALLET
+      if(typeof loadBalance === "function"){
+        loadBalance();
+      }
+
+    } else {
+      alert("❌ " + data.message);
     }
 
-  } catch (err) {
-    console.error("Error loading balances:", err);
+  }catch(err){
+    console.error(err);
+    alert("Server error");
   }
 }
 
-// Run when page loads
-window.onload = loadBalances();
-  
+async function payWithPi(){
+  const allowed = await checkPaymentAccess("Pi");
+  if(!allowed) return;
+
+  payWithBackend("Pi");
+}
+
+async function payWithFiat(){
+  const allowed = await checkPaymentAccess("Fiat");
+  if(!allowed) return;
+
+  payWithBackend("Fiat");
+}
+
+// Hide pay buttons when user edits inputs
+document.addEventListener("input", (e) => {
+  let container = document.getElementById("serviceContainer");
+  if(!container) return;
+  let btn = container.querySelector("#payButtons");
+  if(btn) btn.style.display = "none";
+});
 </script>
 
-<!-- NAV -->
 <nav class="bottom-nav">
-
-<a href="index.html"><span>🏠</span><p>Home</p></a>
-<a href="learn.html"><span>🎓</span><p>Learn</p></a>
-<a href="course.html"><span>📚</span><p>Courses</p></a>
-<a href="marketplace.html"><span>🛒</span><p>Market</p></a>
-
-<a href="finance.html" class="active">
-<span>💰</span><p>Finance</p>
-</a>
-
-<a href="wallet.html">
-<span>👛</span><p>Wallet</p>
-</a>
-<a href="history.html">
-<span>🧾</span>
-<p>History</p>
-</a>
-<a href="support.html"><span>🆘</span><p>Support</p></a>
-<a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
-<a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
-
+<a href="index.html">🏠 Home</a>
+<a href="wallet.html">👛 Wallet</a>
+<a href="marketplace.html">🛒 Market</a>
 </nav>
-  <script src="js/payment.js"></script>
-<script src="js/pi-auth.js"></script>
-
 </body>
-  </html>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Deliveries</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<h2>🚚 My Deliveries</h2>
+
+<div id="deliveryList">Loading...</div>
+
+<script>
+const rider = localStorage.getItem("logistics_username");
+
+fetch('/api/deliveries')
+.then(res => res.json())
+.then(data => {
+
+  const myDeliveries = data.filter(d => d.rider === rider);
+
+  const container = document.getElementById("deliveryList");
+  container.innerHTML = "";
+
+  if(!myDeliveries.length){
+    container.innerHTML = "No deliveries yet";
+    return;
+  }
+
+  myDeliveries.forEach(d => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <p>Order: ${d.orderId}</p>
+      <p>Status: ${d.status}</p>
+
+      <button onclick="updateStatus('${d.orderId}','in_transit')">Start</button>
+      <button onclick="updateStatus('${d.orderId}','delivered')">Delivered</button>
+
+      <hr>
+    `;
+    container.appendChild(div);
+  });
+
+});
+function updateStatus(orderId, status){
+
+  fetch('/api/update-delivery', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ orderId, status })
+  })
+  .then(() => location.reload());
+}
+
+</script>
+
+</body>
+</html>

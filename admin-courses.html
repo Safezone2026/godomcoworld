@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Course Dashboard</title>
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+.card{
+  background:#111;
+  padding:20px;
+  margin:15px 0;
+  border-radius:10px;
+}
+h2, h3{
+  text-align:center;
+}
+.course-box{
+  background:#222;
+  padding:15px;
+  margin:10px 0;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📊 Course Admin Dashboard</h2>
+
+<div class="card">
+  <h3>Total Students</h3>
+  <h1 id="totalStudents">0</h1>
+</div>
+
+<div class="card">
+  <h3>Total Revenue</h3>
+  <h1 id="totalRevenue">₦0</h1>
+</div>
+
+<div class="card">
+  <h3>Total Courses</h3>
+  <h1 id="totalCourses">0</h1>
+</div>
+
+<div class="card">
+  <h3>📚 Courses Overview</h3>
+  <div id="coursesContainer"></div>
+</div>
+
+<div class="card">
+  <h3>👥 All Subscriptions</h3>
+  <div id="subsContainer"></div>
+</div>
+
+<script>
+  let token = localStorage.getItem("adminToken");
+
+if(!token){
+  alert("Unauthorized");
+  window.location.href = "admin-login.html";
+}
+
+async function loadDashboard(){
+
+  try {
+
+    let res = await fetch('http://127.0.0.1:3000/admin/courses', {
+  headers:{
+    'Authorization': token
+  }
+})
+    let data = await res.json();
+
+    document.getElementById("totalStudents").innerText = data.totalStudents;
+    document.getElementById("totalCourses").innerText = data.totalCourses;
+    document.getElementById("totalRevenue").innerText =
+      "₦" + Number(data.totalRevenue).toLocaleString();
+
+    // ================= COURSES =================
+    let container = document.getElementById("coursesContainer");
+    container.innerHTML = "";
+
+    for(let course in data.courses){
+
+      let c = data.courses[course];
+
+      let plansHTML = "";
+
+      for(let p in c.plans){
+        plansHTML += `<p>${p}: ${c.plans[p]} users</p>`;
+      }
+
+      container.innerHTML += `
+        <div class="course-box">
+          <h4>${course}</h4>
+          <p>👥 Students: ${c.students}</p>
+          <p>💰 Revenue: ₦${Number(c.revenue).toLocaleString()}</p>
+          ${plansHTML}
+        </div>
+      `;
+    }
+
+    // ================= SUBSCRIPTIONS =================
+    let subs = document.getElementById("subsContainer");
+    subs.innerHTML = "";
+
+    data.subscriptions.forEach(s => {
+
+      let expiry = new Date(s.expiry).toLocaleDateString();
+
+      subs.innerHTML += `
+        <div class="course-box">
+          👤 ${s.username} <br>
+          📚 ${s.courseName} <br>
+          📦 Plan: ${s.plan} <br>
+          💰 ₦${s.price} <br>
+          ⏳ Expires: ${expiry}
+        </div>
+      `;
+    });
+
+  } catch(err){
+    console.error(err);
+    alert("Failed to load dashboard");
+  }
+}
+
+window.onload = loadDashboard;
+
+</script>
+
+</body>
+</html>

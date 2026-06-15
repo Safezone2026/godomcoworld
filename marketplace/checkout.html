@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Checkout</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+input, select {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border:none;
+}
+button{
+  padding:12px;
+  margin-top:10px;
+  width:100%;
+  border:none;
+  border-radius:8px;
+  background:#00c853;
+  color:white;
+}
+#calcBtn{
+  margin-top:10px;
+  padding:12px;
+  background:#00c853;
+  color:white;
+  border:none;
+  border-radius:8px;
+  width:100%;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🛒 Checkout</h2>
+
+<!-- 👤 BUYER FORM -->
+<h3>Buyer Details</h3>
+
+<input type="text" id="name" placeholder="Full Name">
+<input type="text" id="phone" placeholder="Phone Number">
+
+<input 
+  type="text" 
+  id="address" 
+  placeholder="Delivery Address"
+  oninput="handleAddressInput()"
+>
+
+<!-- 🌍 COUNTRY -->
+<h3>🌍 Country</h3>
+
+<select id="country" onchange="handleAddressInput()">
+
+  <option value="">-- Select Country --</option>
+
+  <option value="Nigeria">🇳🇬 Nigeria</option>
+  <option value="Ghana">🇬🇭 Ghana</option>
+  <option value="Kenya">🇰🇪 Kenya</option>
+  <option value="South Africa">🇿🇦 South Africa</option>
+  <option value="Egypt">🇪🇬 Egypt</option>
+  <option value="Cameroon">🇨🇲 Cameroon</option>
+  <option value="Uganda">🇺🇬 Uganda</option>
+  <option value="Tanzania">🇹🇿 Tanzania</option>
+  <option value="Ethiopia">🇪🇹 Ethiopia</option>
+  <option value="Rwanda">🇷🇼 Rwanda</option>
+  <option value="Senegal">🇸🇳 Senegal</option>
+  <option value="Ivory Coast">🇨🇮 Ivory Coast</option>
+  <option value="Algeria">🇩🇿 Algeria</option>
+  <option value="Morocco">🇲🇦 Morocco</option>
+  <option value="Angola">🇦🇴 Angola</option>
+  <option value="Zambia">🇿🇲 Zambia</option>
+  <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
+  <option value="Malawi">🇲🇼 Malawi</option>
+  <option value="Botswana">🇧🇼 Botswana</option>
+  <option value="Namibia">🇳🇦 Namibia</option>
+  <option value="Sierra Leone">🇸🇱 Sierra Leone</option>
+  <option value="Liberia">🇱🇷 Liberia</option>
+  <option value="Togo">🇹🇬 Togo</option>
+  <option value="Benin">🇧🇯 Benin</option>
+  <option value="Niger">🇳🇪 Niger</option>
+  <option value="Mali">🇲🇱 Mali</option>
+  <option value="Burkina Faso">🇧🇫 Burkina Faso</option>
+  <option value="Gabon">🇬🇦 Gabon</option>
+  <option value="Congo">🇨🇬 Congo</option>
+  <option value="DR Congo">🇨🇩 DR Congo</option>
+
+</select>
+<button id="calcBtn" onclick="calculateTotal()" disabled>
+  📍 Calculate Delivery Fee
+</button>
+
+<h3>🚚 Delivery</h3>
+<p>Calculated automatically (distance + weight + category)</p>
+
+<!-- 💰 ORDER SUMMARY -->
+<h3>💰 Order Summary</h3>
+
+<p>Subtotal:</p>
+<h2 id="subtotal">₦0</h2>
+
+<p>🚚 Delivery Fee:</p>
+<h2 id="deliveryFee">₦0</h2>
+
+<h3>💳 Total</h3>
+<h2 id="total">₦0</h2>
+
+<p>💵 Dollar: <span id="usdTotal">$0</span></p>
+<p>🪙 Pi: <span id="piTotal">0 π</span></p>
+
+<div style="margin-top:20px;">
+  <button onclick="payWithFiat()">💳 Pay with Fiat</button>
+  <button onclick="payWithPi()">🪙 Pay with Pi</button>
+</div>
+
+<hr>
+
+<!-- 🛒 CART -->
+<div id="cartItems"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+<script id="gps1">
+navigator.geolocation.getCurrentPosition(
+  (pos) => {
+    localStorage.setItem("deliveryLat", pos.coords.latitude);
+    localStorage.setItem("deliveryLng", pos.coords.longitude);
+  },
+  (err) => {
+    console.log("Location denied → using fallback");
+
+    // 🔥 fallback (Lagos)
+    localStorage.setItem("deliveryLat", 6.5244);
+    localStorage.setItem("deliveryLng", 3.3792);
+  }
+);
+</script>
+
+<script>
+  let currentUser = localStorage.getItem("username") || prompt("Enter your username (e.g seller1)");
+localStorage.setItem("username", currentUser);
+
+// 🔥 ADD THIS HERE
+localStorage.setItem("walletId", "WALLET-5C04FD4C");
+
+let subtotal = 0;
+
+// ================= LOAD CART =================
+function loadCart(){
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  const container = document.getElementById("cartItems");
+
+  // 🔥 FIX: stop if element not found
+  if (!container) return;
+
+  let html = "";
+  subtotal = 0;
+
+  cart.forEach(item => {
+    let price = Number(item.price);
+    subtotal += price;
+
+    html += `
+      <div>
+        <h4>${item.name}</h4>
+        <p>${item.description}</p>
+        <p>₦${price.toLocaleString()}</p>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+async function checkPaymentAccess(method){
+  // TEMP: always allow payment
+  return true;
+}
+// ================= PAYMENT =================
+async function payWithPi(){
+  const allowed = await checkPaymentAccess("Pi");
+  if(!allowed) return;
+
+  completeCheckout("Pi"); // ✅ method passed
+}
+
+async function payWithFiat(){
+  const allowed = await checkPaymentAccess("Fiat");
+  if(!allowed) return;
+
+  completeCheckout("Fiat"); // ✅ method passed
+}
+async function completeCheckout(method){
+  console.log("Checkout started with:", method);
+
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  try {
+    let amount = method === "Fiat"
+      ? window.totalNaira
+      : window.totalPi;
+
+    let currency = method === "Fiat" ? "NG" : "PI";
+
+    const walletId = localStorage.getItem("walletId");
+
+    const payRes = await fetch("http://127.0.0.1:3000/wallet/pay", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        walletId,
+        amount,
+        currency,
+        type: "product"
+      })
+    });
+
+    const payData = await payRes.json();
+
+    if(!payData.success){
+      alert(payData.message);
+      return;
+    }
+
+    const shipmentRes = await fetch('http://127.0.0.1:3000/logistics/create');
+    const shipmentData = await shipmentRes.json();
+
+    const orderId = shipmentData.orderId;
+
+    const address = document.getElementById("address").value;
+    const country = document.getElementById("country").value;
+
+    const lat = Number(localStorage.getItem("deliveryLat"));
+const lng = Number(localStorage.getItem("deliveryLng"));
+
+await fetch('http://127.0.0.1:3000/api/checkout', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({
+    method,
+    cart,
+    orderId,
+    address,
+    country,
+    user: localStorage.getItem("username") || "guest",
+
+    // 🔥 ADD THIS
+    lat,
+    lng
+  })
+});
+
+    alert("✅ Payment successful\nOrder ID: " + orderId);
+
+    localStorage.removeItem("cart");
+    localStorage.setItem("lastOrderId", orderId);
+
+    setTimeout(() => {
+      window.location.href = "/logistics/track.html";
+    }, 1500);
+
+  } catch(err){
+    console.error(err);
+    alert("Payment failed");
+  }
+}
+
+
+// ================= ENABLE CALCULATE BUTTON =================
+function handleAddressInput(){
+  const address = document.getElementById("address").value.trim();
+  const country = document.getElementById("country").value;
+  const btn = document.getElementById("calcBtn");
+
+  if(!btn) return;
+
+  if(address.length >= 5 && country !== ""){
+    btn.disabled = false;
+    btn.style.opacity = "1";
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
+  }
+}
+
+// ================= CALCULATE DELIVERY =================
+async function calculateTotal(){
+
+  // 🔥 ALWAYS RECALCULATE subtotal FIRST
+  loadCart();
+
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  document.getElementById("deliveryFee").innerText = "Calculating...";
+
+  const res = await fetch('http://127.0.0.1:3000/calculate-delivery', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      cart,
+      address: document.getElementById("address").value,
+      country: document.getElementById("country").value
+    })
+  });
+
+  const data = await res.json();
+
+  let delivery = 0;
+
+  if(data.success){
+  delivery = data.deliveryFee;
+
+  let html = "";
+  data.breakdown.forEach(item => {
+    html += `
+      <div>
+        ${item.product} → ${item.weight}kg / ${item.distanceKm}km = ₦${item.fee.toLocaleString()}
+      </div>
+    `;
+  });
+
+  const breakdownDiv = document.getElementById("deliveryBreakdown");
+if (breakdownDiv) {
+  breakdownDiv.innerHTML = html;
+}
+
+  const total = subtotal + delivery;
+
+  // 🔥 STORE GLOBAL VALUES
+  window.totalNaira = total;
+  window.totalPi = total / 471238500;
+
+  // UPDATE UI
+  document.getElementById("subtotal").innerText =
+    "₦" + subtotal.toLocaleString();
+
+  document.getElementById("deliveryFee").innerText =
+    "₦" + delivery.toLocaleString();
+
+  document.getElementById("total").innerText =
+    "₦" + total.toLocaleString();
+
+  updateCurrency(total);
+}
+
+// ================= CURRENCY =================
+function updateCurrency(total){
+
+  const usd = total / 1500;
+  const pi = total / 471238500;
+
+  document.getElementById("usdTotal").innerText =
+    "$" + usd.toFixed(2);
+
+  document.getElementById("piTotal").innerText =
+    pi.toFixed(8) + " π";
+}
+
+// ================= INIT =================
+window.payWithPi = payWithPi;
+window.payWithFiat = payWithFiat;
+window.addEventListener("storage", () => {
+  updateCartCount();
+});
+loadCart();
+}
+</script>
+</body>
+</html>

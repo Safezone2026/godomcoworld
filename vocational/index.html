@@ -23,76 +23,81 @@
 <a href="../index.html">
 <button>Home</button>
 </a>
+<a href="../courses/my-courses.html">
+  <button>My Courses</button>
+</a>
 
 </header>
 
 <div class="container">
 
-<h2>🛠 Vocational Training Center</h2>
-
+<h2>🛠 Vocational Courses</h2>
 <p>Practical skills training for real-world careers.</p>
 
 <div class="course-grid">
 
 <div class="card">
-<h3>Electrical Installation</h3>
-<a id="btn-electrical" href="electrical.html">
-  <button class="course-btn">View Course</button>
+  <h3>Agricultural Processing</h3>
+  <a href="../course.html?course=Agricultural Processing">
+    <button>View Course</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>Furniture & Carpentry</h3>
+  <a href="../course.html?course=Furniture%20%26%20Carpentry">
+  <button>View Course</button>
 </a>
 </div>
 
 <div class="card">
-<h3>Solar Installation</h3>
-<a id="btn-solar" href="solar.html">
-  <button class="course-btn">View Course</button>
+  <h3>Electrical Installation</h3>
+  <a href="../course.html?course=Electrical Installation">
+    <button>View Course</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>Fashion & Textile Design</h3>
+  <a href="../course.html?course=Fashion%20%26%20Textile%20Design">
+  <button>View Course</button>
 </a>
 </div>
 
 <div class="card">
-<h3>Welding Technology</h3>
-<a id="btn-welding" href="welding.html">
-  <button class="course-btn">View Course</button>
-</a>
+  <h3>Automobile Mechanics</h3>
+  <a href="../course.html?course=Automobile Mechanics">
+    <button>View Course</button>
+  </a>
 </div>
 
 <div class="card">
-<h3>Automobile Mechanics</h3>
-<a id="btn-mechanics" href="mechanics.html">
-  <button class="course-btn">View Course</button>
-</a>
+  <h3>Smartphone Repair</h3>
+  <a href="../course.html?course=Smartphone Repair">
+    <button>View Course</button>
+  </a>
 </div>
 
 <div class="card">
-<h3>Fashion & Textile Design</h3>
-<a id="btn-fashion" href="fashion.html">
-  <button class="course-btn">View Course</button>
-</a>
+  <h3>Solar Installation</h3>
+  <a href="../course.html?course=Solar Installation">
+    <button>View Course</button>
+  </a>
 </div>
 
 <div class="card">
-<h3>Furniture & Carpentry</h3>
-<a id="btn-carpentry" href="carpentry.html">
-  <button class="course-btn">View Course</button>
-</a>
-</div>
-
-<div class="card">
-<h3>Smartphone Repair</h3>
-<a id="btn-phone" href="phone-repair.html">
-  <button class="course-btn">View Course</button>
-</a>
-</div>
-
-<div class="card">
-<h3>Agricultural Processing</h3>
-<a id="btn-agro" href="agro-processing.html">
-  <button class="course-btn">View Course</button>
+  <h3>Welding & Fitting Technology</h3>
+  <a href="../course.html?course=Welding%20%26%20Fitting%20Technology">
+  <button>View Course</button>
 </a>
 </div>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 
-</div>
+<script src="../js/wallet-init.js"></script>
+
 <script>
 document.querySelectorAll(".logo").forEach(el => {
   el.innerHTML = '<img src="/images/logo.png" class="app-logo">';
@@ -127,7 +132,7 @@ function updateButton(courseName, buttonId){
 // RUN
 updateButton("Electrical Installation", "btn-electrical");
 updateButton("Solar Installation", "btn-solar");
-updateButton("Welding Technology", "btn-welding");
+updateButton("Welding & Fitting Technology", "btn-welding");
 updateButton("Automobile Mechanics", "btn-mechanics");
 updateButton("Fashion & Textile Design", "btn-fashion");
 updateButton("Furniture & Carpentry", "btn-carpentry");

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Godomcoworld Admin Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    body { font-family: Arial; padding: 20px; background:#0d0d0d; color:#fff; }
+    h2 { margin-top: 30px; }
+    .card { border: 1px solid #444; padding: 10px; margin: 10px 0; background:#1a1a1a; color:#fff; border-radius:8px; }
+    button { margin-top: 5px; padding: 8px; }
+    input, select { padding:8px; margin:5px 0; }
+  </style>
+</head>
+
+<body>
+
+<h1>Admin Dashboard</h1>
+
+<!-- LOGIN -->
+<div id="loginBox">
+  <h2>Admin Login</h2>
+  <input type="password" id="adminPass" placeholder="Enter admin password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+
+  <h2>📊 Platform Revenue</h2>
+  <div id="revenueBox"></div>
+  <div id="revenueList"></div>
+
+  <h2>💰 App Revenue Wallet</h2>
+  <div id="revenueBalance"></div>
+  <h2>Total Revenue: <span id="totalRevenue">₦0</span></h2>
+
+  <h3>📊 Revenue Breakdown</h3>
+  <div id="revenueBreakdown"></div>
+
+  <input type="number" id="withdrawAmount" placeholder="Amount"/>
+  <select id="withdrawMethod" onchange="toggleWithdrawFields()">
+  <option value="">Select Method</option>
+  <option value="bank">🏦 Bank Transfer</option>
+  <option value="crypto">🪙 Crypto Wallet</option>
+</select>
+<!-- BANK DETAILS -->
+<div id="bankFields" style="display:none;">
+  <select id="bankName">
+    <option value="">Select Bank</option>
+    <option>Access Bank</option>
+    <option>GTBank</option>
+    <option>First Bank</option>
+    <option>UBA</option>
+    <option>Zenith Bank</option>
+  </select>
+
+  <input type="text" id="accountNumber" placeholder="Account Number">
+  <input type="text" id="accountName" placeholder="Account Name">
+</div>
+
+<!-- CRYPTO DETAILS -->
+<div id="cryptoFields" style="display:none;">
+  <select id="cryptoType">
+    <option value="">Select Coin</option>
+    <option value="BTC">Bitcoin</option>
+    <option value="USDT">USDT</option>
+    <option value="ETH">Ethereum</option>
+    <option value="PI">Pi</option>
+  </select>
+
+  <input type="text" id="walletAddress" placeholder="Wallet Address">
+</div>
+
+  <select id="withdrawCurrency">
+    <option value="NG">Naira</option>
+    <option value="PI">Pi</option>
+    <option value="USD">USD</option>
+  </select>
+
+  <button onclick="withdrawRevenue()">Withdraw</button>
+  <h2>⚙️ Payment Control</h2>
+
+<div class="card">
+  <label>
+    <input type="checkbox" id="togglePi"> Enable Pi Payments
+  </label><br><br>
+
+  <label>
+    <input type="checkbox" id="toggleFiat"> Enable Fiat Payments
+  </label><br><br>
+
+  <button onclick="savePaymentSettings()">💾 Save Settings</button>
+</div>
+  <h2>👥 User Withdrawal Requests</h2>
+<div id="withdrawalsList"></div>
+<h2>📜 System Logs</h2>
+<div id="logsList"></div>
+
+  <h2>Products</h2>
+  <div id="productsList"></div>
+
+  <h2>Orders</h2>
+  <div id="ordersList"></div>
+
+  <h2>Sellers</h2>
+  <div id="sellersList"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
+<script>
+const API = "http://127.0.0.1:3000";
+
+function login() {
+  const pass = document.getElementById('adminPass').value;
+
+  if (pass === "admin123") {
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadAll();
+  } else {
+    alert("Wrong password");
+  }
+}
+
+function loadAll() {
+  loadRevenueSummary();
+  loadRevenueWallet();
+  loadProducts();
+  loadOrders();
+  loadSellers();
+  loadWithdrawals();
+  loadLogs();
+  loadPaymentSettings();
+}
+
+// ================= REVENUE SUMMARY =================
+async function loadRevenueSummary() {
+  const res = await fetch(API + '/revenue-wallet');
+  const data = await res.json();
+
+  const b = data.breakdown || {};
+
+  const total =
+  (b.productFees || 0) +
+  (b.courseFees || 0) +
+  (b.swapFees || 0) +
+  (b.gasFees || 0) +
+  (b.logisticsFees || 0) +
+  (b.serviceFees || 0); // ✅ ADD THIS
+
+  document.getElementById('revenueBox').innerHTML =
+    "<h3>Total Revenue: ₦" + total.toLocaleString() + "</h3>";
+
+  document.getElementById("totalRevenue").innerText =
+    "₦" + total.toLocaleString();
+
+  document.getElementById("revenueList").innerHTML = `
+  <div class="card">🔄 Swap Fees: ₦${(b.swapFees || 0).toLocaleString()}</div>
+  <div class="card">⛽ Gas Fees: ₦${(b.gasFees || 0).toLocaleString()}</div>
+  <div class="card">🛒 Product Fees: ₦${(b.productFees || 0).toLocaleString()}</div>
+  <div class="card">🚚 Logistics Fees: ₦${(b.logisticsFees || 0).toLocaleString()}</div>
+  <div class="card">📚 Course Fees: ₦${(b.courseFees || 0).toLocaleString()}</div>
+  <div class="card">💳 Service Fees: ₦${(b.serviceFees || 0).toLocaleString()}</div>
+`;
+}
+
+// ================= REVENUE WALLET =================
+async function loadRevenueWallet(){
+  const res = await fetch(API + "/revenue-wallet");
+  const data = await res.json();
+
+  document.getElementById("revenueBalance").innerHTML =
+    "<div class='card'>" +
+    "<h3>Total Revenue Wallet</h3>" +
+    "<p>₦" + (data.NG || 0).toLocaleString() + "</p>" +
+    "<p>" + (data.PI || 0) + " π</p>" +
+    "<p>$" + (data.USD || 0) + "</p>" +
+    "</div>";
+
+  const b = data.breakdown || {};
+
+document.getElementById("revenueBreakdown").innerHTML = `
+  <div class="card">Swap Fees: ₦${(b.swapFees || 0).toLocaleString()}</div>
+  <div class="card">Gas Fees: ₦${(b.gasFees || 0).toLocaleString()}</div>
+  <div class="card">Product Fees: ₦${(b.productFees || 0).toLocaleString()}</div>
+  <div class="card">Logistics Fees: ₦${(b.logisticsFees || 0).toLocaleString()}</div>
+  <div class="card">Course Fees: ₦${(b.courseFees || 0).toLocaleString()}</div>
+  <div class="card">Service Fees: ₦${(b.serviceFees || 0).toLocaleString()}</div>
+`;
+}
+function toggleWithdrawFields(){
+
+  const method = document.getElementById("withdrawMethod").value;
+
+  document.getElementById("bankFields").style.display =
+    method === "bank" ? "block" : "none";
+
+  document.getElementById("cryptoFields").style.display =
+    method === "crypto" ? "block" : "none";
+}
+// ================= WITHDRAW =================
+async function withdrawRevenue(){
+
+  const amount = Number(document.getElementById("withdrawAmount").value);
+  const currency = document.getElementById("withdrawCurrency").value;
+  const method = document.getElementById("withdrawMethod").value;
+
+  if(!amount || amount <= 0){
+    return alert("Enter valid amount");
+  }
+
+  if(!method){
+    return alert("Select withdrawal method");
+  }
+
+  let details = {};
+
+  // 🏦 BANK
+  if(method === "bank"){
+    const bankName = document.getElementById("bankName").value;
+    const accountNumber = document.getElementById("accountNumber").value;
+    const accountName = document.getElementById("accountName").value;
+
+    if(!bankName || !accountNumber || !accountName){
+      return alert("Fill bank details");
+    }
+
+    details = { bankName, accountNumber, accountName };
+  }
+
+  // 🪙 CRYPTO
+  if(method === "crypto"){
+    const cryptoType = document.getElementById("cryptoType").value;
+    const walletAddress = document.getElementById("walletAddress").value;
+
+    if(!cryptoType || !walletAddress){
+      return alert("Fill crypto details");
+    }
+
+    details = { cryptoType, walletAddress };
+  }
+
+  const res = await fetch(API + "/revenue-withdraw", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      amount,
+      currency,
+      method,
+      details
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+
+  loadRevenueWallet();
+}
+
+// WALLET WITHDRAWALS 
+async function loadWithdrawals(){
+
+  const res = await fetch(API + "/withdrawals");
+  const data = await res.json();
+
+  document.getElementById("withdrawalsList").innerHTML =
+    data.map(w => `
+      <div class="card">
+        💸 ${w.amount} ${w.currency}<br>
+        Fee: ${w.fee || 0}<br>
+        Status: ${w.status}<br>
+
+        🏦 Bank: ${w.details?.bankName || "-"}<br>
+        🔢 Account No: ${w.details?.accountNumber || "-"}<br>
+        👤 Name: ${w.details?.accountName || "-"}<br>
+        🪙 Wallet: ${w.details?.walletAddress || "-"}<br>
+
+        ${
+          w.status === "pending"
+  ? `
+    <button onclick="handleWithdrawal('${w.id}','approve')">✅ Approve</button>
+    <button onclick="handleWithdrawal('${w.id}','reject')">❌ Reject</button>
+  `
+  : w.status === "approved"
+  ? `
+    <button onclick="markAsPaid('${w.id}')">💸 Mark as Paid</button>
+  `
+  : ""
+        }
+      </div>
+    `).join('');
+}
+// APPROVE/REJECT 
+async function handleWithdrawal(id, action){
+
+  const res = await fetch(API + "/withdrawals/approve", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ id, action })
+  });
+
+  const data = await res.json();
+
+  alert(data.message || "Updated");
+
+  loadWithdrawals();
+}
+// MARKED PAID 
+async function markAsPaid(id){
+
+  const res = await fetch(API + "/withdrawals/paid", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ id })
+  });
+
+  const data = await res.json();
+
+  alert(data.message || "Marked as paid");
+
+  loadWithdrawals();
+}
+async function loadLogs(){
+  const res = await fetch(API + "/logs");
+  const data = await res.json();
+
+  document.getElementById("logsList").innerHTML =
+    data.map(l => `
+      <div class="card">
+        🧾 ${l.action}<br>
+        💰 ${l.amount || ""} ${l.currency || ""}<br>
+        👤 ${l.walletId || ""}<br>
+        📅 ${new Date(l.date).toLocaleString()}
+      </div>
+    `).join('');
+}
+
+// PAYMENT SETTINGS 
+async function loadPaymentSettings(){
+
+  const res = await fetch(API + "/admin/payment-settings");
+  const settings = await res.json();
+
+  document.getElementById("togglePi").checked = settings.enablePi;
+  document.getElementById("toggleFiat").checked = settings.enableFiat;
+}
+// SAVE PAYMENT SETTINGS 
+async function savePaymentSettings(){
+
+  const enablePi = document.getElementById("togglePi").checked;
+  const enableFiat = document.getElementById("toggleFiat").checked;
+
+  const res = await fetch(API + "/admin/payment-settings", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ enablePi, enableFiat })
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+}
+
+// ================= PRODUCTS =================
+async function loadProducts() {
+  const res = await fetch(API + '/products');
+  const data = await res.json();
+
+  const container = document.getElementById('productsList');
+  container.innerHTML = '';
+
+  data.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    div.innerHTML =
+      "<strong>" + p.name + "</strong><br>" +
+      "₦" + Number(p.price).toLocaleString() + "<br>" +
+      "Seller: " + p.sellerUsername;
+
+    const btn = document.createElement('button');
+    btn.textContent = "Delete";
+
+    btn.onclick = async () => {
+      await fetch(API + '/delete-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id })
+      });
+      loadProducts();
+    };
+
+    div.appendChild(btn);
+    container.appendChild(div);
+  });
+}
+
+// ================= ORDERS =================
+async function loadOrders() {
+  const res = await fetch(API + '/orders-full');
+  const data = await res.json();
+
+  const container = document.getElementById('ordersList');
+  container.innerHTML = '';
+
+  (data.orders || []).forEach(o => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    div.innerHTML =
+      "Order ID: " + o.id + "<br>" +
+      "User: " + o.user + "<br>" +
+      "Total: ₦" + Number(o.total).toLocaleString() + "<br>" +
+      "Status: " + o.deliveryStatus + "<br>" +
+      "Date: " + o.date;
+
+    container.appendChild(div);
+  });
+}
+
+// ================= SELLERS =================
+async function loadSellers() {
+  const res = await fetch(API + '/sellers');
+  const data = await res.json();
+
+  const container = document.getElementById('sellersList');
+  container.innerHTML = '';
+
+  (data.sellers || []).forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    div.innerHTML =
+      "Username: " + s.username + "<br>" +
+      "Earnings: ₦" + Number(s.earnings || 0).toLocaleString();
+
+    container.appendChild(div);
+  });
+}
+window.onload = function(){
+  loadWithdrawals();
+  loadSellers()
+};
+   
+        
+</script>
+
+</body>
+</html>

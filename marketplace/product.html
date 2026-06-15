@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Details</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<h2>Product Details</h2>
+
+<div id="productDetails"></div>
+
+<a href="products.html"><button>⬅ Back</button></a>
+
+<script>
+const productDetails = document.getElementById('productDetails');
+
+// Get product ID from URL
+const params = new URLSearchParams(window.location.search);
+const productId = params.get('id');
+
+// Fetch all products
+async function loadProduct() {
+  try {
+    const res = await fetch('/products');
+    const data = await res.json();
+
+    const product = data.products.find(p => String(p.id) === productId);
+
+    if (!product) {
+      productDetails.innerHTML = "<p>Product not found</p>";
+      return;
+    }
+
+    productDetails.innerHTML = `
+      <div style="max-width:400px;">
+        <img src="${product.imagePath}" style="width:100%; border-radius:10px;">
+        <h2>${product.name}</h2>
+        <p>${product.description}</p>
+        <h3>${product.currency || '₦'}${product.price}</h3>
+        <p><strong>Category:</strong> ${product.category}</p>
+
+        <button onclick='addToCart(${JSON.stringify(product)})'>
+          🛒 Add to Cart
+        </button>
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    productDetails.innerHTML = "<p>Error loading product</p>";
+  }
+}
+
+// Simple cart (local)
+function addToCart(product){
+  let cart = JSON.parse(localStorage.getItem('cart') || "[]");
+  cart.push(product);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  alert("Added to cart");
+}
+
+loadProduct();
+</script>
+
+</body>
+</html>

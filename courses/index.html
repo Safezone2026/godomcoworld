@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Tech Courses - Godomcoworld</title>
+
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+  <img src="/images/logo.png" alt="Godomcoworld Logo" class="app-logo">
+  
+</div>
+
+<a href="../index.html">
+<button>Home</button>
+</a>
+<a href="../courses/my-courses.html">
+  <button>My Courses</button>
+</a>
+
+</header>
+
+<div class="container">
+
+<h2>💻 Technology Courses</h2>
+
+<p>Explore advanced technologies shaping the future.</p>
+
+<div class="course-grid">
+
+<div class="card">
+  <h3>Augmented Reality</h3>
+  <a href="../course.html?course=Augmented Reality">
+    <button>View Course</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>Argumentation & Critical Thinking</h3>
+  <a href="../course.html?course=Argumentation%20%26%20Critical%20Thinking">
+  <button>View Course</button>
+</a>
+</div>
+
+<div class="card">
+  <h3>Blockchain Development</h3>
+  <a href="../course.html?course=Blockchain Development">
+    <button>View Course</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>Hologram Technology</h3>
+  <a href="../course.html?course=Hologram Technology">
+    <button>View Course</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>Nanotechnology</h3>
+  <a href="../course.html?course=Nanotechnology">
+    <button>View Course</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>Space Technology</h3>
+  <a href="../course.html?course=Space Technology">
+    <button>View Course</button>
+  </a>
+</div>
+
+<div class="card">
+  <h3>Web3 & Blockchain Integration</h3>
+  <a href="../course.html?course=Web3%20%26%20Blockchain%20Integration">
+  <button>View Course</button>
+</a>
+</div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
+<script src="../js/wallet-init.js"></script>
+
+<script>
+// Fix logo rendering (same as vocational)
+document.querySelectorAll(".logo").forEach(el => {
+  el.innerHTML = '<img src="/images/logo.png" class="app-logo">';
+});
+
+// 🔐 Unlock Logic (SAME SYSTEM)
+function updateButton(courseName, buttonId){
+
+  let data = localStorage.getItem("plan_" + courseName);
+  let btn = document.getElementById(buttonId).querySelector("button");
+
+  if(data){
+    let parsed = JSON.parse(data);
+    let now = new Date().getTime();
+
+    if(now < parsed.expiry){
+      btn.innerText = "Continue Course 🔓";
+      btn.style.background = "green";
+    }else{
+      localStorage.removeItem("plan_" + courseName);
+      btn.innerText = "Renew Course 🔁";
+      btn.style.background = "orange";
+    }
+
+  }else{
+    btn.innerText = "Unlock Course 🔒";
+    btn.style.background = "#00bfff";
+  }
+}
+
+// 🔥 RUN FOR ALL COURSES
+updateButton("Augmented Reality", "btn-ar");
+updateButton("Argumentation", "btn-argumentation");
+updateButton("Blockchain", "btn-blockchain");
+updateButton("Hologram Technology", "btn-hologram");
+updateButton("Nanotechnology", "btn-nanotech");
+updateButton("Space Technology", "btn-space");
+updateButton("Web3 & Blockchain", "btn-webblockchain");
+
+</script>
+
+<!-- 🔻 SAME NAVIGATION -->
+<nav class="bottom-nav">
+
+<a href="../index.html"><span>🏠</span><p>Home</p></a>
+<a href="../learn.html"><span>🎓</span><p>Learn</p></a>
+<a href="../courses.html"><span>📚</span><p>Courses</p></a>
+<a href="../marketplace.html"><span>🛒</span><p>Market</p></a>
+<a href="../finance.html"><span>💰</span><p>Finance</p></a>
+<a href="../login.html"><span>🔐</span><p>Login</p></a>
+
+<a href="../verify.html">
+<span>🔍</span>
+<p>Verify</p>
+</a>
+
+<a href="../support.html">
+<span>🆘</span>
+<p>Support</p>
+</a>
+
+<a href="../chatbot.html">
+<span>🤖</span>
+<p>Chat</p>
+</a>
+
+<a href="../dashboard.html"><span>📊</span><p>Dashboard</p></a>
+
+</nav>
+
+</body>
+</html>

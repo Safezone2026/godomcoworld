@@ -1,34 +1,269 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Revenue Dashboard</title>
+<title>Seller Dashboard</title>
+<link rel="stylesheet" href="../css/style.css">
+
+<style>
+body{
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial;
+}
+
+.card{
+  background:#111;
+  padding:20px;
+  margin:15px 0;
+  border-radius:10px;
+  text-align:center;
+}
+
+button{
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  background:#00c853;
+  color:white;
+  cursor:pointer;
+}
+
+.history{
+  background:#222;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+}
+</style>
 </head>
 
 <body>
 
-<h2>📊 Seller Earnings</h2>
+<h2>📊 Seller Dashboard</h2>
 
-<h3 id="user"></h3>
-<h1 id="earnings">₦0</h1>
+<div class="card">
+  <h3 id="user"></h3>
+
+  <h3>💰 Total Sales</h3>
+  <h2 id="totalSales">₦0</h2>
+
+  <h3>📉 Platform Fee (5%)</h3>
+  <h2 id="fees">₦0</h2>
+
+  <h3>💵 Your Earnings</h3>
+  <h1 id="earnings">₦0</h1>
+
+  <h3>⏳ Pending Balance</h3>
+  <h2 id="pendingBalance">₦0</h2>
+</div>
+
+<!-- NEW CARD (separate) -->
+<div class="card">
+    <h3>💵 Available Balance</h3>
+  <h2 id="availableBalance">₦0</h2>
+
+  <h3>💸 Withdraw Funds</h3>
+
+  <select id="withdrawMethod">
+  <option value="">Select Method</option>
+  <option value="bank">Bank Transfer</option>
+  <option value="pi">Pi Network</option>
+</select>
+
+<div id="bankFields" style="display:none;">
+  <select id="bankName">
+    <option>Access Bank</option>
+    <option>GTBank</option>
+    <option>UBA</option>
+    <option>First Bank</option>
+    <option>Zenith Bank</option>
+    <option>Opay</option>
+    <option>PalmPay</option>
+  </select>
+
+  <input type="text" id="accountNumber" placeholder="Account Number">
+  <input type="text" id="accountName" placeholder="Account Name">
+</div>
+
+<div id="piFields" style="display:none;">
+  <input type="text" id="piAddress" placeholder="Enter Pi Wallet Address">
+</div>
+<input type="number" id="amount" placeholder="Enter amount">
+
+  <button onclick="submitWithdrawal()">Submit Withdrawal</button>
+</div>
+</div>
+
+<div class="card">
+  <h3>📊 Sales Breakdown</h3>
+  <div id="salesHistory">Loading...</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>
-
-async function loadEarnings(){
-
-  let user = localStorage.getItem("piUser");
-
-  const res = await fetch('http://127.0.0.1:3000/sellers');
-  const data = await res.json();
-
-  let earnings = data.sellers[user] || 0;
-
-  document.getElementById("earnings").innerText =
-    "₦" + earnings.toFixed(2);
-
-}
-
-window.onload = loadEarnings;
-
+  eruda.init();
 </script>
 
+<script>
+let currentSeller = localStorage.getItem("username");
+
+if(!currentSeller){
+  currentSeller = prompt("Enter your username (e.g seller1)");
+  localStorage.setItem("username", currentSeller);
+}
+
+console.log("Current seller:", currentSeller);
+console.log("JS LOADED");
+
+// ================= LOAD EARNINGS =================
+async function loadEarnings(){
+
+  document.getElementById("user").innerText = "Seller: " + currentSeller;
+
+  try {
+    const res = await fetch(`http://127.0.0.1:3000/seller-dashboard/${currentSeller}`);
+    const data = await res.json();
+
+    const seller = data.seller || {};
+
+// 💰 Earnings
+document.getElementById("earnings").innerText =
+  "₦" + Number(seller.earnings || 0).toLocaleString();
+
+// 📊 Total Sales
+document.getElementById("totalSales").innerText =
+  "₦" + Number(seller.totalSales || 0).toLocaleString();
+
+// 📉 Fees
+document.getElementById("fees").innerText =
+  "₦" + Number(seller.totalFees || 0).toLocaleString();
+
+// ⏳ Pending Balance
+document.getElementById("pendingBalance").innerText =
+  "₦" + Number(seller.pendingBalance || 0).toLocaleString();
+
+// 💵 Available Balance
+document.getElementById("availableBalance").innerText =
+  "₦" + Number(seller.availableBalance || 0).toLocaleString();
+
+  } catch(err){
+    console.error(err);
+    alert("Failed to load earnings");
+  }
+}
+
+// ================= LOAD SALES HISTORY =================
+async function loadSalesHistory(){
+
+  let container = document.getElementById("salesHistory");
+  container.innerHTML = "Loading...";
+
+  try {
+
+    const res = await fetch(`http://127.0.0.1:3000/seller-dashboard/${currentSeller}`);
+    const data = await res.json();
+
+    console.log("Seller dashboard data:", data);
+
+    // 🔥 THIS IS WHERE IT IS USED
+    const transactions = data.seller.transactions || [];
+
+    if(transactions.length === 0){
+      container.innerHTML = "No sales yet";
+      return;
+    }
+
+    container.innerHTML = "";
+
+    transactions.forEach(t => {
+      container.innerHTML += `
+        <div class="history">
+          Sale: ₦${Number(t.sale).toLocaleString()} <br>
+          Fee: ₦${Number(t.fee).toLocaleString()} <br>
+          Earned: ₦${Number(t.earned).toLocaleString()} <br>
+          <small>${t.date}</small>
+        </div>
+      `;
+    });
+
+  } catch(err){
+    console.error(err);
+    container.innerHTML = "Failed to load sales";
+  }
+}
+
+// ================= WITHDRAW UI =================
+document.getElementById("withdrawMethod").addEventListener("change", function(){
+
+  const method = this.value;
+
+  document.getElementById("bankFields").style.display =
+    method === "bank" ? "block" : "none";
+
+  document.getElementById("piFields").style.display =
+    method === "pi" ? "block" : "none";
+});
+
+// ================= SUBMIT WITHDRAW =================
+async function submitWithdrawal(){
+
+  const method = document.getElementById("withdrawMethod").value;
+  const amount = Number(prompt("Enter amount to withdraw"));
+
+  if(!amount || amount <= 0){
+    return alert("Invalid amount");
+  }
+
+  let details = {};
+
+  if(method === "bank"){
+    details = {
+      bank: document.getElementById("bankName").value,
+      accountNumber: document.getElementById("accountNumber").value,
+      accountName: document.getElementById("accountName").value
+    };
+  }
+
+  if(method === "pi"){
+    details = {
+      piAddress: document.getElementById("piAddress").value
+    };
+  }
+
+  try {
+
+    const res = await fetch('http://127.0.0.1:3000/seller-withdraw', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        username: currentSeller,
+        amount,
+        method,
+        details
+      })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    loadEarnings();
+
+  } catch(err){
+    console.error(err);
+    alert("Withdrawal failed");
+  }
+}
+
+// ================= INIT =================
+window.onload = function() {
+  loadEarnings();
+  loadSalesHistory();
+
+  setInterval(loadEarnings, 5000);
+};
+
+
+
+</script>
 </body>
 </html>

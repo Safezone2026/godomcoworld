@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Courses</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { background:#0d0d0d; color:white; font-family:Arial; padding:20px; }
+    .card {
+      background:#1a1a1a;
+      padding:15px;
+      margin:10px 0;
+      border-radius:8px;
+    }
+    a {
+      color:#4CAF50;
+      text-decoration:none;
+    }
+  </style>
+</head>
+<body>
+
+<h2>📚 My Courses</h2>
+
+<div id="myCourses"></div>
+
+<script>
+
+const courseList = [
+  "Augmented Reality",
+  "Argumentation & Critical Thinking",
+  "Blockchain Development",
+  "Hologram Technology",
+  "Nanotechnology",
+  "Space Technology",
+  "Web3 & Blockchain Integration",
+  "Agricultural Processing",
+  "Furniture & Carpentry",
+  "Electrical Installation",
+  "Fashion & Textile Design",
+  "Automobile Mechanics",
+  "Smartphone Repair",
+  "Solar Installation",
+  "Welding & Fitting Technology"
+];
+
+const container = document.getElementById("myCourses");
+
+courseList.forEach(course => {
+  let saved = localStorage.getItem("plan_" + course);
+
+  if(saved){
+    let parsed = JSON.parse(saved);
+
+    if(Date.now() < parsed.expiry){
+
+      container.innerHTML += `
+        <div class="card">
+          <h3>${course}</h3>
+          <a href="../course.html?course=${encodeURIComponent(course)}">
+            ▶ Continue Course
+          </a>
+        </div>
+      `;
+    }
+  }
+});
+
+if(container.innerHTML === ""){
+  container.innerHTML = "<p>No active courses yet</p>";
+}
+
+</script>
+
+</body>
+</html>

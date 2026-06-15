@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Course Details</div>
+  <a href="index.html"><button>Back</button></a>
+</header>
+
+<div class="container">
+
+<h2 id="courseTitle"></h2>
+<p id="courseDesc">This course will equip you with practical skills.</p>
+
+<!-- 🔒 LOCKED CONTENT -->
+<div id="lockedContent">
+  <p style="color:red;">🔒 Subscribe to access full course</p>
+</div>
+
+<!-- 💰 PRICING -->
+<h3>Choose Plan</h3>
+
+<div class="course-grid">
+
+<div class="card">
+  <h3>Basic</h3>
+  <p id="basicPrice"></p>
+  <p id="basicPi"></p>
+
+  <button onclick="pay('basic','PI')">Pay with Pi</button>
+  <button onclick="pay('basic','USD')">Pay with Fiat</button>
+</div>
+
+<div class="card">
+  <h3>Intermediate</h3>
+  <p id="interPrice"></p>
+  <p id="interPi"></p>
+
+  <button onclick="pay('intermediate','PI')">Pay with Pi</button>
+  <button onclick="pay('intermediate','USD')">Pay with Fiat</button>
+</div>
+
+<div class="card">
+  <h3>Professional</h3>
+  <p id="proPrice"></p>
+  <p id="proPi"></p>
+
+  <button onclick="pay('pro','PI')">Pay with Pi</button>
+  <button onclick="pay('pro','USD')">Pay with Fiat</button>
+</div>
+
+</div>
+
+<!-- ✅ UNLOCKED CONTENT -->
+  <div id="courseContent" style="display:none;">
+  <h3>📚 Course Content</h3>
+
+  <div id="lessonList"></div>
+
+  <div id="lessonViewer" style="margin-top:20px; display:none;">
+    <h4 id="lessonTitle"></h4>
+    <p id="lessonText"></p>
+  </div>
+</div>
+</div>
+<hr>
+
+<h3>🤖 AI Tutor</h3>
+
+<textarea id="aiQuestion" placeholder="Ask anything about this course..." style="width:100%;height:80px;"></textarea>
+
+<br><br>
+
+<button onclick="startListening()">🎤 Speak</button>
+<button onclick="askAI()">Ask AI</button>
+<button onclick="speakAnswer()">🔊 Listen</button>
+
+<p id="aiResponse" style="margin-top:15px;"></p>
+
+<hr>
+
+<h3>🎓 Certificate</h3>
+<button onclick="generateCertificate()">Generate Certificate</button>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+<script src="../js/payment.js"></script>
+<script src="../js/wallet-init.js"></script>
+
+<script>
+
+//  COURSE DATABASE
+const courseData = {
+
+  "Augmented Reality": {
+    description: "Learn AR development and immersive design.",
+    price: { basic: 20, inter: 50, pro: 100 },
+    lessons: ["AR Basics", "Unity AR", "3D Objects", "Real Projects"]
+  },
+
+  "Argumentation & Critical Thinking": {
+    description: "Master reasoning and persuasion.",
+    price: { basic: 15, inter: 40, pro: 80 },
+    lessons: ["Logic", "Fallacies", "Debate", "Persuasion"]
+  },
+
+  "Blockchain Development": {
+    description: "Build blockchain apps.",
+    price: { basic: 30, inter: 70, pro: 150 },
+    lessons: ["Blockchain", "Solidity", "Smart Contracts", "DApps"]
+  },
+
+  "Hologram Technology": {
+    description: "3D holographic systems.",
+    price: { basic: 25, inter: 60, pro: 120 },
+    lessons: ["Hologram Basics", "Projection", "3D Design", "Applications"]
+  },
+
+  "Nanotechnology": {
+    description: "Nano science and innovation.",
+    price: { basic: 35, inter: 80, pro: 160 },
+    lessons: ["Nano Basics", "Materials", "Medicine", "Future Tech"]
+  },
+
+  "Space Technology": {
+    description: "Explore space systems.",
+    price: { basic: 40, inter: 90, pro: 180 },
+    lessons: ["Satellites", "Rockets", "Navigation", "Exploration"]
+  },
+
+  "Web3 & Blockchain Integration": {
+    description: "Connect blockchain to web.",
+    price: { basic: 25, inter: 60, pro: 120 },
+    lessons: ["Web3", "Wallets", "Contracts", "Integration"]
+  },
+
+  "Agricultural Processing": {
+    description: "Food processing skills.",
+    price: { basic: 10, inter: 25, pro: 50 },
+    lessons: ["Processing", "Storage", "Packaging", "Distribution"]
+  },
+
+  "Furniture & Carpentry": {
+    description: "Woodwork and furniture design.",
+    price: { basic: 12, inter: 30, pro: 60 },
+    lessons: ["Tools", "Cutting", "Assembly", "Finishing"]
+  },
+
+  "Electrical Installation": {
+    description: "Electrical wiring and safety.",
+    price: { basic: 15, inter: 35, pro: 70 },
+    lessons: ["Wiring", "Circuits", "Installation", "Safety"]
+  },
+
+  "Fashion & Textile Design": {
+    description: "Clothing and textile creation.",
+    price: { basic: 10, inter: 25, pro: 50 },
+    lessons: ["Design", "Cutting", "Sewing", "Branding"]
+  },
+
+  "Automobile Mechanics": {
+    description: "Vehicle repair and maintenance.",
+    price: { basic: 20, inter: 45, pro: 90 },
+    lessons: ["Engine", "Diagnostics", "Repair", "Maintenance"]
+  },
+
+  "Smartphone Repair": {
+    description: "Fix mobile devices.",
+    price: { basic: 10, inter: 25, pro: 50 },
+    lessons: ["Hardware", "Software", "Screen", "Troubleshooting"]
+  },
+
+  "Solar Installation": {
+    description: "Install solar systems.",
+    price: { basic: 15, inter: 35, pro: 70 },
+    lessons: ["Panels", "Installation", "Wiring", "Maintenance"]
+  },
+
+  "Welding & Fitting Technology": {
+  description: "Welding and fabrication.",
+  price: { basic: 25, inter: 60, pro: 120 }, // 🔥 UPDATED
+  lessons: ["Tools", "Arc Welding", "Fabrication", "Safety"]
+}
+
+};
+
+//  GET COURSE
+
+let params = new URLSearchParams(window.location.search);
+let courseName = params.get("course");
+
+if(!courseName || !courseData[courseName]){
+  alert("Course not found");
+  throw new Error("Invalid course");
+}
+
+let course = courseData[courseName];
+
+// LOAD CONTENT
+document.getElementById("courseTitle").innerText = courseName;
+document.getElementById("courseDesc").innerText = course.description;
+
+// LOAD LESSONS 
+const courseLessons = {
+
+  "Augmented Reality": [
+    { title: "Introduction to AR", content: "AR overlays digital elements onto the real world using smartphones or smart glasses." },
+    { title: "AR Tools", content: "Popular tools include Unity, ARCore, and ARKit for building AR applications." },
+    { title: "AR Applications", content: "Used in gaming, education, healthcare, and retail experiences." }
+  ],
+
+  "Argumentation & Critical Thinking": [
+    { title: "Logic Basics", content: "Critical thinking involves analyzing facts to form judgment." },
+    { title: "Logical Fallacies", content: "Common errors in reasoning like false cause, ad hominem, and slippery slope." },
+    { title: "Debate Skills", content: "Learn how to structure arguments and defend positions effectively." }
+  ],
+
+  "Blockchain Development": [
+    { title: "Blockchain Basics", content: "A decentralized ledger that records transactions securely." },
+    { title: "Smart Contracts", content: "Programs that execute automatically on blockchain." },
+    { title: "DApps", content: "Decentralized applications built on blockchain networks." }
+  ],
+
+  "Hologram Technology": [
+    { title: "Hologram Basics", content: "3D projections that appear real without glasses." },
+    { title: "Projection Systems", content: "Uses lasers and light diffraction." },
+    { title: "Applications", content: "Used in entertainment, education, and communication." }
+  ],
+
+  "Nanotechnology": [
+    { title: "Nano Basics", content: "Working with materials at atomic scale." },
+    { title: "Medical Uses", content: "Used in drug delivery and diagnostics." },
+    { title: "Industrial Uses", content: "Used in electronics and materials engineering." }
+  ],
+
+  "Space Technology": [
+    { title: "Space Systems", content: "Satellites, rockets, and spacecraft systems." },
+    { title: "Exploration", content: "Used for planetary missions and research." },
+    { title: "Communication", content: "Satellites enable global communication." }
+  ],
+
+  "Web3 & Blockchain Integration": [
+    { title: "Web3 Basics", content: "Decentralized internet powered by blockchain." },
+    { title: "Integration", content: "Connecting apps with wallets and smart contracts." },
+    { title: "DeFi", content: "Decentralized finance without banks." }
+  ],
+
+  "Agricultural Processing": [
+    { title: "Processing", content: "Converting raw farm products into finished goods like garri and oil." },
+    { title: "Storage", content: "Preserving products using drying and refrigeration." },
+    { title: "Packaging", content: "Protecting and branding products for market." },
+    { title: "Distribution", content: "Transporting goods to consumers." }
+  ],
+
+  "Furniture & Carpentry": [
+    { title: "Wood Basics", content: "Understanding wood types and uses." },
+    { title: "Tools", content: "Using saws, drills, and measuring tools." },
+    { title: "Furniture Design", content: "Creating chairs, tables, and cabinets." }
+  ],
+
+  "Electrical Installation": [
+    { title: "Wiring", content: "Installing electrical cables safely." },
+    { title: "Circuits", content: "Understanding current flow and connections." },
+    { title: "Safety", content: "Avoiding shocks and electrical hazards." }
+  ],
+
+  "Fashion & Textile Design": [
+    { title: "Design Basics", content: "Creating clothing styles." },
+    { title: "Fabric Types", content: "Understanding materials like cotton and silk." },
+    { title: "Sewing", content: "Constructing garments." }
+  ],
+
+  "Automobile Mechanics": [
+    { title: "Engine Basics", content: "Understanding how engines work." },
+    { title: "Maintenance", content: "Oil changes, brake repair, and servicing." },
+    { title: "Diagnostics", content: "Finding faults in vehicles." }
+  ],
+
+  "Smartphone Repair": [
+    { title: "Hardware", content: "Fixing screens and batteries." },
+    { title: "Software", content: "Fixing OS and apps." },
+    { title: "Tools", content: "Using repair kits." }
+  ],
+
+  "Solar Installation": [
+    { title: "Solar Panels", content: "Converting sunlight into electricity." },
+    { title: "Inverters", content: "Converting DC to AC power." },
+    { title: "Battery Storage", content: "Storing solar energy." }
+  ],
+
+  "Welding & Fitting Technology": [
+    { title: "Welding Types", content: "Arc, MIG, TIG welding methods." },
+    { title: "Metal Work", content: "Cutting and joining metals." },
+    { title: "Fabrication", content: "Building structures and equipment." }
+  ]
+
+};
+
+//  DYNAMIC PRICING 
+const prices = course.price;
+document.getElementById("basicPrice").innerText = "$" + prices.basic + "/month";
+document.getElementById("interPrice").innerText = "$" + prices.inter + "/month";
+document.getElementById("proPrice").innerText = "$" + prices.pro + "/month";
+
+document.getElementById("basicPi").innerText =
+  (prices.basic / 314159).toFixed(8) + " π";
+
+document.getElementById("interPi").innerText =
+  (prices.inter / 314159).toFixed(8) + " π";
+
+document.getElementById("proPi").innerText =
+  (prices.pro / 314159).toFixed(8) + " π";
+
+//  ACCESS CHECK 
+let saved = localStorage.getItem("plan_" + courseName);
+
+if(saved){
+  let parsed = JSON.parse(saved);
+
+  if(Date.now() < parsed.expiry){
+    unlockCourse();
+  } else {
+    alert("Subscription expired");
+  }
+}
+
+//  PAYMENT 
+async function pay(plan, method){
+
+  // 🔒 GLOBAL PAYMENT CONTROL (ADD THIS)
+  const allowed = await checkPaymentAccess(method === "PI" ? "Pi" : "Fiat");
+  if(!allowed) return;
+
+  // ⬇️ EXISTING CODE CONTINUES
+  const walletId = localStorage.getItem("walletId");
+
+  if(!walletId){
+    alert("Wallet not found");
+    return;
+  }
+
+  const prices = course.price;
+
+  if(plan === "basic"){
+    usd = prices.basic;
+  } else if(plan === "inter"){
+    usd = prices.inter;
+  } else if(plan === "pro"){
+    usd = prices.pro;
+  } else {
+    alert("Invalid plan");
+    return;
+  }
+
+  let currency, amount;
+
+  if(method === "PI"){
+    currency = "PI";
+    amount = Number((usd / 314159).toFixed(8));
+  } else {
+
+    // 🔥 SIMPLE: let backend decide
+currency = "USD"; // default
+amount = usd;
+  }
+
+  const res = await fetch("http://127.0.0.1:3000/wallet/pay", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      walletId,
+      amount,
+      currency,
+      type: "course"
+    })
+  });
+
+  const data = await res.json();
+
+  if(data.success){
+    localStorage.setItem("plan_" + courseName, JSON.stringify({
+      plan,
+      expiry: Date.now() + (30 * 24 * 60 * 60 * 1000)
+    }));
+
+    alert("Payment successful!");
+    unlockCourse();
+
+  } else {
+    alert(data.message);
+  }
+}
+
+
+//  UNLOCK 
+function unlockCourse(){
+  document.getElementById("lockedContent").style.display = "none";
+  document.getElementById("courseContent").style.display = "block";
+    renderLessons(); // 🔥 THIS IS KEY
+}
+
+//  RENDER LESSONS 
+function renderLessons(){
+
+  let list = document.getElementById("lessonList");
+  list.innerHTML = "";
+
+  let lessons = courseLessons[courseName];
+
+  if(!lessons){
+    list.innerHTML = "<p>No content available yet.</p>";
+    return;
+  }
+
+  lessons.forEach((lesson, index) => {
+
+    list.innerHTML += `
+      <div 
+        style="
+          padding:10px;
+          margin:8px 0;
+          background:#1a1a1a;
+          border-radius:8px;
+          cursor:pointer;
+        "
+        onclick="openLesson(${index})"
+      >
+        📘 ${lesson.title}
+      </div>
+    `;
+  });
+}
+
+// OPEN lessons
+   function openLesson(index){
+
+  let lesson = courseLessons[courseName][index];
+
+  document.getElementById("lessonTitle").innerText = lesson.title;
+  document.getElementById("lessonText").innerText = lesson.content;
+
+  document.getElementById("lessonViewer").style.display = "block";
+}
+
+//  AI KNOWLEDGE 
+const aiKnowledge = {
+
+  "Agricultural Processing": [
+    { keywords:["processing"], answer:"Processing converts raw crops into usable goods like garri and oil." },
+    { keywords:["storage"], answer:"Storage preserves food using drying, refrigeration, and containers." },
+    { keywords:["packaging"], answer:"Packaging protects products and improves sales." },
+    { keywords:["distribution"], answer:"Distribution ensures products reach markets." }
+  ],
+
+  "Blockchain Development": [
+    { keywords:["blockchain"], answer:"Blockchain is a decentralized ledger system." },
+    { keywords:["smart contract"], answer:"Smart contracts execute automatically on blockchain." },
+    { keywords:["dapp"], answer:"DApps are decentralized apps running on blockchain." }
+  ],
+
+  "Augmented Reality": [
+    { keywords:["ar"], answer:"AR overlays digital objects onto real-world view." }
+  ],
+
+  "Solar Installation": [
+    { keywords:["solar"], answer:"Solar systems generate electricity from sunlight." },
+    { keywords:["battery"], answer:"Batteries store solar energy for later use." }
+  ],
+
+  "Welding & Fitting Technology": [
+    { keywords:["welding"], answer:"Welding joins metals using heat." },
+    { keywords:["metal"], answer:"Metal fabrication builds structures." }
+  ]
+
+  // 👉 You can expand anytime
+};
+// ASK AI
+function askAI(){
+
+  let q = document.getElementById("aiQuestion").value.toLowerCase();
+  let res = "AI Tutor: ";
+
+  let courseAI = aiKnowledge[courseName];
+
+  if(courseAI && Array.isArray(courseAI)){
+
+    let match = courseAI.find(item =>
+      item.keywords.some(k => q.includes(k))
+    );
+
+    if(match){
+      res += match.answer;
+    } else {
+      res += "Try asking about: " +
+        courseAI.map(i => i.keywords[0]).join(", ");
+    }
+
+  } else {
+    res += "AI knowledge not available yet for this course.";
+  }
+
+  document.getElementById("aiResponse").innerText = res;
+}
+
+// VOICE INPUT 
+function startListening(){
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.start();
+
+  recognition.onresult = function(e){
+    document.getElementById("aiQuestion").value = e.results[0][0].transcript;
+  };
+}
+
+//  SPEAK 
+function speakAnswer(){
+  const text = document.getElementById("aiResponse").innerText;
+
+  if(!text){
+    alert("No response yet");
+    return;
+  }
+
+  const speech = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(speech);
+}
+
+//  CERTIFICATE 
+function generateCertificate(){
+
+  const planData = localStorage.getItem("plan_" + courseName);
+
+  if(!planData){
+    alert("You must subscribe first");
+    return;
+  }
+
+  const parsed = JSON.parse(planData);
+
+  if(Date.now() > parsed.expiry){
+    alert("Subscription expired");
+    return;
+  }
+
+  const name = prompt("Enter your full name:");
+  if(!name) return;
+
+  const certId = "GODO-" + Date.now();
+
+  document.getElementById("studentName").innerText = name;
+  document.getElementById("courseTitleCert").innerText = courseName;
+  document.getElementById("certDate").innerText = new Date().toDateString();
+  document.getElementById("certId").innerText = certId;
+
+  document.getElementById("certificate").style.display = "block";
+
+  window.print();
+}
+</script>
+<div id="certificate" style="display:none; padding:30px; background:white; color:black; text-align:center; border:8px solid gold; margin-top:20px;">
+  <h1 style="color:darkblue;">🏆 Certificate of Completion</h1>
+
+  <p>This certifies that</p>
+  <h2 id="studentName"></h2>
+
+  <p>has successfully completed</p>
+  <h2 id="courseTitleCert"></h2>
+
+  <p>on Godomcoworld Technology Platform</p>
+
+  <p id="certDate"></p>
+
+  <p><strong>Certificate ID:</strong> <span id="certId"></span></p>
+</div>
+
+</body>
+  </html>

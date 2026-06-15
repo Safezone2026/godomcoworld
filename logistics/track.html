@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Delivery</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Track Delivery</div>
+  <a href="index.html">
+    <button>Back</button>
+  </a>
+</header>
+
+<div class="container">
+
+<h2>Track Your Order</h2>
+
+<input type="text" id="trackingInput" placeholder="Enter Tracking Number"><br><br>
+
+<button onclick="trackOrder()">Track</button>
+<div id="destinationBox" style="
+  background:#111;
+  padding:10px;
+  margin-top:10px;
+  border-radius:8px;
+">
+  📍 Destination: Loading...
+</div>
+
+<p id="status">Status: Waiting...</p>
+
+<div id="timeline"></div>
+
+<!-- ✅ BUTTONS (hidden by default) -->
+<button id="confirmBtn" style="display:none;background:#00c853;color:white;">
+  ✅ Confirm Delivery
+</button>
+
+<button id="disputeBtn" style="display:none;background:red;color:white;">
+  ⚠️ Report Issue
+</button>
+
+</div>
+
+<script>
+
+// ================= USER =================
+let username = localStorage.getItem("username");
+
+if(!username){
+  username = prompt("Enter your username (e.g buyer1)");
+  localStorage.setItem("username", username);
+}
+
+console.log("Current user:", username);
+
+// ================= TRACK ORDER =================
+async function trackOrder(){
+
+  let orderIdInput = document.getElementById("trackingInput").value.trim();
+
+  if(!orderIdInput){
+    alert("Enter tracking number");
+    return;
+  }
+
+  try {
+
+    let res = await fetch(`http://127.0.0.1:3000/logistics/track/${orderIdInput}`);
+    let data = await res.json();
+
+    if (!data.success) {
+      document.getElementById("status").innerText = data.message;
+      return;
+    }
+
+    const status = data.delivery.status;
+
+// 📍 Destination
+document.getElementById("destinationBox").innerText =
+  `📍 ${data.order.address}, ${data.order.country}`;
+
+// Status
+document.getElementById("status").innerText =
+  "Status: " + status;
+
+renderTimeline(status);
+
+    // ✅ SAVE globally for buttons
+    window.currentOrderId = orderIdInput;
+
+    document.getElementById("status").innerText =
+      "Status: " + status;
+
+    renderTimeline(status);
+
+    // ================= BUTTON CONTROL =================
+    const confirmBtn = document.getElementById("confirmBtn");
+    const disputeBtn = document.getElementById("disputeBtn");
+
+    // hide all first
+    confirmBtn.style.display = "none";
+    disputeBtn.style.display = "none";
+
+    if (status === "delivered_pending") {
+      confirmBtn.style.display = "block";
+      disputeBtn.style.display = "block";
+    }
+
+    if (status === "in_transit") {
+      disputeBtn.style.display = "block";
+    }
+
+  } catch(err){
+    console.error(err);
+    document.getElementById("status").innerText =
+      "Tracking failed (network issue)";
+  }
+}
+
+// ================= TIMELINE =================
+function renderTimeline(status){
+
+  let steps = ["pending", "in_transit", "delivered_pending", "delivered"];
+
+  let html = "";
+
+  steps.forEach(step => {
+
+    if(step === status){
+      html += `<p>🟢 ${step}</p>`;
+    } 
+    else if(steps.indexOf(step) < steps.indexOf(status)){
+      html += `<p>✔ ${step}</p>`;
+    } 
+    else {
+      html += `<p>⬜ ${step}</p>`;
+    }
+
+  });
+
+  document.getElementById("timeline").innerHTML = html;
+}
+
+// ================= CONFIRM DELIVERY =================
+document.getElementById("confirmBtn").onclick = async function(){
+
+  if(!window.currentOrderId){
+    alert("No order selected");
+    return;
+  }
+
+  const res = await fetch('http://127.0.0.1:3000/confirm-delivery', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      orderId: window.currentOrderId
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+
+  // 🔄 refresh tracking
+  trackOrder();
+};
+
+// ================= DISPUTE =================
+document.getElementById("disputeBtn").onclick = async function(){
+
+  if(!window.currentOrderId){
+    alert("No order selected");
+    return;
+  }
+
+  const reason = prompt("Enter reason (e.g damaged item)");
+  const description = prompt("Describe the issue");
+
+  const res = await fetch('http://127.0.0.1:3000/open-dispute', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      orderId: window.currentOrderId,
+      buyer: username,
+      reason,
+      description
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+};
+
+// ================= AUTO LOAD =================
+window.onload = function(){
+
+  let lastOrderId = localStorage.getItem("lastOrderId");
+
+  if(lastOrderId){
+    document.getElementById("trackingInput").value = lastOrderId;
+
+    setTimeout(() => {
+      trackOrder();
+    }, 500);
+  }
+};
+
+</script>
+
+<a href="../marketplace/marketplace.html">
+<button>Back to Marketplace</button>
+</a>
+
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistics Dashboard</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🚚 Logistics Dashboard</div>
+  <a href="index.html"><button>Back</button></a>
+</header>
+
+<div class="container">
+
+<h2>Welcome, Partner</h2>
+
+<p id="userInfo"></p>
+
+<hr>
+
+<h3>📦 Actions</h3>
+
+<button onclick="viewOrders()">View Available Orders</button><br><br>
+
+<button onclick="viewDeliveries()">My Deliveries</button><br><br>
+
+<button onclick="toggleStatus()">Go Online / Offline</button><br><br>
+
+<button onclick="logout()">Logout</button>
+
+</div>
+
+<script>
+
+// Load user info
+const username = localStorage.getItem("logistics_username");
+document.getElementById("userInfo").textContent = "Logged in as: " + username;
+
+// Navigation
+function viewOrders(){
+  window.location.href = "logistics-orders.html";
+}
+
+function viewDeliveries(){
+  window.location.href = "logistics-deliveries.html";
+}
+
+// Toggle availability
+function toggleStatus(){
+  let status = localStorage.getItem("availability") || "offline";
+
+  if(status === "offline"){
+    status = "online";
+  } else {
+    status = "offline";
+  }
+
+  localStorage.setItem("availability", status);
+
+  alert("You are now " + status);
+}
+
+// Logout
+function logout(){
+  localStorage.removeItem("logistics_username");
+  localStorage.removeItem("logistics_wallet");
+
+  window.location.href = "logistics-partner-registration.html";
+}
+
+</script>
+
+</body>
+</html>
