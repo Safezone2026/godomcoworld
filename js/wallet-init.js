@@ -1,5 +1,4 @@
-const API_URL = 'http://127.0.0.1:3000';
-
+const API_URL = 'https://godomcoworld-backend.onrender.com';
 async function initWallet() {
   let username = localStorage.getItem("username");
 
