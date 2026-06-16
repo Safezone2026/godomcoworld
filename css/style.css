@@ -342,24 +342,6 @@ transform:scale(0.95);
   color: #27ae60; /* green money color */
   font-size: 16px;
 }
-<style>
-/* 🔥 Bigger Eruda button */
-.eruda-entry-btn {
-  width: 70px !important;
-  height: 70px !important;
-  font-size: 20px !important;
-  bottom: 80px !important; /* move up */
-  right: 20px !important;
-  opacity: 1 !important;
-}
-</style>
-<style>
-.eruda-entry-btn {
-  top: 80px !important;
-  right: 20px !important;
-  bottom: auto !important;
-}
-</style>
 #revenueBreakdown .card {
   background:#111;
   color:#fff;
