@@ -292,9 +292,12 @@ async function loginPi(){
 
     const scopes = ['username','payments'];
 
-    const auth = await Pi.authenticate(scopes);
+     alert("Before authenticate");
 
-    alert("Step 2");
+const auth = await Pi.authenticate(scopes);
+
+alert("After authenticate");   
+alert("Step 2");
 
     console.log(auth);
 
