@@ -204,7 +204,7 @@ async function completeCheckout(method){
 
     const walletId = localStorage.getItem("walletId");
 
-    const payRes = await fetch("http://127.0.0.1:3000/wallet/pay", {
+    const payRes = await fetch("https://godomcoworld-backend.onrender.com/wallet/pay", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({
@@ -222,7 +222,7 @@ async function completeCheckout(method){
       return;
     }
 
-    const shipmentRes = await fetch('http://127.0.0.1:3000/logistics/create');
+    const shipmentRes = await fetch('https://godomcoworld-backend.onrender.com/logistics/create');
     const shipmentData = await shipmentRes.json();
 
     const orderId = shipmentData.orderId;
@@ -233,7 +233,7 @@ async function completeCheckout(method){
     const lat = Number(localStorage.getItem("deliveryLat"));
 const lng = Number(localStorage.getItem("deliveryLng"));
 
-await fetch('http://127.0.0.1:3000/api/checkout', {
+await fetch('https://godomcoworld-backend.onrender.com/api/checkout', {
   method: 'POST',
   headers: {'Content-Type':'application/json'},
   body: JSON.stringify({
@@ -293,7 +293,7 @@ async function calculateTotal(){
 
   document.getElementById("deliveryFee").innerText = "Calculating...";
 
-  const res = await fetch('http://127.0.0.1:3000/calculate-delivery', {
+  const res = await fetch('https://godomcoworld-backend.onrender.com/calculate-delivery', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
