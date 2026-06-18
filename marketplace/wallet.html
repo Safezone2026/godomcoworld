@@ -191,6 +191,8 @@ const countryRates = {
   CG:{symbol:"FCFA",rate:600}, CD:{symbol:"CDF",rate:2800}
 };
 
+const API = "https://godomcoworld-backend.onrender.com";
+
 
 // ================= USER =================
 let username = localStorage.getItem("username");
@@ -290,11 +292,11 @@ function depositPi() {
 // updateWalletDisplay
 let walletCurrency = "USD";
 
-async function updateWalletDisplay(){
+    async function updateWalletDisplay(){
 
   const walletId = localStorage.getItem("walletId");
 
-  const res = await fetch(`http://127.0.0.1:3000/wallet/${walletId}`);
+  const res = await fetch(`${API}/wallet/${walletId}`);
   const wallet = await res.json();
 
   const usd = wallet.balances?.USD || 0;
@@ -306,7 +308,7 @@ async function updateWalletDisplay(){
 
   if(walletCurrency === "USD"){
 
-    // 🔥 Convert NG → USD if no USD balance
+    // Convert NG → USD if no USD balance
     display = usd > 0 ? usd : (ngn / rate);
 
     document.getElementById("walletBalance").innerText =
@@ -314,11 +316,12 @@ async function updateWalletDisplay(){
 
   } else {
 
-    // 🔥 Convert USD → NG if no NG balance
+    // Convert USD → NG if no NG balance
     display = ngn > 0 ? ngn : (usd * rate);
 
     document.getElementById("walletBalance").innerText =
       "₦" + display.toLocaleString();
+
   }
 }
 // TOGGLE currency
