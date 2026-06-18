@@ -48,7 +48,12 @@ select, input[type=number]{
 <header>
 <h1>💳 My Wallet</h1>
 <p id="walletIdDisplay" style="font-size:11px; color:#aaa;"></p>
-</header>
+<button onclick="
+localStorage.removeItem('walletId');
+location.reload();
+">
+Reset Wallet
+</button></header>
 
 <main>
 
