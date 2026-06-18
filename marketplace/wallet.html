@@ -50,11 +50,12 @@ select, input[type=number]{
 <p id="walletIdDisplay" style="font-size:11px; color:#aaa;"></p>
 <button onclick="
 localStorage.removeItem('walletId');
+localStorage.removeItem('username');
 location.reload();
 ">
 Reset Wallet
-</button></header>
-
+</button>
+</header>
 <main>
 
 <!-- FIAT BALANCE -->
