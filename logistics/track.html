@@ -72,7 +72,9 @@ async function trackOrder(){
 
   try {
 
-    let res = await fetch(`http://127.0.0.1:3000/logistics/track/${orderIdInput}`);
+   let res = await fetch(
+  `https://godomcoworld-backend.onrender.com/logistics/track/${orderIdInput}`
+);
     let data = await res.json();
 
     if (!data.success) {
