@@ -201,6 +201,11 @@ async function completeCheckout(method){
 
     const walletId = localStorage.getItem("walletId");
 
+alert(
+  "walletId=" + walletId +
+  "\nusername=" + localStorage.getItem("username")
+);
+
     const payRes = await fetch("https://godomcoworld-backend.onrender.com/wallet/pay", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
