@@ -36,7 +36,7 @@ fetch('/api/orders')
 
 function acceptOrder(id){
 
-  const rider = localStorage.getItem("logistics_username");
+  const rider = localStorage.getItem("logisticsName");
 
   fetch('/api/assign-order', {
     method: 'POST',

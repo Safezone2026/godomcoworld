@@ -11,7 +11,7 @@
 <div id="deliveryList">Loading...</div>
 
 <script>
-const rider = localStorage.getItem("logistics_username");
+const rider = localStorage.getItem("logisticsName");
 
 fetch('/api/deliveries')
 .then(res => res.json())

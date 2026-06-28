@@ -159,7 +159,7 @@ if(!username){
   username = prompt("Enter your username (e.g rider1)");
   localStorage.setItem("username", username);
 }
-const existingUser = localStorage.getItem("logistics_username");
+const existingUser = localStorage.getItem("logisticsName");
 
 if(existingUser){
   window.location.href = "logistics-home.html";
@@ -274,7 +274,7 @@ console.log("🚚 SENDING DATA:", payload);
 
   // ✅ Save identity
   localStorage.setItem("logistics_wallet", wallet);
-  localStorage.setItem("logistics_username", username);
+  localStorage.setItem("logisticsName", username);
 
   // ✅ Redirect to logistics home
   window.location.href = "logistics-home.html";
