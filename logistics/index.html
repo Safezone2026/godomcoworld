@@ -96,7 +96,7 @@ if(!rider){
   rider = prompt("Enter logistics name (e.g Godomco Rider)");
   localStorage.setItem("logisticsName", rider);
 }
-
+console.log("Current rider =", rider);
 document.getElementById("riderName").innerText = "Rider: " + rider;
 
 
@@ -105,7 +105,7 @@ async function loadDashboard(){
 
   try {
 
-    const res = await fetch(`http://127.0.0.1:3000/logistics-dashboard/${rider}`);
+    const res = await fetch(`https://godomcoworld-backend.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}`);
     const data = await res.json();
 
     console.log("LOGISTICS DATA:", data);
@@ -197,7 +197,7 @@ function renderButtons(d){
 // ================= UPDATE STATUS =================
 async function updateStatus(orderId, status){
 
-  const res = await fetch('http://127.0.0.1:3000/update-delivery-status', {
+  const res = await fetch('https://godomcoworld-backend.onrender.com/update-delivery-status', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ orderId, status })
