@@ -158,7 +158,7 @@ document.getElementById("confirmBtn").onclick = async function(){
     return;
   }
 
-  const res = await fetch('http://127.0.0.1:3000/confirm-delivery', {
+  const res = await fetch('https://godomcoworld-backend.onrender.com/confirm-delivery', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
@@ -185,7 +185,7 @@ document.getElementById("disputeBtn").onclick = async function(){
   const reason = prompt("Enter reason (e.g damaged item)");
   const description = prompt("Describe the issue");
 
-  const res = await fetch('http://127.0.0.1:3000/open-dispute', {
+  const res = await fetch('https://godomcoworld-backend.onrender.com/open-dispute', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
