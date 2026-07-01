@@ -526,12 +526,12 @@ async function loadSwapHistory(){
   .filter(t => t.type === "swap")
   .map(t => `
     <p>
-      ${t.fromCurrency} → ${t.toCurrency} <br>
+      \${t.from_currency} → \${t.to_currency} <br>
       Amount: ${Number(t.amount).toLocaleString()} <br>
-      Received: ${Number(t.received || 0).toLocaleString()} <br>
-      Fee: ${Number(t.fee).toLocaleString()} <br>
-      Gas: ${Number(t.gas).toLocaleString()} <br>
-      ${new Date(t.timestamp).toLocaleString()}
+      Received: \${Number(t.received ?? 0).toLocaleString()} <br>
+      Fee: \${Number(t.fee ?? 0).toLocaleString()} <br>
+      Gas: \${Number(t.gas ?? 0).toLocaleString()} <br>
+      \${new Date(t.created_at).toLocaleString()}
     </p>
   `).join('');
 }
