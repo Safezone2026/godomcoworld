@@ -486,7 +486,7 @@ if(type === "piToFiat"){
   fromCurrency = document.getElementById("currencySelect").value;
   toCurrency = "PI";
 }
-
+alert("USING SWAP-TEST ENDPOINT");
 const res = await fetch(API + "/wallet/swap-test", {
   method:"POST",
   headers:{ "Content-Type":"application/json" },
