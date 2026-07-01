@@ -524,16 +524,16 @@ async function loadSwapHistory(){
 
   container.innerHTML = txs
   .filter(t => t.type === "swap")
-  .map(t => `
-    <p>
-      \${t.from_currency} → \${t.to_currency} <br>
-      Amount: ${Number(t.amount).toLocaleString()} <br>
-      Received: \${Number(t.received ?? 0).toLocaleString()} <br>
-      Fee: \${Number(t.fee ?? 0).toLocaleString()} <br>
-      Gas: \${Number(t.gas ?? 0).toLocaleString()} <br>
-      \${new Date(t.created_at).toLocaleString()}
-    </p>
-  `).join('');
+.map(t => `
+  <p>
+    ${t.from_currency} → ${t.to_currency} <br>
+    Amount: ${Number(t.amount).toLocaleString()} <br>
+    Received: ${Number(t.received ?? 0).toLocaleString()} <br>
+    Fee: ${Number(t.fee ?? 0).toLocaleString()} <br>
+    Gas: ${Number(t.gas ?? 0).toLocaleString()} <br>
+    ${new Date(t.created_at).toLocaleString()}
+  </p>
+`).join('');
 }
 // WITHDRAW Fiat
 async function requestWithdrawal(){
