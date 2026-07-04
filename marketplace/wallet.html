@@ -235,7 +235,9 @@ async function initWallet() {
   const res = await fetch(API + "/wallet/create", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ username })
+    body: JSON.stringify({ username,
+network: currentNetwork,
+ })
   });
 
   const data = await res.json();
@@ -253,7 +255,13 @@ async function initWallet() {
 
 // ================= LOAD BALANCE =================
 async function loadBalance(){
-  const res = await fetch(API + "/wallet/" + walletId);
+  const res = await fetch(
+  API +
+  "/wallet/" +
+  walletId +
+  "?network=" +
+  currentNetwork
+);
   const wallet = await res.json();
 
   // ONLY update Pi here
@@ -321,7 +329,8 @@ async function addTestFund() {
     const res = await fetch(API + "/wallet/test-fund", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walletId })
+      body: JSON.stringify({ walletId,
+network: currentNetwork })
     });
 
     const data = await res.json();
@@ -400,11 +409,12 @@ async function sendPi(){
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({
-      fromWalletId: walletId,
-      toWalletId,
-      amount,
-      currency: "PI"
-    })
+  fromWalletId,
+  toWalletId,
+  network: currentNetwork,
+  amount,
+  currency
+})
   });
 
   const data = await res.json();
@@ -473,7 +483,13 @@ async function performSwap(){
   }
 
   // 🔥 GET WALLET
-  const resWallet = await fetch(API + "/wallet/" + walletId);
+  const resWallet = await fetch(
+  API +
+  "/wallet/" +
+  walletId +
+  "?network=" +
+  currentNetwork
+);
   const wallet = await resWallet.json();
 
   let today = new Date().toLocaleDateString();
@@ -543,11 +559,12 @@ const res = await fetch(API + "/wallet/swap", {
   method:"POST",
   headers:{ "Content-Type":"application/json" },
   body: JSON.stringify({
-    walletId,
-    fromCurrency,
-    toCurrency,
-    amount
-  })
+  walletId,
+  network: currentNetwork,
+  fromCurrency,
+  toCurrency,
+  amount
+})
 });
 
   const data = await res.json();
@@ -569,7 +586,17 @@ loadSwapHistory(); // ✅ ADD THIS
 
 // ================= HISTORY =================
 async function loadSwapHistory(){
-  const res = await fetch(API + "/transactions/" + walletId);
+
+  const walletId = localStorage.getItem("walletId");
+
+  const res = await fetch(
+    API +
+    "/transactions/" +
+    walletId +
+    "?network=" +
+    currentNetwork
+  );
+
   const txs = await res.json();
 
   const container = document.getElementById("swapHistory");
@@ -613,16 +640,17 @@ async function requestWithdrawal(){
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({
-      walletId,
-      amount,
-      currency,
-      method: "bank",
-      details: {
-        bankName,
-        accountNumber,
-        accountName
-      }
-    })
+  walletId,
+  network: currentNetwork,
+  amount,
+  currency,
+  method: "bank",
+  details: {
+    bankName,
+    accountNumber,
+    accountName
+  }
+})
   });
 
   const data = await res.json();
