@@ -47,6 +47,14 @@ select, input[type=number]{
 
 <header>
 <h1>💳 My Wallet</h1>
+<label><strong>Wallet Network</strong></label>
+
+<select id="walletNetwork" onchange="switchWalletNetwork()">
+  <option value="mainnet">🟢 Mainnet Wallet</option>
+  <option value="testnet">🟣 Testnet Wallet</option>
+</select>
+
+<p id="networkStatus">🟢 Mainnet Wallet</p>
 <p id="walletIdDisplay" style="font-size:11px; color:#aaa;"></p>
 <button onclick="
 localStorage.removeItem('walletId');
@@ -86,7 +94,9 @@ Reset Wallet
 
 <button onclick="depositPi()">Deposit Pi</button>
 <button onclick="sendPi()">Send Pi</button>
-<button onclick="addTestFund()">⚡ Add Test Funds</button>
+<button id="testFundBtn" onclick="addTestFund()">
+  ⚡ Add Test Funds
+</button>
 
 </div>
 <h2>💸 Withdraw Funds</h2>
@@ -192,7 +202,8 @@ const countryRates = {
 };
 
 const API = "https://godomcoworld-backend.onrender.com";
-
+let currentNetwork =
+localStorage.getItem("walletNetwork") || "mainnet";
 
 // ================= USER =================
 let username = localStorage.getItem("username");
@@ -257,6 +268,47 @@ async function loadBalance(){
 
 function connectWallet(){
   alert("Wallet connected ✅\nWallet ID: " + walletId);
+}
+function switchWalletNetwork(){
+
+  currentNetwork =
+  document.getElementById("walletNetwork").value;
+
+  localStorage.setItem(
+    "walletNetwork",
+    currentNetwork
+  );
+
+  updateWalletUI();
+
+  updateWalletDisplay();
+
+  loadSwapHistory();
+
+}
+
+function updateWalletUI(){
+
+  const btn =
+    document.getElementById("testFundBtn");
+
+  const status =
+    document.getElementById("networkStatus");
+
+  if(currentNetwork==="mainnet"){
+
+    btn.style.display="none";
+
+    status.innerHTML="🟢 Mainnet Wallet";
+
+  }else{
+
+    btn.style.display="inline-block";
+
+    status.innerHTML="🟣 Testnet Wallet";
+
+  }
+
 }
 
 // ================= TEST FUND =================
@@ -615,12 +667,28 @@ function populateCountries(){
 
 // ================= INIT =================
 window.onload = function(){
+
+  document.getElementById("walletNetwork").value =
+    currentNetwork;
+
+  updateWalletUI();
+
   initWallet();
+
   updateWalletDisplay();
+
   loadWithdrawals();
+
   populateCountries();
-  document.getElementById("swapAmount").addEventListener("input", calculateSwapPreview);
-document.getElementById("swapType").addEventListener("change", calculateSwapPreview);
+
+  loadSwapHistory();
+
+  document.getElementById("swapAmount")
+    .addEventListener("input", calculateSwap);
+
+  document.getElementById("swapType")
+    .addEventListener("change", calculateSwap);
+
 };
 </script>
 
