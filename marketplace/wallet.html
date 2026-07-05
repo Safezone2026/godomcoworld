@@ -274,6 +274,10 @@ console.log("Wallet created:", walletId);
 
 // ================= LOAD BALANCE =================
 async function loadBalance(){
+console.log("loadBalance()", {
+  walletId,
+  currentNetwork
+});
 
   if (!walletId) {
     console.log("No walletId yet, skipping loadBalance()");
@@ -387,13 +391,18 @@ function depositPi() {
 let walletCurrency = "USD";
 
     async function updateWalletDisplay(){
-
+console.log("updateWalletDisplay()", {
+  walletId: localStorage.getItem("walletId_" + currentNetwork),
+  currentNetwork
+});
   const walletId =
   localStorage.getItem(
     "walletId_" + currentNetwork
   );
 
-  const res = await fetch(`${API}/wallet/${walletId}`);
+  const res = await fetch(
+  `${API}/wallet/${walletId}?network=${currentNetwork}`
+);
   const wallet = await res.json();
 
   const usd = wallet.balances?.USD || 0;
@@ -622,7 +631,10 @@ loadSwapHistory(); // ✅ ADD THIS
 
 // ================= HISTORY =================
 async function loadSwapHistory(){
-
+console.log("loadSwapHistory()", {
+  walletId: localStorage.getItem("walletId_" + currentNetwork),
+  currentNetwork
+});
   const walletId =
   localStorage.getItem(
     "walletId_" + currentNetwork
@@ -702,7 +714,10 @@ async function requestWithdrawal(){
 
 // WITHDRAWAL HISTORY 
 async function loadWithdrawals(){
-
+console.log("loadWithdrawals()", {
+  walletId: localStorage.getItem("walletId_" + currentNetwork),
+  currentNetwork
+});
   const walletId =
   localStorage.getItem(
     "walletId_" + currentNetwork
