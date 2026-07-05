@@ -222,13 +222,10 @@ let walletId =
 async function initWallet() {
 
   walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  ); // ✅ use global
-document.getElementById("walletIdDisplay").textContent =
-  "Wallet ID: " + walletId;
+    localStorage.getItem(
+      "walletId_" + currentNetwork
+    );
 
-await loadBalance();
   // ✅ If wallet already exists → DO NOT create again
   if (walletId) {
     console.log("Using existing wallet:", walletId);
@@ -236,11 +233,11 @@ await loadBalance();
     document.getElementById("walletIdDisplay").textContent =
       "Wallet ID: " + walletId;
 
-    loadBalance();
+    await loadBalance();
     return;
   }
 
-  // ❗ Only create if no wallet exists
+  // Only create if no wallet exists...
   const res = await fetch(API + "/wallet/create", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -262,18 +259,25 @@ network: currentNetwork,
   document.getElementById("walletIdDisplay").textContent =
     "Wallet ID: " + walletId;
 
-  loadBalance();
+  await loadBalance();
 }
 
 // ================= LOAD BALANCE =================
 async function loadBalance(){
+
+  if (!walletId) {
+    console.log("No walletId yet, skipping loadBalance()");
+    return;
+  }
+
   const res = await fetch(
-  API +
-  "/wallet/" +
-  walletId +
-  "?network=" +
-  currentNetwork
-);
+    API +
+    "/wallet/" +
+    walletId +
+    "?network=" +
+    currentNetwork
+  );
+
   const wallet = await res.json();
 
   // ONLY update Pi here
