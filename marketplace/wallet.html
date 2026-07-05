@@ -57,7 +57,9 @@ select, input[type=number]{
 <p id="networkStatus">🟢 Mainnet Wallet</p>
 <p id="walletIdDisplay" style="font-size:11px; color:#aaa;"></p>
 <button onclick="
-localStorage.removeItem('walletId');
+localStorage.removeItem('walletId_mainnet');
+localStorage.removeItem('walletId_testnet');
+localStorage.removeItem('walletNetwork');
 localStorage.removeItem('username');
 location.reload();
 ">
@@ -249,13 +251,20 @@ async function initWallet() {
 
   const data = await res.json();
 
-  walletId = data.walletId;
-  localStorage.setItem(
+if (!data.walletId) {
+  console.error("Wallet creation failed:", data);
+  alert(data.message || "Failed to create wallet.");
+  return;
+}
+
+walletId = data.walletId;
+
+localStorage.setItem(
   "walletId_" + currentNetwork,
   walletId
 );
 
-  console.log("Wallet created:", walletId);
+console.log("Wallet created:", walletId);
 
   document.getElementById("walletIdDisplay").textContent =
     "Wallet ID: " + walletId;
