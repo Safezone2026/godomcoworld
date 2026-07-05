@@ -241,9 +241,10 @@ async function initWallet() {
   const res = await fetch(API + "/wallet/create", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ username,
-network: currentNetwork,
- })
+    body: JSON.stringify({
+  username: username.trim(),
+  network: currentNetwork,
+})
   });
 
   const data = await res.json();
