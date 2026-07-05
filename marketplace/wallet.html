@@ -307,7 +307,7 @@ console.log("loadBalance()", {
 function connectWallet(){
   alert("Wallet connected ✅\nWallet ID: " + walletId);
 }
-function switchWalletNetwork(){
+async function switchWalletNetwork(){
 
   currentNetwork =
     document.getElementById("walletNetwork").value;
@@ -319,13 +319,13 @@ function switchWalletNetwork(){
 
   updateWalletUI();
 
-  // Load or create the wallet for the selected network
-  initWallet();
+  // Wait until the wallet is loaded or created
+  await initWallet();
 
-  // Refresh everything
-  updateWalletDisplay();
-  loadSwapHistory();
-  loadWithdrawals();
+  // Now refresh everything
+  await updateWalletDisplay();
+  await loadSwapHistory();
+  await loadWithdrawals();
 
 }
 
