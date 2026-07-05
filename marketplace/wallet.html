@@ -213,13 +213,22 @@ if (!username) {
   localStorage.setItem("username", username);
 }
 
-let walletId = localStorage.getItem("walletId");
+let walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  );
 
 // ================= LOAD WALLET =================
 async function initWallet() {
 
-  walletId = localStorage.getItem("walletId"); // ✅ use global
+  walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  ); // ✅ use global
+document.getElementById("walletIdDisplay").textContent =
+  "Wallet ID: " + walletId;
 
+await loadBalance();
   // ✅ If wallet already exists → DO NOT create again
   if (walletId) {
     console.log("Using existing wallet:", walletId);
@@ -243,7 +252,10 @@ network: currentNetwork,
   const data = await res.json();
 
   walletId = data.walletId;
-  localStorage.setItem("walletId", walletId);
+  localStorage.setItem(
+  "walletId_" + currentNetwork,
+  walletId
+);
 
   console.log("Wallet created:", walletId);
 
@@ -280,7 +292,7 @@ function connectWallet(){
 function switchWalletNetwork(){
 
   currentNetwork =
-  document.getElementById("walletNetwork").value;
+    document.getElementById("walletNetwork").value;
 
   localStorage.setItem(
     "walletNetwork",
@@ -289,9 +301,13 @@ function switchWalletNetwork(){
 
   updateWalletUI();
 
-  updateWalletDisplay();
+  // Load or create the wallet for the selected network
+  initWallet();
 
+  // Refresh everything
+  updateWalletDisplay();
   loadSwapHistory();
+  loadWithdrawals();
 
 }
 
@@ -323,7 +339,10 @@ function updateWalletUI(){
 async function addTestFund() {
   console.log("🔥 Button clicked"); // 👈 ADD THIS
 
-  const walletId = localStorage.getItem("walletId");
+  const walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  );
 
   try {
     const res = await fetch(API + "/wallet/test-fund", {
@@ -355,7 +374,10 @@ let walletCurrency = "USD";
 
     async function updateWalletDisplay(){
 
-  const walletId = localStorage.getItem("walletId");
+  const walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  );
 
   const res = await fetch(`${API}/wallet/${walletId}`);
   const wallet = await res.json();
@@ -587,7 +609,10 @@ loadSwapHistory(); // ✅ ADD THIS
 // ================= HISTORY =================
 async function loadSwapHistory(){
 
-  const walletId = localStorage.getItem("walletId");
+  const walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  );
 
   const res = await fetch(
     API +
@@ -634,7 +659,10 @@ async function requestWithdrawal(){
     }
   }
 
-  const walletId = localStorage.getItem("walletId");
+  const walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  );
 
   const res = await fetch(API + "/wallet/withdraw", {
     method:"POST",
@@ -661,7 +689,10 @@ async function requestWithdrawal(){
 // WITHDRAWAL HISTORY 
 async function loadWithdrawals(){
 
-  const walletId = localStorage.getItem("walletId");
+  const walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  );
 
   const res = await fetch(API + "/withdrawals");
   const data = await res.json();
