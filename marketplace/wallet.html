@@ -725,14 +725,14 @@ function populateCountries(){
 }
 
 // ================= INIT =================
-window.onload = function(){
+window.onload = async function(){
 
   document.getElementById("walletNetwork").value =
     currentNetwork;
 
   updateWalletUI();
 
-  initWallet();
+  await initWallet();
 
   updateWalletDisplay();
 
@@ -741,7 +741,6 @@ window.onload = function(){
   populateCountries();
 
   loadSwapHistory();
-
   document.getElementById("swapAmount")
     .addEventListener("input", calculateSwap);
 
