@@ -199,7 +199,13 @@ async function completeCheckout(method){
 
     let currency = method === "Fiat" ? "NG" : "PI";
 
-    const walletId = localStorage.getItem("walletId");
+    const currentNetwork =
+  localStorage.getItem("walletNetwork") || "mainnet";
+
+const walletId =
+  localStorage.getItem(
+    "walletId_" + currentNetwork
+  );
 
 alert(
   "walletId=" + walletId +
@@ -209,12 +215,13 @@ alert(
     const payRes = await fetch("https://godomcoworld-backend.onrender.com/wallet/pay", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        walletId,
-        amount,
-        currency,
-        type: "product"
-      })
+  body: JSON.stringify({
+  walletId,
+  amount,
+  currency,
+  type: "product",
+  network: currentNetwork
+})
     });
 
     const payData = await payRes.json();
