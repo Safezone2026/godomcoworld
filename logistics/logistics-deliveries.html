@@ -13,7 +13,7 @@
 <script>
 const rider = localStorage.getItem("logisticsName");
 
-fetch('/api/deliveries')
+fetch('https://godomcoworld-backend.onrender.com/api/deliveries')
 .then(res => res.json())
 .then(data => {
 
@@ -44,7 +44,7 @@ fetch('/api/deliveries')
 });
 function updateStatus(orderId, status){
 
-  fetch('/api/update-delivery', {
+  fetch('https://godomcoworld-backend.onrender.com/api/update-delivery', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ orderId, status })

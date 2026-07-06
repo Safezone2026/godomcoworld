@@ -11,7 +11,7 @@
 <div id="ordersList">Loading...</div>
 
 <script>
-fetch('/api/orders')
+fetch('https://godomcoworld-backend.onrender.com/api/orders')
 .then(res => res.json())
 .then(data => {
   const container = document.getElementById("ordersList");
