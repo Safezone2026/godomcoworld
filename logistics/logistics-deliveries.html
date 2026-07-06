@@ -30,11 +30,11 @@ fetch('https://godomcoworld-backend.onrender.com/api/deliveries')
   myDeliveries.forEach(d => {
     const div = document.createElement("div");
     div.innerHTML = `
-      <p>Order: ${d.orderId}</p>
-      <p>Status: ${d.status}</p>
+      <p>Order: ${d.order_id}</p>
+<p>Status: ${d.status}</p>
 
-      <button onclick="updateStatus('${d.orderId}','in_transit')">Start</button>
-      <button onclick="updateStatus('${d.orderId}','delivered')">Delivered</button>
+<button onclick="updateStatus('${d.order_id}','in_transit')">Start</button>
+<button onclick="updateStatus('${d.order_id}','delivered')">Delivered</button>
 
       <hr>
     `;
