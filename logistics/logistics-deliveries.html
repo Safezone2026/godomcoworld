@@ -33,8 +33,13 @@ fetch('https://godomcoworld-backend.onrender.com/api/deliveries')
       <p>Order: ${d.order_id}</p>
 <p>Status: ${d.status}</p>
 
-<button onclick="updateStatus('${d.order_id}','in_transit')">Start</button>
-<button onclick="updateStatus('${d.order_id}','delivered')">Delivered</button>
+<button onclick="updateStatus('${d.order_id}','in_transit')">
+Start Journey
+</button>
+
+<button onclick="updateStatus('${d.order_id}','delivered_pending')">
+Delivered to Buyer
+</button>
 
       <hr>
     `;
