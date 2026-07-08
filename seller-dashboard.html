@@ -119,9 +119,10 @@ async function loadEarnings(){
   document.getElementById("user").innerText = "Seller: " + currentSeller;
 
   try {
-    const res = await fetch(`http://127.0.0.1:3000/seller-dashboard/${currentSeller}`);
+    const API = "https://godomcoworld-backend.onrender.com";
+   fetch(`${API}/seller-dashboard/${encodeURIComponent(currentSeller)}`)
     const data = await res.json();
-
+    console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
 
 // 💰 Earnings
@@ -158,7 +159,11 @@ async function loadSalesHistory(){
 
   try {
 
-    const res = await fetch(`http://127.0.0.1:3000/seller-dashboard/${currentSeller}`);
+    const API = "https://godomcoworld-backend.onrender.com";
+
+const res = await fetch(
+  `${API}/seller-dashboard/${encodeURIComponent(currentSeller)}`
+);
     const data = await res.json();
 
     console.log("Seller dashboard data:", data);
@@ -230,7 +235,9 @@ async function submitWithdrawal(){
 
   try {
 
-    const res = await fetch('http://127.0.0.1:3000/seller-withdraw', {
+    const API = "https://godomcoworld-backend.onrender.com";
+
+const res = await fetch(`${API}/seller-withdraw`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
