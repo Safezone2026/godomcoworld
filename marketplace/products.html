@@ -52,6 +52,9 @@
     border: none;
     padding: 5px 10px;
   }
+#sellerUploadSection{
+  display: none;
+}
   #cartList div { margin-bottom: 5px; }
   form {
     margin: 10px;
@@ -75,7 +78,7 @@
 </a>
   </div>
 </header>
-
+<div id="sellerUploadSection">
 <form id="productForm">
   <h2>Add New Product</h2>
   <input type="text" name="name" placeholder="Product Name" required />
@@ -105,6 +108,7 @@
   </select>
   <button type="submit">Add Product</button>
 </form>
+</div>
 
 <h2>Browse Products</h2>
 <input type="text" id="searchInput" placeholder="Search products..." style="padding:5px; width:200px; margin:10px 0;">
@@ -155,6 +159,28 @@ renderCart();
 
 form.style.display = 'block';
 document.querySelector('input[name="sellerUsername"]').value = currentSellerUsername;
+// ================= SHOW UPLOAD FORM FOR REGISTERED SELLERS =================
+(async () => {
+
+  try {
+
+    const res = await fetch(
+      `${API_URL}/seller/${encodeURIComponent(currentSellerUsername)}`
+    );
+
+    const data = await res.json();
+
+    if (data.registered) {
+      document.getElementById("sellerUploadSection").style.display = "block";
+    }
+
+  } catch (err) {
+
+    console.error("Seller verification failed:", err);
+
+  }
+
+})();
 
 // -------------------- LOAD PRODUCTS --------------------
 async function loadProducts() {
