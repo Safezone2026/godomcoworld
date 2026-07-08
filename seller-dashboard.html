@@ -120,9 +120,14 @@ async function loadEarnings(){
 
   try {
     const API = "https://godomcoworld-backend.onrender.com";
-   fetch(`${API}/seller-dashboard/${encodeURIComponent(currentSeller)}`)
-    const data = await res.json();
-    console.log("Seller dashboard response:", data);
+
+const res = await fetch(
+  `${API}/seller-dashboard/${encodeURIComponent(currentSeller)}`
+);
+
+const data = await res.json();
+
+console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
 
 // 💰 Earnings
@@ -164,9 +169,10 @@ async function loadSalesHistory(){
 const res = await fetch(
   `${API}/seller-dashboard/${encodeURIComponent(currentSeller)}`
 );
-    const data = await res.json();
 
-    console.log("Seller dashboard data:", data);
+const data = await res.json();
+
+console.log("Seller dashboard data:", data);
 
     // 🔥 THIS IS WHERE IT IS USED
     const transactions = data.seller.transactions || [];
