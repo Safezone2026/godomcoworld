@@ -207,5 +207,32 @@ panel.style.display="none";
 };
 
 console.log("Developer Console Loaded");
+// ---------- FETCH MONITOR ----------
+const oldFetch = window.fetch;
 
+window.fetch = async function(...args){
+
+    console.log("➡️ FETCH", args[0]);
+
+    try{
+
+        const response = await oldFetch.apply(window, args);
+
+        console.log(
+            "✅ RESPONSE",
+            response.status,
+            response.url
+        );
+
+        return response;
+
+    }catch(err){
+
+        console.error("❌ FETCH ERROR", err);
+
+        throw err;
+
+    }
+
+};
 })();
