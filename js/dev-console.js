@@ -77,6 +77,45 @@ panel.innerHTML = `
 `;
 
 document.body.appendChild(panel);
+// ---------- DRAG SUPPORT ----------
+let dragging = false;
+let offsetX = 0;
+let offsetY = 0;
+
+const header = document.getElementById("godomcoDevHeader");
+
+header.style.cursor = "move";
+
+header.addEventListener("touchstart", function(e){
+
+    dragging = true;
+
+    const touch = e.touches[0];
+
+    offsetX = touch.clientX - panel.offsetLeft;
+    offsetY = touch.clientY - panel.offsetTop;
+
+});
+
+document.addEventListener("touchmove", function(e){
+
+    if(!dragging) return;
+
+    const touch = e.touches[0];
+
+    panel.style.left = (touch.clientX - offsetX) + "px";
+    panel.style.top = (touch.clientY - offsetY) + "px";
+
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+
+});
+
+document.addEventListener("touchend", function(){
+
+    dragging = false;
+
+});
 
 const logs = document.getElementById("godomcoDevLogs");
 
