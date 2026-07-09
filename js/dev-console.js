@@ -1,3 +1,4 @@
+alert("Developer console loaded");
 (function () {
 
 const DEV_USER = "seller1";
