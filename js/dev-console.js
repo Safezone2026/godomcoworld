@@ -78,6 +78,10 @@ panel.innerHTML = `
 `;
 
 document.body.appendChild(panel);
+alert("Panel added to page");
+panel.style.background = "red";
+panel.style.width = "200px";
+panel.style.height = "200px";
 // ---------- DRAG SUPPORT ----------
 let dragging = false;
 let offsetX = 0;
