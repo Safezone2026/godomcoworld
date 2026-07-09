@@ -4,6 +4,7 @@ alert("Developer console loaded");
 const DEV_USER = "seller1";
 
 const currentUser = localStorage.getItem("username") || "";
+alert("Current username = " + currentUser);
 
 if (currentUser !== DEV_USER) return;
 
