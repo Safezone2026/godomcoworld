@@ -1,41 +1,50 @@
-alert("Developer console loaded");
-(function () {
+alert("Step 1");
 
-const DEV_USER = "seller1";
+document.addEventListener("DOMContentLoaded", () => {
+
+alert("Step 2");
+
+const DEV_USERS = ["seller1","GBEST20"];
 
 const currentUser = localStorage.getItem("username") || "";
-alert("Current username = " + currentUser);
 
-if (currentUser !== DEV_USER) return;
+alert("Current username = [" + currentUser + "]");
 
-// ---------- CSS ----------
-const style = document.createElement("style");
+if (!DEV_USERS.includes(currentUser)) {
+    alert("Step 4: Not developer");
+    return;
+}
 
-style.innerHTML = `
+alert("Step 5: Passed developer check");
+
+const style=document.createElement("style");
+
+style.textContent=`
 #godomcoDevConsole{
 position:fixed;
-bottom:10px;
-right:10px;
+bottom:15px;
+right:15px;
 width:340px;
 max-height:55vh;
 background:#111;
 color:#00ff66;
 border:1px solid #00ff66;
-border-radius:8px;
+border-radius:10px;
 font-family:monospace;
 font-size:12px;
 z-index:999999;
 overflow:hidden;
-box-shadow:0 0 12px rgba(0,255,0,.3);
+box-shadow:0 0 12px rgba(0,255,0,.4);
 }
 
 #godomcoDevHeader{
-background:#00aa44;
-color:#fff;
+background:#008844;
 padding:8px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+cursor:move;
+color:white;
 font-weight:bold;
 }
 
@@ -46,26 +55,30 @@ max-height:45vh;
 white-space:pre-wrap;
 }
 
-#godomcoDevButtons button{
-margin-left:4px;
-cursor:pointer;
+#godomcoDevHeader button{
+margin-left:5px;
 }
 `;
 
 document.head.appendChild(style);
 
-// ---------- PANEL ----------
-const panel = document.createElement("div");
+const panel=document.createElement("div");
 
-panel.id = "godomcoDevConsole";
+panel.id="godomcoDevConsole";
 
-panel.innerHTML = `
+panel.innerHTML=`
 <div id="godomcoDevHeader">
 
-<span>🛠 Godomcoworld Developer Console</span>
+<span>🛠 Godomcoworld Dev Console</span>
 
-<div id="godomcoDevButtons">
+<div>
 
+<button id="devMin">—</button>
+
+<button id="devStorage">Storage</button>
+
+<button id="devTest">Test</button>
+<button id="devCopy">Copy</button>
 <button id="devClear">Clear</button>
 
 <button id="devHide">Hide</button>
@@ -78,60 +91,17 @@ panel.innerHTML = `
 `;
 
 document.body.appendChild(panel);
-alert("Panel added to page");
-panel.style.background = "red";
-panel.style.width = "200px";
-panel.style.height = "200px";
-// ---------- DRAG SUPPORT ----------
-let dragging = false;
-let offsetX = 0;
-let offsetY = 0;
 
-const header = document.getElementById("godomcoDevHeader");
+const logs=document.getElementById("godomcoDevLogs");
 
-header.style.cursor = "move";
-
-header.addEventListener("touchstart", function(e){
-
-    dragging = true;
-
-    const touch = e.touches[0];
-
-    offsetX = touch.clientX - panel.offsetLeft;
-    offsetY = touch.clientY - panel.offsetTop;
-
-});
-
-document.addEventListener("touchmove", function(e){
-
-    if(!dragging) return;
-
-    const touch = e.touches[0];
-
-    panel.style.left = (touch.clientX - offsetX) + "px";
-    panel.style.top = (touch.clientY - offsetY) + "px";
-
-    panel.style.right = "auto";
-    panel.style.bottom = "auto";
-
-});
-
-document.addEventListener("touchend", function(){
-
-    dragging = false;
-
-});
-
-const logs = document.getElementById("godomcoDevLogs");
-
-// ---------- LOGGER ----------
-function addLog(type,args){
-
-const t=new Date().toLocaleTimeString();
+function add(type,args){
 
 const line=document.createElement("div");
 
-line.innerHTML=`<b>[${t}]</b> ${type}: ${args.map(a=>{
+line.innerHTML=
+"<b>"+new Date().toLocaleTimeString()+"</b> "+type+
+": "+
+args.map(a=>{
 
 if(typeof a==="object"){
 
@@ -149,7 +119,7 @@ return "[Object]";
 
 return a;
 
-}).join(" ")}`;
+}).join(" ");
 
 logs.appendChild(line);
 
@@ -157,48 +127,95 @@ logs.scrollTop=logs.scrollHeight;
 
 }
 
-window.DevConsole={
-
-log(...a){
-
-addLog("LOG",a);
-
-},
-
-error(...a){
-
-addLog("ERROR",a);
-
-},
-
-warn(...a){
-
-addLog("WARN",a);
-
-}
-
-};
-
-// ---------- Hook console ----------
 const oldLog=console.log;
+
 console.log=function(...a){
 
 oldLog.apply(console,a);
 
-DevConsole.log(...a);
+add("LOG",a);
 
 };
 
 const oldError=console.error;
+
 console.error=function(...a){
 
 oldError.apply(console,a);
 
-DevConsole.error(...a);
+add("ERROR",a);
 
 };
 
-// ---------- Buttons ----------
+const oldWarn=console.warn;
+
+console.warn=function(...a){
+
+oldWarn.apply(console,a);
+
+add("WARN",a);
+
+};
+
+const oldFetch=window.fetch;
+
+window.fetch = async (...args) => {
+
+    const method = (args[1] && args[1].method) || "GET";
+
+    add("➡️ REQUEST", [method, args[0]]);
+
+    const start = Date.now();
+
+    try {
+
+        const res = await oldFetch(...args);
+       let body = "";
+
+try {
+    body = await res.clone().text();
+} catch (e) {
+    body = "[Response body unavailable]";
+}
+
+add("BODY", [body]);
+
+        add("✅ RESPONSE", [
+            res.status,
+            res.statusText,
+            Date.now() - start + " ms"
+        ]);
+
+        return res;
+
+    } catch (err) {
+
+        add("❌ NETWORK ERROR", [err.message]);
+
+        throw err;
+
+    }
+
+};
+// ---------- MINIMIZE ----------
+let minimized = false;
+
+document.getElementById("devMin").onclick = () => {
+
+    minimized = !minimized;
+
+    if(minimized){
+
+        logs.style.display = "none";
+
+    }else{
+
+        logs.style.display = "";
+
+    }
+
+};
+
 document.getElementById("devClear").onclick=()=>{
 
 logs.innerHTML="";
@@ -210,34 +227,118 @@ document.getElementById("devHide").onclick=()=>{
 panel.style.display="none";
 
 };
+document.getElementById("devStorage").onclick = () => {
 
-console.log("Developer Console Loaded");
-// ---------- FETCH MONITOR ----------
-const oldFetch = window.fetch;
+    logs.innerHTML = "";
 
-window.fetch = async function(...args){
+    add("STORAGE", ["username = " + (localStorage.getItem("username") || "")]);
 
-    console.log("➡️ FETCH", args[0]);
+    add("STORAGE", ["walletId = " + (localStorage.getItem("walletId") || "")]);
 
-    try{
+    add("STORAGE", ["country = " + (localStorage.getItem("country") || "")]);
 
-        const response = await oldFetch.apply(window, args);
+    add("STORAGE", ["currency = " + (localStorage.getItem("currency") || "")]);
 
-        console.log(
-            "✅ RESPONSE",
-            response.status,
-            response.url
-        );
+    add("STORAGE", ["seller = " + (localStorage.getItem("seller") || "")]);
 
-        return response;
+    add("STORAGE", ["piUser = " + (localStorage.getItem("piUser") || "")]);
 
-    }catch(err){
+};
 
-        console.error("❌ FETCH ERROR", err);
+document.getElementById("devTest").onclick = () => {
 
-        throw err;
+    Promise.reject("Promise test successful");
+
+};
+// ---------- COPY LOGS ----------
+document.getElementById("devCopy").onclick = async () => {
+
+    try {
+
+        await navigator.clipboard.writeText(logs.innerText);
+
+        console.log("📋 Logs copied to clipboard");
+
+    } catch (err) {
+
+        console.error("Clipboard copy failed", err);
 
     }
 
 };
-})();
+let dragging=false;
+
+let offsetX=0;
+
+let offsetY=0;
+
+const header=document.getElementById("godomcoDevHeader");
+
+header.addEventListener("touchstart",e=>{
+
+dragging=true;
+
+offsetX=e.touches[0].clientX-panel.offsetLeft;
+
+offsetY=e.touches[0].clientY-panel.offsetTop;
+
+});
+
+document.addEventListener("touchmove",e=>{
+
+if(!dragging) return;
+
+panel.style.left=(e.touches[0].clientX-offsetX)+"px";
+
+panel.style.top=(e.touches[0].clientY-offsetY)+"px";
+
+panel.style.right="auto";
+
+panel.style.bottom="auto";
+
+});
+
+document.addEventListener("touchend",()=>{
+
+dragging=false;
+
+});
+// ---------- JAVASCRIPT ERROR MONITOR ----------
+window.onerror = function(message, source, line, column, error){
+
+    add("❌ JS ERROR", [
+
+        message,
+
+        "File: " + source,
+
+        "Line: " + line,
+
+        "Column: " + column
+
+    ]);
+
+    if(error){
+
+        console.error(error);
+
+    }
+
+    return false;
+
+};
+// ---------- UNHANDLED PROMISE MONITOR ----------
+window.addEventListener("unhandledrejection", function(event){
+
+    add("❌ PROMISE ERROR", [
+
+        event.reason
+
+    ]);
+
+    console.error("Unhandled Promise:", event.reason);
+
+});
+console.log("Developer Console Ready");
+
+});
