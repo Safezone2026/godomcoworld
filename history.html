@@ -42,7 +42,11 @@
 async function loadHistory(){
   try {
 
-    const res = await fetch('https://godomcoworld-backend.onrender.com/orders');
+    const network = localStorage.getItem("network") || "testnet";
+
+const res = await fetch(
+  `https://godomcoworld-backend.onrender.com/history/${username}?network=${network}`
+);
     const data = await res.json();
 
     console.log("History:", data);
@@ -50,12 +54,12 @@ async function loadHistory(){
     let container = document.getElementById("historyContainer");
     container.innerHTML = "";
 
-    if(!data.orders || data.orders.length === 0){
-      container.innerHTML = "<p>No transactions yet</p>";
-      return;
-    }
+    if (!Array.isArray(data) || data.length === 0) {
+    container.innerHTML = "<p>No transactions yet</p>";
+    return;
+}
 
-    data.orders.forEach(order => {
+data.forEach(order => {
 
       container.innerHTML += `
         <div class="card">
