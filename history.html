@@ -42,7 +42,7 @@
 async function loadHistory(){
   try {
 
-    const res = await fetch('http://127.0.0.1:3000/orders');
+    const res = await fetch('https://godomcoworld-backend.onrender.com/orders');
     const data = await res.json();
 
     console.log("History:", data);
