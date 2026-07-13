@@ -1,21 +1,10 @@
-alert("Step 1");
-
 document.addEventListener("DOMContentLoaded", () => {
-
-alert("Step 2");
 
 const DEV_USERS = ["seller1","GBEST20"];
 
 const currentUser = localStorage.getItem("username") || "";
 
-alert("Current username = [" + currentUser + "]");
-
-if (!DEV_USERS.includes(currentUser)) {
-    alert("Step 4: Not developer");
-    return;
-}
-
-alert("Step 5: Passed developer check");
+if (!DEV_USERS.includes(currentUser)) return;
 
 const style=document.createElement("style");
 
@@ -88,6 +77,39 @@ panel.innerHTML=`
 </div>
 
 <div id="godomcoDevLogs"></div>
+
+<div style="padding:8px;border-top:1px solid #00ff66;">
+<input
+id="devCommand"
+type="text"
+placeholder="Enter JavaScript command..."
+style="
+width:100%;
+background:#000;
+color:#00ff66;
+border:1px solid #00ff66;
+padding:6px;
+font-family:monospace;
+">
+
+<button
+id="devRun"
+style="
+margin-top:6px;
+width:100%;
+">
+▶ Run Command
+</button>
+</div>
+
+<div id="godomcoDevNetwork" style="
+display:none;
+padding:8px;
+overflow:auto;
+max-height:45vh;
+white-space:pre-wrap;
+font-size:11px;
+"></div>
 `;
 
 document.body.appendChild(panel);
@@ -340,5 +362,49 @@ window.addEventListener("unhandledrejection", function(event){
 
 });
 console.log("Developer Console Ready");
+// ---------- API TEST ----------
+const apiBtn = document.getElementById("devApi");
+
+if (apiBtn) {
+
+  apiBtn.onclick = async () => {
+
+    logs.innerHTML = "";
+
+    const username = localStorage.getItem("username") || "";
+    const network = localStorage.getItem("network") || "testnet";
+
+    const API =
+      location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:3000"
+      : "https://godomcoworld-backend.onrender.com";
+
+    const url = `${API}/history/${username}?network=${network}`;
+
+    add("API", [url]);
+
+    try {
+
+      const res = await fetch(url);
+
+      add("STATUS", [res.status, res.statusText]);
+
+      const json = await res.json();
+
+      add("ORDERS", [json.orders ? json.orders.length : 0]);
+
+      add("TRANSACTIONS", [json.transactions ? json.transactions.length : 0]);
+
+      add("SUCCESS", ["History endpoint reachable"]);
+
+    } catch (err) {
+
+      add("FAILED", [err.message]);
+
+    }
+
+  };
+
+}
 
 });
