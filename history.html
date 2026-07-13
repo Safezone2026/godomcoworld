@@ -1,110 +1,519 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<title>Transaction History - Godomcoworld</title>
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Activity Center | Godomcoworld</title>
+
 <link rel="stylesheet" href="css/style.css">
-
-<style>
-.card{
-  background:#111;
-  color:white;
-  padding:15px;
-  margin:10px 0;
-  border-radius:10px;
-}
-.success{
-  color:#00e676;
-}
-.empty{
-  text-align:center;
-  margin-top:40px;
-  color:gray;
-}
-</style>
-
+<link rel="stylesheet" href="css/activity-center.css">
 </head>
 
 <body>
 
 <header>
-<h1>🧾 Transaction History</h1>
+
+<h2>📊 Activity Center</h2>
+
+<p id="welcomeText">
+
+Loading...
+
+</p>
+
 </header>
 
 <main>
 
-<div id="historyContainer"></div>
+<div class="summary-grid">
+
+<div class="summary-card">
+
+<h3>📦 Orders</h3>
+
+<span id="orderCount">0</span>
+
+</div>
+
+<div class="summary-card">
+
+<h3>💸 Wallet</h3>
+
+<span id="walletCount">0</span>
+
+</div>
+
+<div class="summary-card">
+
+<h3>🔄 Swaps</h3>
+
+<span id="swapCount">0</span>
+
+</div>
+
+<div class="summary-card">
+
+<h3>🚚 Deliveries</h3>
+
+<span id="deliveryCount">0</span>
+
+</div>
+
+</div>
+
+<input
+id="searchActivity"
+type="text"
+placeholder="🔍 Search activity...">
+
+<div class="tabs">
+
+<button class="active" data-filter="all">
+
+All
+
+</button>
+
+<button data-filter="orders">
+
+Orders
+
+</button>
+
+<button data-filter="wallet">
+
+Wallet
+
+</button>
+
+<button data-filter="swap">
+
+Swaps
+
+</button>
+
+<button data-filter="delivery">
+
+Deliveries
+
+</button>
+
+</div>
+
+<div id="timeline"
+
+class="timeline">
+
+<div class="empty">
+
+Loading activity...
+
+</div>
+
+</div>
+
+<!-- PART 2 STARTS HERE -->
+<!-- Activity Timeline -->
 
 </main>
 
-<script>
+<!-- Bottom Navigation -->
 
-async function loadHistory(){
-  try {
-
-    const network = localStorage.getItem("network") || "testnet";
-
-const res = await fetch(
-  `https://godomcoworld-backend.onrender.com/history/${username}?network=${network}`
-);
-    const data = await res.json();
-
-    console.log("History:", data);
-
-    let container = document.getElementById("historyContainer");
-    container.innerHTML = "";
-
-    if (!Array.isArray(data) || data.length === 0) {
-    container.innerHTML = "<p>No transactions yet</p>";
-    return;
-}
-
-data.forEach(order => {
-
-      container.innerHTML += `
-        <div class="card">
-          <h3>🧾 Order</h3>
-          <p><b>User:</b> ${order.user}</p>
-          <p><b>Total:</b> ₦${order.total}</p>
-          <p><b>Method:</b> ${order.method}</p>
-          <p><b>Date:</b> ${order.date}</p>
-
-          <h4>Items:</h4>
-          ${order.items.map(item => `
-            <p>• ${item.name} - ₦${item.price}</p>
-          `).join("")}
-
-          <hr>
-        </div>
-      `;
-    });
-
-  } catch(err){
-    console.error("ERROR:", err);
-    alert("Failed to load history");
-  }
-}
-
-window.onload = loadHistory;
-
-</script>
-
-<!-- NAV -->
 <nav class="bottom-nav">
 
-<a href="index.html"><span>🏠</span><p>Home</p></a>
-<a href="finance.html"><span>💰</span><p>Finance</p></a>
-<a href="/marketplace/wallet.html"><span>👛</span><p>Wallet</p></a>
-
-<a href="history.html" class="active">
-<span>🧾</span><p>History</p>
+<a href="index.html">
+<span>🏠</span>
+<p>Home</p>
 </a>
 
-<a href="support.html"><span>🆘</span><p>Support</p></a>
-<a href="chatbot.html"><span>🤖</span><p>AI Help</p></a>
-<a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
+<a href="finance.html">
+<span>💰</span>
+<p>Finance</p>
+</a>
+
+<a href="/marketplace/wallet.html">
+<span>👛</span>
+<p>Wallet</p>
+</a>
+
+<a href="history.html" class="active">
+<span>📊</span>
+<p>Activity</p>
+</a>
+
+<a href="support.html">
+<span>🆘</span>
+<p>Support</p>
+</a>
+
+<a href="chatbot.html">
+<span>🤖</span>
+<p>AI Help</p>
+</a>
+
+<a href="dashboard.html">
+<span>📊</span>
+<p>Dashboard</p>
+</a>
 
 </nav>
 
+<script>
+
+const timeline =
+document.getElementById("timeline");
+
+const username =
+localStorage.getItem("username");
+
+const network =
+localStorage.getItem("network") || "testnet";
+console.log("Username =", username);
+console.log("Network =", network);
+const welcomeText =
+document.getElementById("welcomeText");
+
+if(username){
+
+welcomeText.textContent =
+`Hello, ${username} 👋`;
+
+}else{
+
+welcomeText.textContent =
+"Welcome 👋";
+
+}
+
+let allActivities=[];
+
+async function loadHistory(){
+
+try{
+const API =
+location.hostname === "127.0.0.1"
+? "http://127.0.0.1:3000"
+: "https://godomcoworld-backend.onrender.com";
+
+const url =
+`${API}/history/${username}?network=${network}`;
+
+console.log("Fetching:", url);
+
+alert("About to fetch:\n" + url);
+
+const res = await fetch(url);
+console.log("HTTP Status:", res.status);
+console.log("HTTP OK:", res.ok);
+
+if (!res.ok) {
+    throw new Error("HTTP " + res.status);
+}
+alert("Fetch completed");
+
+const data = await res.json();
+console.log(data);
+const orders =
+data.orders || [];
+
+const transactions =
+data.transactions || [];
+
+document.getElementById("orderCount").textContent =
+orders.length;
+
+document.getElementById("walletCount").textContent =
+transactions.length;
+
+document.getElementById("swapCount").textContent =
+transactions.filter(t=>t.type==="swap").length;
+
+document.getElementById("deliveryCount").textContent =
+orders.filter(o=>o.status==="delivered").length;
+
+allActivities=[];
+
+orders.forEach(o=>{
+
+allActivities.push({
+
+category:"orders",
+
+date:o.created_at ||
+
+o.date ||
+
+"",
+
+html:`
+
+<div class="activity-card">
+
+<h3>📦 Order</h3>
+
+<p><b>Order ID:</b> ${o.order_id}</p>
+
+<p><b>Status:</b> ${o.status}</p>
+
+<p><b>Total:</b> ₦${Number(o.total||0).toLocaleString()}</p>
+
+<button class="receipt-btn">
+
+📄 Receipt
+
+</button>
+
+</div>
+
+`
+
+});
+
+});
+
+transactions.forEach(t=>{
+
+const icon =
+
+t.type==="swap"
+
+? "🔄"
+
+: "💸";
+
+const category =
+
+t.type==="swap"
+
+? "swap"
+
+: "wallet";
+
+allActivities.push({
+
+category,
+
+date:t.created_at ||
+
+"",
+
+html:`
+
+<div class="activity-card">
+
+<h3>${icon} Wallet Transaction</h3>
+
+<p><b>Type:</b> ${t.type}</p>
+
+<p><b>Amount:</b>
+
+${Number(t.amount||0).toLocaleString()}
+
+${t.currency||""}
+
+</p>
+
+<p><b>Status:</b>
+
+${t.status||"Completed"}
+
+</p>
+
+<button class="receipt-btn">
+
+📄 Receipt
+
+</button>
+
+</div>
+
+`
+
+});
+
+});
+
+allActivities.sort(
+
+(a,b)=>
+
+new Date(b.date)-
+
+new Date(a.date)
+
+);
+
+renderActivities("all");
+
+}catch(err){
+
+    console.error("History Error:", err);
+
+    alert(
+        "History Error\n\n" +
+        err.message +
+        "\n\n" +
+        (err.stack || "")
+    );
+
+    timeline.innerHTML = `
+    <div class="empty">
+    ❌ ${err.message}
+    </div>
+    `;
+
+}
+
+}
+function renderActivities(filter){
+
+timeline.innerHTML="";
+
+let activities=[...allActivities];
+
+if(filter!=="all"){
+
+activities=
+activities.filter(a=>a.category===filter);
+
+}
+
+const keyword=
+document.getElementById("searchActivity")
+.value
+.toLowerCase();
+
+if(keyword){
+
+activities=
+activities.filter(a=>
+a.html.toLowerCase().includes(keyword)
+);
+
+}
+
+if(activities.length===0){
+
+timeline.innerHTML=`
+
+<div class="empty">
+
+📭
+
+<h3>No activity found</h3>
+
+<p>
+
+There are no matching records.
+
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+activities.forEach(a=>{
+
+timeline.innerHTML+=a.html;
+
+});
+
+}
+
+// ----------------------------
+// Search
+// ----------------------------
+
+document
+.getElementById("searchActivity")
+.addEventListener(
+
+"input",
+
+()=>renderActivities(
+
+document
+.querySelector(".tabs .active")
+.dataset.filter
+
+)
+
+);
+
+// ----------------------------
+// Tabs
+// ----------------------------
+
+document
+
+.querySelectorAll(".tabs button")
+
+.forEach(btn=>{
+
+btn.onclick=()=>{
+
+document
+
+.querySelectorAll(".tabs button")
+
+.forEach(b=>b.classList.remove("active"));
+
+btn.classList.add("active");
+
+renderActivities(btn.dataset.filter);
+
+};
+
+});
+
+// ----------------------------
+// Receipt Placeholder
+// ----------------------------
+
+document.addEventListener(
+
+"click",
+
+e=>{
+
+if(
+
+e.target.classList.contains(
+
+"receipt-btn"
+
+)
+
+){
+
+alert(
+
+"PDF Receipt download will be enabled in the next update."
+
+);
+
+}
+
+}
+
+);
+
+// ----------------------------
+
+window.onload=loadHistory;
+
+</script>
+
+<script src="js/dev-console.js"></script>
 </body>
+
 </html>
