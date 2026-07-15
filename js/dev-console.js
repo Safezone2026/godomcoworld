@@ -563,5 +563,10 @@ uiScript.onload = () => {
     GodomcoDev.modules.ui.init();
 };
 
-document.body.appendChild(uiScript);
-
+if (document.body) {
+    document.body.appendChild(uiScript);
+} else {
+    window.addEventListener("DOMContentLoaded", () => {
+        document.body.appendChild(uiScript);
+    }, { once: true });
+}
