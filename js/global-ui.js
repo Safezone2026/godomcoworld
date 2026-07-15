@@ -64,13 +64,17 @@ function updateFavicon() {
 
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-
+function initGlobalUI() {
     updateTitle();
     updateFavicon();
     ensureGlobalLogo();
+}
 
-});
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGlobalUI);
+} else {
+    initGlobalUI();
+}
 
 window.GodomcoUI = {
 
