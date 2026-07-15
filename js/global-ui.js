@@ -6,22 +6,37 @@
 
 const LOGO = "images/logo.png";
 
-function updateLogos() {
+function ensureGlobalLogo() {
 
-    document.querySelectorAll("img").forEach(img => {
+    const existing = document.querySelector(
+        'img[src*="logo"], img[alt*="logo"], .app-logo'
+    );
 
-        const src = (img.getAttribute("src") || "").toLowerCase();
-        const alt = (img.getAttribute("alt") || "").toLowerCase();
+    if (existing) {
+        existing.src = LOGO;
+        existing.id = "godomco-global-logo";
+        return;
+    }
 
-        if (
-            src.includes("logo") ||
-            alt.includes("logo") ||
-            img.classList.contains("app-logo")
-        ) {
-            img.src = LOGO;
-        }
+    const logo = document.createElement("img");
 
-    });
+    logo.id = "godomco-global-logo";
+    logo.src = LOGO;
+    logo.alt = "Godomcoworld";
+
+    logo.style.display = "block";
+    logo.style.width = "110px";
+    logo.style.height = "auto";
+    logo.style.margin = "20px auto";
+    logo.style.objectFit = "contain";
+
+    const target =
+        document.querySelector("header") ||
+        document.querySelector("main") ||
+        document.querySelector(".container") ||
+        document.body;
+
+    target.prepend(logo);
 
 }
 
@@ -62,7 +77,7 @@ window.GodomcoUI = {
     refresh() {
         updateTitle();
         updateFavicon();
-        updateLogos();
+        ensureGlobalLogo();
     }
 
 };
