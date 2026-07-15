@@ -570,3 +570,9 @@ if (document.body) {
         document.body.appendChild(uiScript);
     }, { once: true });
 }
+// ---------- LOAD GLOBAL UI ----------
+const globalUIScript = document.createElement("script");
+
+globalUIScript.src = "js/global-ui.js";
+
+document.body.appendChild(globalUIScript);
