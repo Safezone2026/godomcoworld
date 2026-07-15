@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateTitle();
     updateFavicon();
-    updateLogos();
+    ensureGlobalLogo();
 
 });
 
