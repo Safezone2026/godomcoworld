@@ -10,25 +10,47 @@ async function initWallet() {
     localStorage.setItem("username", username);
   }
 
-  // Don't overwrite existing wallet
-  let walletId = localStorage.getItem("walletId");
+  // Check cached wallet
+let walletId = localStorage.getItem("walletId");
 
-  if (walletId) {
-    console.log("Using existing wallet:", walletId);
-    return;
-  }
+if (walletId) {
 
-  const res = await fetch(`${API_URL}/wallet/create`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    const check = await fetch(`${API_URL}/wallet/${walletId}`);
+
+    if (check.ok) {
+
+        console.log("Using existing wallet:", walletId);
+
+        return;
+
+    }
+
+    console.warn("Cached wallet not found. Creating a new wallet...");
+
+    localStorage.removeItem("walletId");
+
+}
+
+// Create new wallet
+const res = await fetch(`${API_URL}/wallet/create`, {
+
+    method: "POST",
+
+    headers: {
+
+        "Content-Type": "application/json"
+
+    },
+
     body: JSON.stringify({ username })
-  });
 
-  const wallet = await res.json();
+});
 
-  localStorage.setItem("walletId", wallet.walletId);
+const wallet = await res.json();
 
-  console.log("Wallet created:", wallet.walletId);
+localStorage.setItem("walletId", wallet.walletId);
+
+console.log("Wallet created:", wallet.walletId);
 }
 
 initWallet();

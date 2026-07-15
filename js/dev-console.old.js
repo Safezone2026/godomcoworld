@@ -1,21 +1,3 @@
-window.GodomcoDev = window.GodomcoDev || {
-    version: "2.0",
-    logs: [],
-    network: [],
-    storage: {},
-    wallet: {},
-    performance: {},
-    modules: {}
-};
-window.onerror = function (msg, src, line, col, err) {
-    alert(
-        "JS ERROR\n\n" +
-        msg +
-        "\nLine: " + line +
-        "\nColumn: " + col
-    );
-    console.error(err || msg);
-};
 document.addEventListener("DOMContentLoaded", () => {
 
 const DEV_USERS = ["seller1","GBEST20"];
@@ -109,6 +91,8 @@ id="devCommand"
 type="text"
 placeholder="Enter JavaScript command..."
 style="
+  panel.style.zIndex = "2147483647";
+  panel.style.pointerEvents = "auto";
 width:100%;
 background:#000;
 color:#00ff66;
@@ -268,15 +252,11 @@ add("BODY", [body]);
 
     } catch (err) {
 
-    add("❌ FETCH FAILED", [
-        args[0],
-        err.message
-    ]);
+        add("❌ NETWORK ERROR", [err.message]);
 
-    console.error("Fetch failed:", args[0], err);
+        throw err;
 
-    throw err;
-}
+    }
 
 };
 // ---------- MINIMIZE ----------
@@ -419,18 +399,15 @@ window.onerror = function(message, source, line, column, error){
 
 };
 // ---------- UNHANDLED PROMISE MONITOR ----------
-window.addEventListener("unhandledrejection", function(event) {
+window.addEventListener("unhandledrejection", function(event){
 
-    event.preventDefault();
+    add("❌ PROMISE ERROR", [
 
-    console.error("Promise reason:", event.reason);
+        event.reason
 
-console.dir(event.reason);
+    ]);
 
-add("❌ PROMISE ERROR", [
-    event.reason?.message || String(event.reason),
-    event.reason?.stack || "(no stack)"
-]);
+    console.error("Unhandled Promise:", event.reason);
 
 });
 // ---------- COMMAND RUNNER ----------
@@ -554,14 +531,3 @@ if (apiBtn) {
 }
 
 });
-// ---------- LOAD DEV UI MODULE ----------
-const uiScript = document.createElement("script");
-
-uiScript.src = "js/dev-ui.js";
-
-uiScript.onload = () => {
-    GodomcoDev.modules.ui.init();
-};
-
-document.body.appendChild(uiScript);
-
