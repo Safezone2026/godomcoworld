@@ -4,7 +4,7 @@
 
 (function () {
 
-const LOGO = "images/logo.png";
+const LOGO = "/images/logo.png";
 
 function ensureGlobalLogo() {
 
