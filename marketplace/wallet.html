@@ -575,7 +575,7 @@ async function calculateSwapPreview(){
 
 // ================= SWAP =================
 async function performSwap(){
-
+console.log("🚀 performSwap started");
   const amount = Number(document.getElementById('swapAmount').value);
   const type = document.getElementById('swapType').value;
   const resultDiv = document.getElementById('swapResult');
@@ -656,7 +656,14 @@ if(type === "piToFiat"){
   fromCurrency = document.getElementById("currencySelect").value;
   toCurrency = "PI";
 }
-
+console.log("🚀 Sending swap request", {
+  API,
+  walletId,
+  network: currentNetwork,
+  fromCurrency,
+  toCurrency,
+  amount
+});
 const res = await fetch(API + "/wallet/swap", {
   method:"POST",
   headers:{ "Content-Type":"application/json" },
