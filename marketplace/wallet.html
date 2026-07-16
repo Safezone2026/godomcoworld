@@ -178,11 +178,11 @@ Reset Wallet
 
 <script>
   // ================= SWAP CONFIG =================
-const PI_RATE = 1500 * 314159; // ₦471,238,500
-const USD_RATE = 1500;
-const SWAP_FEE_PERCENT = 0.02; // 2%
-const GAS_FEE_NAIRA = 0.2 * USD_RATE;
-const DAILY_LIMIT_NAIRA = 10000 * USD_RATE; // ₦15,000,000
+let PI_RATE = 0;
+let USD_RATE = 0;
+const SWAP_FEE_PERCENT = 0.02;
+let GAS_FEE_NAIRA = 0;
+let DAILY_LIMIT_NAIRA = 0;
 // ====================== COUNTRY RATES ======================
 const countryRates = {
   USD:{symbol:"$",rate:1},
@@ -204,6 +204,34 @@ const countryRates = {
 };
 
 const API = "https://godomcoworld-backend.onrender.com";
+async function loadRates() {
+  try {
+    const res = await fetch(API + "/country-rates");
+    const data = await res.json();
+
+    Object.assign(countryRates, data);
+
+    USD_RATE = countryRates.USD.rate;
+    PI_RATE = countryRates.NG.rate * 314159;
+
+    GAS_FEE_NAIRA = 0.2 * USD_RATE;
+    DAILY_LIMIT_NAIRA = 10000 * USD_RATE;
+
+    console.log("Rates loaded:", {
+      USD_RATE,
+      PI_RATE
+    });
+
+  } catch (err) {
+    console.warn("Using fallback rates");
+
+    USD_RATE = countryRates.USD.rate;
+    PI_RATE = countryRates.NG.rate * 314159;
+
+    GAS_FEE_NAIRA = 0.2 * USD_RATE;
+    DAILY_LIMIT_NAIRA = 10000 * USD_RATE;
+  }
+}
 let currentNetwork =
 localStorage.getItem("walletNetwork") || "mainnet";
 
@@ -468,7 +496,8 @@ async function sendPi(){
   loadBalance();
 }
 // LIVE SWAP PREVIEW
-function calculateSwapPreview(){
+async function calculateSwapPreview(){
+
   const amount = Number(document.getElementById("swapAmount").value);
   const type = document.getElementById("swapType").value;
   const resultDiv = document.getElementById("swapResult");
@@ -478,42 +507,70 @@ function calculateSwapPreview(){
     return;
   }
 
+  let fromCurrency, toCurrency;
+
   if(type === "piToFiat"){
-
-  let naira = amount * PI_RATE;
-  let fee = naira * SWAP_FEE_PERCENT;
-  let gas = 0.2 * USD_RATE; // ₦300
-
-  let final = naira - fee - gas;
-
-  resultDiv.innerHTML = `
-    <b>Preview:</b><br>
-    You send: ${amount} π<br>
-    Rate: ₦${PI_RATE.toLocaleString()} / π<br><br>
-
-    Swap Fee (2%): ₦${fee.toLocaleString()}<br>
-    Gas Fee: ₦${gas.toLocaleString()}<br><br>
-
-    <b>You receive: ₦${final.toLocaleString()}</b>
-  `;
-}
-
-  else if(type === "fiatToPi"){
-
-    let pi = amount / PI_RATE;
-    let fee = pi * SWAP_FEE_PERCENT;
-    let final = pi - fee;
-
-    resultDiv.innerHTML = `
-      <b>Preview:</b><br>
-      You send: ₦${amount.toLocaleString()}<br><br>
-
-      Swap Fee (2%): ${fee.toFixed(6)} π<br>
-      Gas Fee: ₦${GAS_FEE_NAIRA.toLocaleString()}<br><br>
-
-      <b>You receive: ${final.toFixed(6)} π</b>
-    `;
+    fromCurrency = "PI";
+    toCurrency = document.getElementById("currencySelect").value;
+  } else {
+    fromCurrency = document.getElementById("currencySelect").value;
+    toCurrency = "PI";
   }
+
+  try{
+
+    const res = await fetch(API + "/wallet/swap-preview", {
+      method: "POST",
+      headers: {
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        fromCurrency,
+        toCurrency,
+        amount
+      })
+    });
+
+    const data = await res.json();
+
+    if(!data.success){
+      resultDiv.innerHTML = data.message;
+      return;
+    }
+
+    if(type === "piToFiat"){
+
+      resultDiv.innerHTML = `
+      <b>Preview:</b><br>
+      You send: ${amount} π<br>
+      Rate: ₦${Number(data.piRate).toLocaleString()} / π<br><br>
+
+      Swap Fee: ₦${Number(data.fee).toLocaleString()}<br>
+      Gas Fee: ₦${Number(data.gas).toLocaleString()}<br><br>
+
+      <b>You receive: ₦${Number(data.received).toLocaleString()}</b>
+      `;
+
+    } else {
+
+      resultDiv.innerHTML = `
+      <b>Preview:</b><br>
+      You send: ₦${Number(amount).toLocaleString()}<br><br>
+
+      Swap Fee: ₦${Number(data.fee).toLocaleString()}<br>
+      Gas Fee: ₦${Number(data.gas).toLocaleString()}<br><br>
+
+      <b>You receive: ${Number(data.received).toFixed(8)} π</b>
+      `;
+
+    }
+
+  } catch(err){
+
+    resultDiv.innerHTML = "Unable to load preview.";
+
+  }
+
 }
 
 // ================= SWAP =================
