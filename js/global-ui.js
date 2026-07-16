@@ -4,7 +4,7 @@
 
 (function () {
 
-const LOGO = "/images/logo.png";
+const LOGO = new URL("../images/logo.png", window.location.href).href;
 
 function ensureGlobalLogo() {
 

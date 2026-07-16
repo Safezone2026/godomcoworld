@@ -557,7 +557,7 @@ if (apiBtn) {
 // ---------- LOAD DEV UI MODULE ----------
 const uiScript = document.createElement("script");
 
-uiScript.src = "js/dev-ui.js";
+uiScript.src = "/js/dev-ui.js";
 
 uiScript.onload = () => {
     GodomcoDev.modules.ui.init();
@@ -573,6 +573,6 @@ if (document.body) {
 // ---------- LOAD GLOBAL UI ----------
 const globalUIScript = document.createElement("script");
 
-globalUIScript.src = "js/global-ui.js";
+globalUIScript.src = "/js/global-ui.js";
 
 document.body.appendChild(globalUIScript);
