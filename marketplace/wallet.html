@@ -612,14 +612,7 @@ console.log("🚀 performSwap started");
   return resultDiv.textContent = "❌ Insufficient Pi balance";
 }
 
-    // ❌ Daily limit
-    if((swapData[today] + naira) > DAILY_LIMIT_NAIRA){
-      return resultDiv.textContent = "❌ Daily limit exceeded ($10,000)";
-    }
-
-    // ✅ Update usage
-    swapData[today] += naira;
-    localStorage.setItem("swapHistory", JSON.stringify(swapData));
+ 
 
   }
 
@@ -638,12 +631,7 @@ console.log("🚀 performSwap started");
 
     let nairaValue = amount;
 
-    if((swapData[today] + nairaValue) > DAILY_LIMIT_NAIRA){
-      return resultDiv.textContent = "❌ Daily limit exceeded ($10,000)";
-    }
-
-    swapData[today] += nairaValue;
-    localStorage.setItem("swapHistory", JSON.stringify(swapData));
+   
   }
 
   // ================= BACKEND CALL =================
