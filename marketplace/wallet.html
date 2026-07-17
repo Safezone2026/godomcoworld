@@ -718,10 +718,25 @@ console.log("loadSwapHistory()", {
 .map(t => `
   <p>
     ${t.from_currency} → ${t.to_currency} <br>
-    Amount: ${Number(t.amount).toLocaleString()} <br>
-    Received: ${Number(t.received ?? 0).toLocaleString()} <br>
-    Fee: ${Number(t.fee ?? 0).toLocaleString()} <br>
-    Gas: ${Number(t.gas ?? 0).toLocaleString()} <br>
+    Amount: ${Number(t.amount).toLocaleString(undefined,{
+  minimumFractionDigits:3,
+  maximumFractionDigits:3
+})} <br>
+
+Received: ₦${Number(t.received ?? 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})} <br>
+
+Fee: ₦${Number(t.fee ?? 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})} <br>
+
+Gas: ₦${Number(t.gas ?? 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})} <br>
     ${new Date(t.created_at).toLocaleString()}
   </p>
 `).join('');
@@ -792,9 +807,21 @@ console.log("loadWithdrawals()", {
   document.getElementById("withdrawHistory").innerHTML =
     userData.map(w => `
       <p>
-💸 ${w.amount} ${w.currency}<br>
-Fee: ${w.fee}<br>
-Received: ${w.finalAmount}<br>
+💸 ₦${Number(w.amount ?? 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})}<br>
+
+Fee: ₦${Number(w.fee ?? 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})}<br>
+
+Received: ₦${Number(w.finalAmount ?? 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})}<br>
+
 Status: ${w.status}<br>
 ${new Date(w.date).toLocaleString()}
 </p>
