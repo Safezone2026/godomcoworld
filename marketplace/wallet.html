@@ -671,10 +671,19 @@ const res = await fetch(API + "/wallet/swap", {
   }
 
   resultDiv.innerHTML = `
-  ✅ Swap successful<br>
-  Received: ₦${Number(data.receivedAmount).toLocaleString()}<br>
-  Fee: ₦${Number(data.fee).toLocaleString()}<br>
-  Gas: ₦${Number(data.gasFee).toLocaleString()}
+✅ Swap successful<br>
+Received: ₦${Number(data.receivedAmount).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})}<br>
+Fee: ₦${Number(data.fee).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})}<br>
+Gas: ₦${Number(data.gasFee).toLocaleString(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})}
 `;
 
 loadBalance();
