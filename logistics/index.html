@@ -64,6 +64,35 @@ button {
   <h3>📦 Deliveries Completed</h3>
   <h2 id="completed">0</h2>
 </div>
+<div class="card">
+  <h3>💸 Withdraw Earnings</h3>
+
+  <input
+    type="number"
+    id="withdrawAmount"
+    placeholder="Enter amount">
+
+  <select id="withdrawMethod">
+    <option value="bank">Bank</option>
+    <option value="crypto">Crypto</option>
+  </select>
+
+  <input
+    type="text"
+    id="withdrawDetails"
+    placeholder="Account No / Wallet Address">
+
+  <button onclick="withdrawFunds()">
+    Withdraw
+  </button>
+
+  <p id="withdrawMsg"></p>
+</div>
+
+<div class="card">
+  <h3>📜 Withdrawal History</h3>
+  <div id="withdrawHistory">Loading...</div>
+</div>
 
 <div class="card">
   <h3>📋 Assigned Deliveries</h3>
@@ -210,14 +239,117 @@ async function updateStatus(orderId, status){
   loadDashboard();
 }
 
+// ================= RIDER WITHDRAW =================
+async function withdrawFunds(){
+
+  const amount =
+    Number(document.getElementById("withdrawAmount").value);
+
+  const method =
+    document.getElementById("withdrawMethod").value;
+
+  const details =
+    document.getElementById("withdrawDetails").value;
+
+  if(!amount || amount <= 0){
+    return alert("Enter withdrawal amount");
+  }
+
+  const body = {
+    riderName: rider,
+    amount,
+    method
+  };
+
+  if(method === "bank"){
+    body.bankName = "Bank";
+    body.accountNumber = details;
+  }else{
+    body.cryptoAddress = details;
+    body.network = "TRC20";
+  }
+
+  const res = await fetch(
+    "https://godomcoworld-backend.onrender.com/rider-withdraw",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(body)
+    }
+  );
+
+  const data = await res.json();
+
+  document.getElementById("withdrawMsg").innerText =
+    data.message;
+
+  if(data.success){
+
+    document.getElementById("withdrawAmount").value="";
+    document.getElementById("withdrawDetails").value="";
+
+    loadDashboard();
+    loadWithdrawals();
+
+  }
+
+}
+
+// ================= LOAD WITHDRAWALS =================
+async function loadWithdrawals(){
+
+  const res = await fetch(
+    `https://godomcoworld-backend.onrender.com/rider-withdrawals/${encodeURIComponent(rider)}`
+  );
+
+  const data = await res.json();
+
+  if(!data.success){
+    return;
+  }
+
+  const history = data.withdrawals || [];
+
+document.getElementById("withdrawHistory").innerHTML =
+history.length
+? history.map(w=>`
+
+<p>
+
+💸 ₦${Number(w.amount || 0).toLocaleString(undefined,{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}<br>
+
+Method: ${w.method || "-"}<br>
+
+Status:
+<b>${w.status}</b><br>
+
+ID: ${w.withdrawal_id}<br>
+
+${new Date(w.created_at).toLocaleString()}
+
+</p>
+
+`).join("")
+: "<p>No withdrawals yet.</p>";
+
+}
 
 // ================= AUTO LOAD =================
 window.onload = function(){
   loadDashboard();
+loadWithdrawals();
 };
 
 // 🔄 refresh every 5s
-setInterval(loadDashboard, 5000);
+setInterval(() => {
+    loadDashboard();
+    loadWithdrawals();
+}, 5000);
 
 </script>
 
