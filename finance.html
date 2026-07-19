@@ -301,18 +301,21 @@ async function payWithBackend(method){
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({
-        walletId,
-        amount,
-        currency,
-        type: currentService // 🔥 dynamic later
-      })
+  walletId,
+  amount,
+  currency,
+  type: currentService,
+  network: method
+})
     });
 
     const data = await res.json();
 
     if(data.success){
-      alert("✅ Payment successful");
-
+      alert(`✅ ${data.message}\nFee: ${data.fee ?? 0}`);
+    if (data.receiptId) {
+  console.log("Receipt:", data.receiptId);
+}
       // 🔥 REFRESH WALLET
       if(typeof loadBalance === "function"){
         loadBalance();
