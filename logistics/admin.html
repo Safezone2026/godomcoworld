@@ -26,7 +26,7 @@ async function updateStatus(){
   let orderId = document.getElementById("orderId").value;
   let status = document.getElementById("status").value;
 
-  let res = await fetch('http://127.0.0.1:3000/logistics/update', {
+  let res = await fetch('https://godomcoworld-backend.onrender.com/logistics/update', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ orderId, status })

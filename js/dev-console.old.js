@@ -499,7 +499,7 @@ if (apiBtn) {
 
     const API =
       location.hostname === "127.0.0.1"
-      ? "http://127.0.0.1:3000"
+      ? "https://godomcoworld-backend.onrender.com"
       : "https://godomcoworld-backend.onrender.com";
 
     const url = `${API}/history/${username}?network=${network}`;

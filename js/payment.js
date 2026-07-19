@@ -1,4 +1,4 @@
-window.API = "http://127.0.0.1:3000";
+window.API = "https://godomcoworld-backend.onrender.com";
 
 async function payWithWallet(amount, currency) {
   const walletId = localStorage.getItem("walletId");
@@ -50,7 +50,7 @@ async function payWithWallet(amount, currency) {
 async function checkPaymentAccess(method){
 
   try{
-    const res = await fetch("http://127.0.0.1:3000/admin/payment-settings");
+    const res = await fetch("https://godomcoworld-backend.onrender.com/admin/payment-settings");
     const settings = await res.json();
 
     if(method === "Pi" && settings.enablePi === false){

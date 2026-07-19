@@ -158,7 +158,7 @@ async function checkAccess(){
 
   try {
 
-    let res = await fetch(`http://127.0.0.1:3000/course-access?username=${username}&courseName=${courseName}`);
+    let res = await fetch(`https://godomcoworld-backend.onrender.com/course-access?username=${username}&courseName=${courseName}`);
     let data = await res.json();
 
     if(data.access){
@@ -191,7 +191,7 @@ async function payCourse(price, plan){
     onReadyForServerCompletion: async function(){
 
       // 🔥 SAVE TO BACKEND
-      await fetch('http://127.0.0.1:3000/subscribe-course', {
+      await fetch('https://godomcoworld-backend.onrender.com/subscribe-course', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({

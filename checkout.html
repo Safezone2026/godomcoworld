@@ -146,7 +146,7 @@ async function completeCheckout(method){
 
   try {
 
-    await fetch('http://127.0.0.1:3000/checkout', {
+    await fetch('https://godomcoworld-backend.onrender.com/checkout', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -214,7 +214,7 @@ if (!amount || isNaN(amount)) {
     const userId = 1; // Example/mock user ID
 
     try {
-        const response = await fetch("http://127.0.0.1:3000/pay", {
+        const response = await fetch("https://godomcoworld-backend.onrender.com/pay", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, amount, type })
@@ -246,7 +246,7 @@ function payWithFiat() { payWithBackend("Fiat"); }
   
   async function loadBalances() {
   try {
-    const res = await fetch('http://127.0.0.1:3000/users');
+    const res = await fetch('https://godomcoworld-backend.onrender.com/users');
     const data = await res.json();
 
     const user = data.users.find(u => u.id === 1);

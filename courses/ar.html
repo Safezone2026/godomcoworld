@@ -170,7 +170,7 @@ async function checkAccess(){
 
   try {
 
-    let res = await fetch(`http://127.0.0.1:3000/course-access?username=${username}&courseName=${courseName}`);
+    let res = await fetch(`https://godomcoworld-backend.onrender.com/course-access?username=${username}&courseName=${courseName}`);
     let data = await res.json();
 
     if(data.access){
