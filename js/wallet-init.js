@@ -15,7 +15,11 @@ let walletId = localStorage.getItem("walletId");
 
 if (walletId) {
 
-    const check = await fetch(`${API_URL}/wallet/${walletId}`);
+    const network = localStorage.getItem("walletNetwork") || "testnet";
+
+const check = await fetch(
+  `${API_URL}/wallet/${walletId}?network=${network}`
+);
 
     if (check.ok) {
 
@@ -42,7 +46,12 @@ const res = await fetch(`${API_URL}/wallet/create`, {
 
     },
 
-    body: JSON.stringify({ username })
+    const network = localStorage.getItem("walletNetwork") || "testnet";
+
+body: JSON.stringify({
+  username,
+  network
+})
 
 });
 
