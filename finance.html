@@ -305,7 +305,7 @@ async function payWithBackend(method){
   amount,
   currency,
   type: currentService,
-  network: method
+  network: localStorage.getItem("walletNetwork") || "testnet"
 })
     });
 
