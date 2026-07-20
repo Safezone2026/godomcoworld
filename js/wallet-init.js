@@ -36,23 +36,17 @@ const check = await fetch(
 }
 
 // Create new wallet
+const network = localStorage.getItem("walletNetwork") || "testnet";
+
 const res = await fetch(`${API_URL}/wallet/create`, {
-
-    method: "POST",
-
-    headers: {
-
-        "Content-Type": "application/json"
-
-    },
-
-    const network = localStorage.getItem("walletNetwork") || "testnet";
-
-body: JSON.stringify({
-  username,
-  network
-})
-
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    username,
+    network
+  })
 });
 
 const wallet = await res.json();
