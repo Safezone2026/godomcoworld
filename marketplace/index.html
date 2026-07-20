@@ -47,7 +47,9 @@ Buy products, sell goods and connect artisans with global customers.
 <div class="card">
 <h3>Upload Products</h3>
 <p>Registered sellers can upload products.</p>
-<a href="upload.html" class="view-btn">Upload</a>
+<button class="view-btn" onclick="openUploadProduct()">
+    Upload Product
+</button>
 </div>
 
 <div class="card">
@@ -109,6 +111,33 @@ Buy products, sell goods and connect artisans with global customers.
 </a>
 
 </nav>
+<script>
+async function openUploadProduct() {
+    const sellerId = localStorage.getItem("sellerId");
+
+    if (!sellerId) {
+        alert("Only registered sellers can upload products.");
+        window.location.href = "seller-register.html";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/seller/${sellerId}`);
+        const data = await res.json();
+
+        if (!data.success) {
+            alert("Seller account not found.");
+            localStorage.removeItem("sellerId");
+            window.location.href = "seller-register.html";
+            return;
+        }
+
+        window.location.href = "upload.html";
+    } catch (err) {
+        alert("Unable to verify seller account.");
+    }
+}
+</script>
 <script src="../js/dev-console.js"></script>
 </body>
   </html>
