@@ -129,16 +129,7 @@ if(!username){
 
 console.log("Current user:", username);
 
-function registerSeller(){
-  fetch('/register-seller', {
-  method: 'POST',
-  headers: {'Content-Type':'application/json'},
-  body: JSON.stringify({
-    username: document.getElementById("username").value,
-    shopAddress: document.getElementById("shopAddress").value,
-    shopCountry: document.getElementById("shopCountry").value
-  })
-});
+async function registerSeller(){
 
 let wallet = document.getElementById("wallet").value;
 let agree = document.getElementById("agree").checked;
@@ -170,12 +161,14 @@ const data = await result.json();
 if (data.success) {
   localStorage.setItem("sellerId", data.seller.id);
   localStorage.setItem("username", data.seller.username);
-  alert("Registration successful");
+  localStorage.setItem("seller_wallet", wallet);
+
+  alert("✅ Registration successful!");
+
+  window.location.href = "upload.html";
 } else {
   alert(data.message);
 }
-// Save seller wallet
-localStorage.setItem("seller_wallet", wallet);
 
 }
 </script>
