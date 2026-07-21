@@ -18,7 +18,11 @@ window.onerror = function (msg, src, line, col, err) {
 };
 document.addEventListener("DOMContentLoaded", () => {
 
-const DEV_USERS = ["seller1","GBEST20"];
+const DEV_USERS = [
+  "seller1",
+  "seller-test-002",
+  "GBEST20"
+];
 
 const currentUser = localStorage.getItem("username") || "";
 
