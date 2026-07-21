@@ -124,7 +124,11 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const formData = new FormData(form);
+ const sellerUsername = localStorage.getItem("username");
+const sellerId = localStorage.getItem("sellerId");
 
+formData.append("sellerUsername", sellerUsername);
+formData.append("sellerId", sellerId);
   // ✅ FIX WEIGHT
   const weight = Number(formData.get("weight")) || 1;
   formData.set("weight", weight);
