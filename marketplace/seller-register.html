@@ -161,8 +161,27 @@ if(!agree){
   return;
 }
 
-alert("Registration successful");
+const result = await fetch("https://godomcoworld-backend.onrender.com/register-seller", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    username: document.getElementById("username").value,
+    shopAddress: document.getElementById("shopAddress").value,
+    shopCountry: document.getElementById("shopCountry").value
+  })
+});
 
+const data = await result.json();
+
+if (data.success) {
+  localStorage.setItem("sellerId", data.seller.id);
+  localStorage.setItem("username", data.seller.username);
+  alert("Registration successful");
+} else {
+  alert(data.message);
+}
 // Save seller wallet
 localStorage.setItem("seller_wallet", wallet);
 
