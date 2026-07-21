@@ -128,7 +128,13 @@ if(!username){
 }
 
 console.log("Current user:", username);
-
+document.body.insertAdjacentHTML(
+  "afterbegin",
+  "<div style='background:yellow;color:black;padding:10px;font-size:18px'>" +
+  "Username: " + localStorage.getItem("username") +
+  "<br>Seller ID: " + localStorage.getItem("sellerId") +
+  "</div>"
+);
 async function registerSeller(){
 
 let wallet = document.getElementById("wallet").value;
