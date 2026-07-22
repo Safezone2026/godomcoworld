@@ -41,7 +41,27 @@ button{
 <body>
 
 <h2>📊 Seller Dashboard</h2>
+<div class="card">
 
+<h3>👤 Seller Profile</h3>
+
+<p><strong>Seller:</strong> <span id="profileName">Loading...</span></p>
+
+<p><strong>Seller ID:</strong> <span id="profileId">Loading...</span></p>
+
+<p><strong>Country:</strong> <span id="profileCountry">Loading...</span></p>
+
+<p><strong>Address:</strong> <span id="profileAddress">Loading...</span></p>
+
+<p><strong>Status:</strong>
+<span style="color:#00ff66;">✅ Active</span>
+</p>
+
+<p><strong>Registration Date:</strong>
+<span id="profileDate">Loading...</span>
+</p>
+
+</div>
 <div class="card">
   <h3 id="user"></h3>
 
@@ -179,7 +199,22 @@ const data = await res.json();
 
 console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
+document.getElementById("profileName").innerText =
+  seller.username || "-";
 
+document.getElementById("profileId").innerText =
+  seller.id || "-";
+
+document.getElementById("profileCountry").innerText =
+  seller.shopCountry || "-";
+
+document.getElementById("profileAddress").innerText =
+  seller.shopAddress || "-";
+
+document.getElementById("profileDate").innerText =
+  seller.createdAt
+    ? new Date(seller.createdAt).toLocaleDateString()
+    : "Not Available";
 // 💰 Earnings
 document.getElementById("earnings").innerText =
   "₦" + Number(seller.earnings || 0).toLocaleString();
