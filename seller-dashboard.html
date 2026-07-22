@@ -103,26 +103,30 @@ button{
 </script>
 
 <script>
-let currentSeller = localStorage.getItem("username");
+const sellerId = localStorage.getItem("sellerId");
+const currentSeller = localStorage.getItem("username") || "";
 
-if(!currentSeller){
-  currentSeller = prompt("Enter your username (e.g seller1)");
-  localStorage.setItem("username", currentSeller);
+if(!sellerId){
+  alert("Seller session expired. Please register/login again.");
+  window.location.href = "marketplace/seller-register.html";
 }
 
 console.log("Current seller:", currentSeller);
+console.log("Seller ID:", sellerId);
 console.log("JS LOADED");
 
 // ================= LOAD EARNINGS =================
 async function loadEarnings(){
 
-  document.getElementById("user").innerText = "Seller: " + currentSeller;
+  document.getElementById("user").innerHTML =
+"Seller: " + currentSeller +
+"<br>Seller ID: " + sellerId;
 
   try {
     const API = "https://godomcoworld-backend.onrender.com";
 
 const res = await fetch(
-  `${API}/seller-dashboard/${encodeURIComponent(currentSeller)}`
+  `${API}/seller-dashboard/${sellerId}`
 );
 
 const data = await res.json();
@@ -167,7 +171,7 @@ async function loadSalesHistory(){
     const API = "https://godomcoworld-backend.onrender.com";
 
 const res = await fetch(
-  `${API}/seller-dashboard/${encodeURIComponent(currentSeller)}`
+  `${API}/seller-dashboard/${sellerId}`
 );
 
 const data = await res.json();
@@ -247,7 +251,7 @@ const res = await fetch(`${API}/seller-withdraw`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        username: currentSeller,
+        sellerId: sellerId,
         amount,
         method,
         details
