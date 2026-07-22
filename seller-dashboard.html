@@ -57,6 +57,52 @@ button{
   <h3>⏳ Pending Balance</h3>
   <h2 id="pendingBalance">₦0</h2>
 </div>
+<div class="card">
+<h3>⚡ Quick Actions</h3>
+
+<button onclick="location.href='marketplace/upload.html'">
+➕ Upload Product
+</button>
+
+<button onclick="location.href='marketplace/products.html'">
+📦 My Products
+</button>
+
+<button onclick="location.href='seller-orders.html'">
+🛒 Orders
+</button>
+
+<button onclick="location.href='marketplace/wallet.html'">
+💳 Wallet
+</button>
+
+</div>
+<div class="card">
+
+<h3>📦 Recent Products</h3>
+
+<div id="recentProducts">
+Loading products...
+</div>
+
+<button onclick="location.href='marketplace/products.html'">
+View All Products
+</button>
+
+</div>
+<div class="card">
+
+<h3>🛒 Recent Orders</h3>
+
+<div id="recentOrders">
+Loading orders...
+</div>
+
+<button onclick="location.href='seller-orders.html'">
+View All Orders
+</button>
+
+</div>
 
 <!-- NEW CARD (separate) -->
 <div class="card">
@@ -216,6 +262,31 @@ document.getElementById("withdrawMethod").addEventListener("change", function(){
   document.getElementById("piFields").style.display =
     method === "pi" ? "block" : "none";
 });
+// ================= RECENT PRODUCTS =================
+async function loadRecentProducts(){
+
+  const container = document.getElementById("recentProducts");
+
+  container.innerHTML = `
+    <div class="history">
+      📦 No products uploaded yet
+    </div>
+  `;
+
+}
+
+// ================= RECENT ORDERS =================
+async function loadRecentOrders(){
+
+  const container = document.getElementById("recentOrders");
+
+  container.innerHTML = `
+    <div class="history">
+      🛒 No orders yet
+    </div>
+  `;
+
+}
 
 // ================= SUBMIT WITHDRAW =================
 async function submitWithdrawal(){
@@ -271,13 +342,16 @@ const res = await fetch(`${API}/seller-withdraw`, {
 
 // ================= INIT =================
 window.onload = function() {
+
   loadEarnings();
   loadSalesHistory();
 
+  loadRecentProducts();
+  loadRecentOrders();
+
   setInterval(loadEarnings, 5000);
+
 };
-
-
 
 </script>
 <script src="js/dev-console.js"></script>
