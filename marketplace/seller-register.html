@@ -166,19 +166,10 @@ const data = await result.json();
 
 if (data.success) {
 
-  console.log("STEP 1");
-  alert("STEP 1");
-
   localStorage.setItem("sellerId", data.seller.id);
-
-  console.log("STEP 2");
-  alert("STEP 2");
 
   localStorage.setItem("username", data.seller.username);
   localStorage.setItem("seller_wallet", wallet);
-
-  console.log("STEP 3");
-  alert("STEP 3");
 
   window.location.href = "upload.html";
 
