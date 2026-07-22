@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
 const DEV_USERS = [
   "seller1",
   "seller-test-002",
-  "GBEST20"
+  "gbest20"
 ];
 
-const currentUser = localStorage.getItem("username") || "";
+const currentUser = (localStorage.getItem("username") || "").toLowerCase();
 
 if (!DEV_USERS.includes(currentUser)) return;
 
