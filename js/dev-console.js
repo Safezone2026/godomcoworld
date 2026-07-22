@@ -399,29 +399,14 @@ dragging=false;
 
 });
 // ---------- JAVASCRIPT ERROR MONITOR ----------
-window.onerror = function(message, source, line, column, error){
-
+/* window.onerror = function(message, source, line, column, error){
     add("❌ JS ERROR", [
-
         message,
-
         "File: " + source,
-
         "Line: " + line,
-
         "Column: " + column
-
     ]);
-
-    if(error){
-
-        console.error(error);
-
-    }
-
-    return false;
-
-};
+}; */
 // ---------- UNHANDLED PROMISE MONITOR ----------
 window.addEventListener("unhandledrejection", function(event) {
 
