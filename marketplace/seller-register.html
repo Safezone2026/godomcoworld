@@ -126,6 +126,7 @@ if(!username){
   username = prompt("Enter your username (e.g seller1)");
   localStorage.setItem("username", username);
 }
+document.getElementById("username").value = username;
 
 console.log("Current user:", username);
 document.body.insertAdjacentHTML(
