@@ -123,7 +123,7 @@
   let username = localStorage.getItem("username");
 
 if(!username){
-  username = prompt("Enter your username (e.g seller1)");
+  username = prompt("Enter your username (e.g seller1)").trim();
   localStorage.setItem("username", username);
 }
 document.getElementById("username").value = username;
@@ -157,7 +157,7 @@ const result = await fetch("https://godomcoworld-backend.onrender.com/register-s
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    username: document.getElementById("username").value,
+    username: document.getElementById("username").value.trim(),
     shopAddress: document.getElementById("shopAddress").value,
     shopCountry: document.getElementById("shopCountry").value
   })
