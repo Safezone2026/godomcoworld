@@ -425,7 +425,7 @@ async function loadOrders() {
 async function loadSellers() {
   const res = await fetch(API + '/sellers');
   const data = await res.json();
-
+console.log("SELLERS DATA:", data);
   const container = document.getElementById('sellersList');
   container.innerHTML = '';
 
