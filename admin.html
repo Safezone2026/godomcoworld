@@ -434,8 +434,12 @@ console.log("SELLERS DATA:", data);
     div.className = 'card';
 
     div.innerHTML =
-      "Username: " + s.username + "<br>" +
-      "Earnings: ₦" + Number(s.earnings || 0).toLocaleString();
+  "Username: " + s.username + "<br>" +
+  "Earnings: ₦" + Number(s.earnings || 0).toLocaleString() + "<br>" +
+  "Pending: ₦" + Number(s.pending_balance || 0).toLocaleString() + "<br>" +
+  "Available: ₦" + Number(s.available_balance || 0).toLocaleString() + "<br>" +
+  "Sales: ₦" + Number(s.total_sales || 0).toLocaleString() + "<br>" +
+  "Fees: ₦" + Number(s.total_fees || 0).toLocaleString();
 
     container.appendChild(div);
   });
