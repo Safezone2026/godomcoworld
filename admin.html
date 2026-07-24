@@ -118,6 +118,10 @@ function login() {
   if (pass === "admin123") {
     document.getElementById('loginBox').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
+   console.log(
+  "Dashboard display:",
+  getComputedStyle(document.getElementById("dashboard")).display
+);
     loadAll();
   } else {
     alert("Wrong password");
@@ -444,11 +448,6 @@ console.log("SELLERS DATA:", data);
     container.appendChild(div);
   });
 }
-window.onload = function(){
-  loadWithdrawals();
-  loadSellers()
-};
-   
         
 </script>
 
