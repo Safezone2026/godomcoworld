@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Godomcoworld Admin Dashboard</title>
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="css/style.css">
 
   <style>
     body { font-family: Arial; padding: 20px; background:#0d0d0d; color:#fff; }
@@ -444,8 +444,15 @@ console.log("SELLERS DATA:", data);
   "Available: ₦" + Number(s.available_balance || 0).toLocaleString() + "<br>" +
   "Sales: ₦" + Number(s.total_sales || 0).toLocaleString() + "<br>" +
   "Fees: ₦" + Number(s.total_fees || 0).toLocaleString();
-  console.log("SELLER CARD:", div.innerHTML);
-    container.appendChild(div);
+
+console.log("SELLER CARD:", div.innerHTML);
+
+container.appendChild(div);
+
+console.log(
+  "Seller container HTML:",
+  document.getElementById("sellersList").innerHTML
+);
   });
 }
         
