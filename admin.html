@@ -127,16 +127,45 @@ function login() {
     alert("Wrong password");
   }
 }
+let productsLoaded = false;
+let ordersLoaded = false;
+let sellersLoaded = false;
+let withdrawalsLoaded = false;
+let logsLoaded = false;
 
 function loadAll() {
+  // Load only lightweight data first
   loadRevenueSummary();
   loadRevenueWallet();
-  loadProducts();
-  loadOrders();
-  loadSellers();
-  loadWithdrawals();
-  loadLogs();
   loadPaymentSettings();
+
+  // Load heavy data in the background after the dashboard appears
+  setTimeout(() => {
+    if (!productsLoaded) {
+      loadProducts();
+      productsLoaded = true;
+    }
+
+    if (!ordersLoaded) {
+      loadOrders();
+      ordersLoaded = true;
+    }
+
+    if (!sellersLoaded) {
+      loadSellers();
+      sellersLoaded = true;
+    }
+
+    if (!withdrawalsLoaded) {
+      loadWithdrawals();
+      withdrawalsLoaded = true;
+    }
+
+    if (!logsLoaded) {
+      loadLogs();
+      logsLoaded = true;
+    }
+  }, 500);
 }
 
 // ================= REVENUE SUMMARY =================
