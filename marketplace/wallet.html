@@ -495,39 +495,35 @@ async function sendPi(){
 
   loadBalance();
 }
-// LIVE SWAP PREVIEW
-async function calculateSwapPreview(){
+
+// ================= SWAP PREVIEW =================
+async function calculateSwapPreview() {
 
   const amount = Number(document.getElementById("swapAmount").value);
   const type = document.getElementById("swapType").value;
   const resultDiv = document.getElementById("swapResult");
 
-  if(!amount || amount <= 0){
+  if (!amount || amount <= 0) {
     resultDiv.innerHTML = "";
     return;
   }
 
   let fromCurrency, toCurrency;
 
-  if(type === "piToFiat"){
+  if (type === "piToFiat") {
     fromCurrency = "PI";
     toCurrency = document.getElementById("currencySelect").value;
   } else {
     fromCurrency = document.getElementById("currencySelect").value;
     toCurrency = "PI";
   }
-console.log("PREVIEW VALUES", {
-  type,
-  fromCurrency,
-  toCurrency,
-  selected: document.getElementById("currencySelect").value
-});
-  try{
+
+  try {
 
     const res = await fetch(API + "/wallet/swap-preview", {
       method: "POST",
       headers: {
-        "Content-Type":"application/json"
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         fromCurrency,
@@ -538,48 +534,80 @@ console.log("PREVIEW VALUES", {
 
     const data = await res.json();
 
-    if(!data.success){
+    if (!data.success) {
       resultDiv.innerHTML = data.message;
       return;
     }
 
     const symbol = {
-  NG: "₦",
-  USD: "$",
-  GH: "₵",
-  KE: "KSh",
-  ZA: "R"
-};
+      PI: "π",
+      NG: "₦",
+      USD: "$",
+      GH: "₵",
+      KE: "KSh",
+      ZA: "R"
+    };
 
-if (type === "piToFiat") {
+    const fromSymbol = symbol[fromCurrency] || "";
+    const toSymbol = symbol[toCurrency] || "";
 
-  resultDiv.innerHTML = `
-  <b>Preview:</b><br>
-  You send: ${amount} π<br>
-  Rate: ₦${Number(data.piRate).toLocaleString()} / π<br><br>
+    let receiveDisplay;
 
-  Swap Fee: ₦${Number(data.fee).toLocaleString()}<br>
-  Gas Fee: $${Number(data.gasUSD ?? 0.2).toLocaleString()}<br><br>
+    if (toCurrency === "PI") {
 
-  <b>You receive: ${symbol[toCurrency] || ""}${Number(data.received).toLocaleString()}</b>
-  `;
+      receiveDisplay =
+        Number(data.receivedAmount ?? data.received)
+          .toFixed(8) + " π";
 
-} else {
+    } else {
 
-  resultDiv.innerHTML = `
-<b>Preview:</b><br>
-You send: ${symbol[fromCurrency] || ""}${Number(amount).toLocaleString()}<br><br>
-
-Swap Fee: ${symbol[fromCurrency] || ""}${Number(data.fee).toLocaleString()}<br>
-Gas Fee: $${Number(data.gasUSD ?? data.gasFee ?? 0.2).toLocaleString()}<br><br>
-
-<b>You receive: ${Number(data.receivedAmount ?? data.received).toFixed(8)} π</b>
-`;
+      receiveDisplay =
+        toSymbol +
+        Number(data.receivedAmount ?? data.received)
+          .toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
 
     }
 
-  } catch(err){
+    resultDiv.innerHTML = `
+<b>Preview:</b><br>
 
+You send:
+${fromCurrency === "PI"
+    ? amount + " π"
+    : fromSymbol +
+      Number(amount).toLocaleString(undefined,{
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      })
+}<br><br>
+
+Swap Fee:
+${fromCurrency === "PI"
+    ? Number(data.fee).toFixed(8) + " π"
+    : fromSymbol +
+      Number(data.fee).toLocaleString(undefined,{
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      })
+}<br>
+
+Gas Fee:
+$${Number(data.gasUSD ?? 0.2).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})}<br><br>
+
+<b>You receive:
+${receiveDisplay}
+</b>
+`;
+
+  } catch (err) {
+
+    console.error(err);
     resultDiv.innerHTML = "Unable to load preview.";
 
   }
