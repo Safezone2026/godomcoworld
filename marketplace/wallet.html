@@ -670,20 +670,32 @@ const res = await fetch(API + "/wallet/swap", {
     return resultDiv.textContent = data.message;
   }
 
-  resultDiv.innerHTML = `
+  const receiveSymbol =
+  toCurrency === "PI" ? "π" :
+  toCurrency === "USD" ? "$" :
+  "₦";
+
+const feeSymbol =
+  fromCurrency === "USD" ? "$" :
+  fromCurrency === "PI" ? "π" :
+  "₦";
+
+resultDiv.innerHTML = `
 ✅ Swap successful<br>
-Received: ₦${Number(data.receivedAmount).toLocaleString(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
+Received: ${receiveSymbol}${Number(data.receivedAmount).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
 })}<br>
-Fee: ₦${Number(data.fee).toLocaleString(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
+
+Fee: ${feeSymbol}${Number(data.fee).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
 })}<br>
-Gas: ₦${Number(data.gasFee).toLocaleString(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-})}
+
+Gas: $${Number(data.gasFee).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})}<br>
 `;
 
 loadBalance();
@@ -723,17 +735,29 @@ console.log("loadSwapHistory()", {
   maximumFractionDigits:3
 })} <br>
 
-Received: ₦${Number(t.received ?? 0).toLocaleString(undefined,{
+Received: ${
+  t.to_currency === "PI"
+    ? "π"
+    : t.to_currency === "USD"
+    ? "$"
+    : "₦"
+}${Number(t.received ?? 0).toLocaleString(undefined,{
   minimumFractionDigits:2,
   maximumFractionDigits:2
 })} <br>
 
-Fee: ₦${Number(t.fee ?? 0).toLocaleString(undefined,{
+Fee: ${
+  t.from_currency === "PI"
+    ? "π"
+    : t.from_currency === "USD"
+    ? "$"
+    : "₦"
+}${Number(t.fee ?? 0).toLocaleString(undefined,{
   minimumFractionDigits:2,
   maximumFractionDigits:2
 })} <br>
 
-Gas: ₦${Number(t.gas ?? 0).toLocaleString(undefined,{
+Gas: $${Number(t.gas ?? 0).toLocaleString(undefined,{
   minimumFractionDigits:2,
   maximumFractionDigits:2
 })} <br>
