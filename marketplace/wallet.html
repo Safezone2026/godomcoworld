@@ -516,7 +516,12 @@ async function calculateSwapPreview(){
     fromCurrency = document.getElementById("currencySelect").value;
     toCurrency = "PI";
   }
-
+console.log("PREVIEW VALUES", {
+  type,
+  fromCurrency,
+  toCurrency,
+  selected: document.getElementById("currencySelect").value
+});
   try{
 
     const res = await fetch(API + "/wallet/swap-preview", {
@@ -538,30 +543,38 @@ async function calculateSwapPreview(){
       return;
     }
 
-    if(type === "piToFiat"){
+    const symbol = {
+  NG: "₦",
+  USD: "$",
+  GH: "₵",
+  KE: "KSh",
+  ZA: "R"
+};
 
-      resultDiv.innerHTML = `
-      <b>Preview:</b><br>
-      You send: ${amount} π<br>
-      Rate: ₦${Number(data.piRate).toLocaleString()} / π<br><br>
+if (type === "piToFiat") {
 
-      Swap Fee: ₦${Number(data.fee).toLocaleString()}<br>
-      Gas Fee: ₦${Number(data.gas).toLocaleString()}<br><br>
+  resultDiv.innerHTML = `
+  <b>Preview:</b><br>
+  You send: ${amount} π<br>
+  Rate: ₦${Number(data.piRate).toLocaleString()} / π<br><br>
 
-      <b>You receive: ₦${Number(data.received).toLocaleString()}</b>
-      `;
+  Swap Fee: ₦${Number(data.fee).toLocaleString()}<br>
+  Gas Fee: $${Number(data.gasUSD ?? 0.2).toLocaleString()}<br><br>
 
-    } else {
+  <b>You receive: ${symbol[toCurrency] || ""}${Number(data.received).toLocaleString()}</b>
+  `;
 
-      resultDiv.innerHTML = `
-      <b>Preview:</b><br>
-      You send: ₦${Number(amount).toLocaleString()}<br><br>
+} else {
 
-      Swap Fee: ₦${Number(data.fee).toLocaleString()}<br>
-      Gas Fee: ₦${Number(data.gas).toLocaleString()}<br><br>
+  resultDiv.innerHTML = `
+<b>Preview:</b><br>
+You send: ${symbol[fromCurrency] || ""}${Number(amount).toLocaleString()}<br><br>
 
-      <b>You receive: ${Number(data.received).toFixed(8)} π</b>
-      `;
+Swap Fee: ${symbol[fromCurrency] || ""}${Number(data.fee).toLocaleString()}<br>
+Gas Fee: $${Number(data.gasUSD ?? data.gasFee ?? 0.2).toLocaleString()}<br><br>
+
+<b>You receive: ${Number(data.receivedAmount ?? data.received).toFixed(8)} π</b>
+`;
 
     }
 
@@ -597,42 +610,6 @@ console.log("🚀 performSwap started");
   let today = new Date().toLocaleDateString();
   let swapData = JSON.parse(localStorage.getItem("swapHistory")) || {};
   if (!swapData[today]) swapData[today] = 0;
-
-  // ================= PI → FIAT =================
-  if(type === "piToFiat"){
-
-    let naira = amount * PI_RATE;
-    let fee = naira * SWAP_FEE_PERCENT;
-    let final = naira - fee;
-
-    let totalPiNeeded = amount;
-
-    // ❌ Balance check
-    if(wallet.balances.PI < amount){
-  return resultDiv.textContent = "❌ Insufficient Pi balance";
-}
-
- 
-
-  }
-
-  // ================= FIAT → PI =================
-  else {
-
-    let pi = amount / PI_RATE;
-    let fee = pi * SWAP_FEE_PERCENT;
-    let final = pi - fee;
-
-    let totalFiatNeeded = amount;
-
-    if(wallet.balances.NG < totalFiatNeeded){
-      return resultDiv.textContent = "❌ Insufficient Fiat balance";
-    }
-
-    let nairaValue = amount;
-
-   
-  }
 
   // ================= BACKEND CALL =================
   let fromCurrency, toCurrency;
