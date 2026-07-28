@@ -642,64 +642,35 @@ console.log("🚀 performSwap started");
   // ================= BACKEND CALL =================
   let fromCurrency, toCurrency;
 
-if(type === "piToFiat"){
-  fromCurrency = "PI";
-  toCurrency = document.getElementById("currencySelect").value;
-} else {
-  fromCurrency = document.getElementById("currencySelect").value;
-  toCurrency = "PI";
-}
-console.log("🚀 Sending swap request", {
-  API,
-  walletId,
-  network: currentNetwork,
-  fromCurrency,
-  toCurrency,
-  amount
-});
-const res = await fetch(API + "/wallet/swap", {
-  method:"POST",
-  headers:{ "Content-Type":"application/json" },
-  body: JSON.stringify({
-  walletId,
-  network: currentNetwork,
-  fromCurrency,
-  toCurrency,
-  amount
-})
-});
+const symbol = {
+  PI: "π",
+  USD: "$",
+  NG: "₦",
+  GH: "₵",
+  KE: "KSh",
+  ZA: "R"
+};
 
-  const data = await res.json();
-
-  if(!data.success){
-    return resultDiv.textContent = data.message;
-  }
-
-  const receiveSymbol =
-  toCurrency === "PI" ? "π" :
-  toCurrency === "USD" ? "$" :
-  "₦";
-
-const feeSymbol =
-  fromCurrency === "USD" ? "$" :
-  fromCurrency === "PI" ? "π" :
-  "₦";
+const receiveSymbol = symbol[toCurrency] || "";
+const feeSymbol = symbol[fromCurrency] || "";
+const gasSymbol = "$";
 
 resultDiv.innerHTML = `
 ✅ Swap successful<br>
+
 Received: ${receiveSymbol}${Number(data.receivedAmount).toLocaleString(undefined,{
   minimumFractionDigits:2,
-  maximumFractionDigits:2
+  maximumFractionDigits:8
 })}<br>
 
 Fee: ${feeSymbol}${Number(data.fee).toLocaleString(undefined,{
   minimumFractionDigits:2,
-  maximumFractionDigits:2
+  maximumFractionDigits:8
 })}<br>
 
-Gas: $${Number(data.gasFee).toLocaleString(undefined,{
+Gas: ${gasSymbol}${Number(data.gasFee).toLocaleString(undefined,{
   minimumFractionDigits:2,
-  maximumFractionDigits:2
+  maximumFractionDigits:8
 })}<br>
 `;
 
