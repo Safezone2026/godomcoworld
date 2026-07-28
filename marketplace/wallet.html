@@ -616,66 +616,121 @@ ${receiveDisplay}
 
 // ================= SWAP =================
 async function performSwap(){
-console.log("🚀 performSwap started");
-  const amount = Number(document.getElementById('swapAmount').value);
-  const type = document.getElementById('swapType').value;
-  const resultDiv = document.getElementById('swapResult');
 
-  if (!amount || amount <= 0) {
-    return resultDiv.textContent = "Enter valid amount";
+  console.log("🚀 performSwap started");
+
+  const amount = Number(document.getElementById("swapAmount").value);
+  const type = document.getElementById("swapType").value;
+  const resultDiv = document.getElementById("swapResult");
+
+  if(!amount || amount <= 0){
+    resultDiv.textContent = "Enter valid amount";
+    return;
   }
 
-  // 🔥 GET WALLET
+  // ================= LOAD WALLET =================
   const resWallet = await fetch(
-  API +
-  "/wallet/" +
-  walletId +
-  "?network=" +
-  currentNetwork
-);
+    API +
+    "/wallet/" +
+    walletId +
+    "?network=" +
+    currentNetwork
+  );
+
   const wallet = await resWallet.json();
 
+  // ================= DAILY CACHE =================
   let today = new Date().toLocaleDateString();
-  let swapData = JSON.parse(localStorage.getItem("swapHistory")) || {};
-  if (!swapData[today]) swapData[today] = 0;
+  let swapData =
+    JSON.parse(localStorage.getItem("swapHistory")) || {};
 
-  // ================= BACKEND CALL =================
+  if(!swapData[today]) swapData[today] = 0;
+
+  // ================= DETERMINE PAIR =================
   let fromCurrency, toCurrency;
 
-const symbol = {
-  PI: "π",
-  USD: "$",
-  NG: "₦",
-  GH: "₵",
-  KE: "KSh",
-  ZA: "R"
-};
+  if(type === "piToFiat"){
 
-const receiveSymbol = symbol[toCurrency] || "";
-const feeSymbol = symbol[fromCurrency] || "";
-const gasSymbol = "$";
+    fromCurrency = "PI";
+    toCurrency =
+      document.getElementById("currencySelect").value;
 
-resultDiv.innerHTML = `
-✅ Swap successful<br>
+  }else{
 
-Received: ${receiveSymbol}${Number(data.receivedAmount).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:8
-})}<br>
+    fromCurrency =
+      document.getElementById("currencySelect").value;
+    toCurrency = "PI";
 
-Fee: ${feeSymbol}${Number(data.fee).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:8
-})}<br>
+  }
 
-Gas: ${gasSymbol}${Number(data.gasFee).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:8
-})}<br>
-`;
+  // ================= CALL BACKEND =================
+  const res = await fetch(
+    API + "/wallet/swap",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        walletId,
+        fromCurrency,
+        toCurrency,
+        amount,
+        network:currentNetwork
+      })
+    }
+  );
 
-loadBalance();
-loadSwapHistory(); // ✅ ADD THIS
+  const data = await res.json();
+
+  if(!data.success){
+    resultDiv.textContent = data.message;
+    return;
+  }
+
+  // ================= SYMBOLS =================
+  const symbol = {
+    PI:"π",
+    USD:"$",
+    NG:"₦",
+    GH:"₵",
+    KE:"KSh",
+    ZA:"R"
+  };
+
+  const receiveSymbol =
+    symbol[toCurrency] || "";
+
+  const feeSymbol =
+    symbol[fromCurrency] || "";
+
+  // ================= SUCCESS =================
+  resultDiv.innerHTML = `
+  ✅ Swap successful<br><br>
+
+  Received:
+  ${receiveSymbol}${Number(data.receivedAmount).toLocaleString(undefined,{
+    minimumFractionDigits:2,
+    maximumFractionDigits:8
+  })}<br>
+
+  Fee:
+  ${feeSymbol}${Number(data.fee).toLocaleString(undefined,{
+    minimumFractionDigits:2,
+    maximumFractionDigits:8
+  })}<br>
+
+  Gas Fee:
+  $${Number(data.gasFee ?? data.gasUSD ?? 0.2).toLocaleString(undefined,{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  })}
+  `;
+
+  // ================= REFRESH =================
+  await updateWalletDisplay();
+  loadSwapHistory();
+
 }
 
 // ================= HISTORY =================
