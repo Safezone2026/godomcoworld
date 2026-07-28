@@ -208,7 +208,12 @@ async function loadRevenueWallet(){
     "<div class='card'>" +
     "<h3>Total Revenue Wallet</h3>" +
     "<p>₦" + (data.NG || 0).toLocaleString() + "</p>" +
-    "<p>" + (data.PI || 0) + " π</p>" +
+    "<p>" +
+Number(data.PI || 0).toLocaleString(undefined,{
+minimumFractionDigits:0,
+maximumFractionDigits:8
+}) +
+" π</p>"
     "<p>$" + (data.USD || 0) + "</p>" +
     "</div>";
 
