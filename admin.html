@@ -205,17 +205,28 @@ async function loadRevenueWallet(){
   const data = await res.json();
 
   document.getElementById("revenueBalance").innerHTML =
-    "<div class='card'>" +
-    "<h3>Total Revenue Wallet</h3>" +
-    "<p>₦" + (data.NG || 0).toLocaleString() + "</p>" +
-    "<p>" +
-Number(data.PI || 0).toLocaleString(undefined,{
-minimumFractionDigits:0,
-maximumFractionDigits:8
-}) +
-" π</p>"
-    "<p>$" + (data.USD || 0) + "</p>" +
-    "</div>";
+  "<div class='card'>" +
+  "<h3>Total Revenue Wallet</h3>" +
+
+  "<p>₦" +
+  Number(data.NG || 0).toLocaleString() +
+  "</p>" +
+
+  "<p>π" +
+  Number(data.PI || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 8
+  }) +
+  "</p>" +
+
+  "<p>$" +
+  Number(data.USD || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) +
+  "</p>" +
+
+  "</div>";
 
   const b = data.breakdown || {};
 
