@@ -758,43 +758,62 @@ console.log("loadSwapHistory()", {
 
   container.innerHTML = txs
   .filter(t => t.type === "swap")
-.map(t => `
+.map(t => {
+
+  const amountSymbol =
+    t.from_currency === "PI" ? "π" :
+    t.from_currency === "USD" ? "$" :
+    "₦";
+
+  const receiveSymbol =
+    t.to_currency === "PI" ? "π" :
+    t.to_currency === "USD" ? "$" :
+    "₦";
+
+  const feeSymbol = amountSymbol;
+
+  const amountDecimals =
+    t.from_currency === "PI" ? 6 : 2;
+
+  const receiveDecimals =
+    t.to_currency === "PI" ? 8 : 2;
+
+  const feeDecimals =
+    t.from_currency === "PI" ? 8 : 2;
+
+  return `
   <p>
-    ${t.from_currency} → ${t.to_currency} <br>
-    Amount: ${Number(t.amount).toLocaleString(undefined,{
-  minimumFractionDigits:3,
-  maximumFractionDigits:3
-})} <br>
+    <b>${t.from_currency} → ${t.to_currency}</b><br>
 
-Received: ${
-  t.to_currency === "PI"
-    ? "π"
-    : t.to_currency === "USD"
-    ? "$"
-    : "₦"
-}${Number(t.received ?? 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})} <br>
+    Amount:
+    ${amountSymbol}${Number(t.amount).toLocaleString(undefined,{
+      minimumFractionDigits: amountDecimals,
+      maximumFractionDigits: amountDecimals
+    })}<br>
 
-Fee: ${
-  t.from_currency === "PI"
-    ? "π"
-    : t.from_currency === "USD"
-    ? "$"
-    : "₦"
-}${Number(t.fee ?? 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})} <br>
+    Received:
+    ${receiveSymbol}${Number(t.received ?? 0).toLocaleString(undefined,{
+      minimumFractionDigits: receiveDecimals,
+      maximumFractionDigits: receiveDecimals
+    })}<br>
 
-Gas: $${Number(t.gas ?? 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})} <br>
+    Fee:
+    ${feeSymbol}${Number(t.fee ?? 0).toLocaleString(undefined,{
+      minimumFractionDigits: feeDecimals,
+      maximumFractionDigits: feeDecimals
+    })}<br>
+
+    Gas:
+    $${Number(t.gas ?? 0).toLocaleString(undefined,{
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    })}<br>
+
     ${new Date(t.created_at).toLocaleString()}
   </p>
-`).join('');
+  `;
+})
+.join("");
 }
 // WITHDRAW Fiat
 async function requestWithdrawal(){
