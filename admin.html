@@ -179,7 +179,7 @@ async function loadRevenueSummary() {
   (b.productFees || 0) +
   (b.courseFees || 0) +
   (b.swapFees || 0) +
-  (b.gasFees || 0) +
+  (b.usdGasFees || 0) +
   (b.logisticsFees || 0) +
   (b.serviceFees || 0); // ✅ ADD THIS
 
@@ -191,7 +191,10 @@ async function loadRevenueSummary() {
 
   document.getElementById("revenueList").innerHTML = `
   <div class="card">🔄 Swap Fees: ₦${(b.swapFees || 0).toLocaleString()}</div>
-  <div class="card">⛽ Gas Fees: ₦${(b.gasFees || 0).toLocaleString()}</div>
+  <div class="card">⛽ USD Gas Fees: $${Number(b.usdGasFees || 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})}</div>
   <div class="card">🛒 Product Fees: ₦${(b.productFees || 0).toLocaleString()}</div>
   <div class="card">🚚 Logistics Fees: ₦${(b.logisticsFees || 0).toLocaleString()}</div>
   <div class="card">📚 Course Fees: ₦${(b.courseFees || 0).toLocaleString()}</div>
@@ -232,7 +235,10 @@ async function loadRevenueWallet(){
 
 document.getElementById("revenueBreakdown").innerHTML = `
   <div class="card">Swap Fees: ₦${(b.swapFees || 0).toLocaleString()}</div>
-  <div class="card">Gas Fees: ₦${(b.gasFees || 0).toLocaleString()}</div>
+  <div class="card">USD Gas Fees: $${Number(b.usdGasFees || 0).toLocaleString(undefined,{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+})}</div>
   <div class="card">Product Fees: ₦${(b.productFees || 0).toLocaleString()}</div>
   <div class="card">Logistics Fees: ₦${(b.logisticsFees || 0).toLocaleString()}</div>
   <div class="card">Course Fees: ₦${(b.courseFees || 0).toLocaleString()}</div>
