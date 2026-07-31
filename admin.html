@@ -33,7 +33,19 @@
 
   <h2>💰 App Revenue Wallet</h2>
   <div id="revenueBalance"></div>
-  <h2>Total Revenue: <span id="totalRevenue">₦0</span></h2>
+  <h2>💰 Revenue Totals</h2>
+
+<div class="card">
+  🇳🇬 Naira: <span id="totalRevenueNG">₦0</span>
+</div>
+
+<div class="card">
+  🇺🇸 USD: <span id="totalRevenueUSD">$0.00</span>
+</div>
+
+<div class="card">
+  π Pi: <span id="totalRevenuePI">π0</span>
+</div>
 
   <h3>📊 Revenue Breakdown</h3>
   <div id="revenueBreakdown"></div>
@@ -173,32 +185,78 @@ async function loadRevenueSummary() {
   const res = await fetch(API + '/revenue-wallet');
   const data = await res.json();
 
-  const b = data.breakdown || {};
+  const breakdown = data.breakdown || {};
 
-  const total =
-  (b.productFees || 0) +
-  (b.courseFees || 0) +
-  (b.swapFees || 0) +
-  (b.usdGasFees || 0) +
-  (b.logisticsFees || 0) +
-  (b.serviceFees || 0); // ✅ ADD THIS
+const ng = breakdown.ng || {};
+const usd = breakdown.usd || {};
+const pi = breakdown.pi || {};
 
-  document.getElementById('revenueBox').innerHTML =
-    "<h3>Total Revenue: ₦" + total.toLocaleString() + "</h3>";
+  const nairaTotal =
+  (ng.productFees || 0) +
+  (ng.logisticsFees || 0) +
+  (ng.courseFees || 0) +
+  (ng.serviceFees || 0) +
+  (ng.swapFees || 0) +
+  (ng.gasFees || 0);
 
-  document.getElementById("totalRevenue").innerText =
-    "₦" + total.toLocaleString();
+const usdTotal =
+  (usd.productFees || 0) +
+  (usd.logisticsFees || 0) +
+  (usd.courseFees || 0) +
+  (usd.serviceFees || 0) +
+  (usd.swapFees || 0) +
+  (usd.gasFees || 0);
 
-  document.getElementById("revenueList").innerHTML = `
-  <div class="card">🔄 Swap Fees: ₦${(b.swapFees || 0).toLocaleString()}</div>
-  <div class="card">⛽ USD Gas Fees: $${Number(b.usdGasFees || 0).toLocaleString(undefined,{
+const piTotal =
+  (pi.productFees || 0) +
+  (pi.logisticsFees || 0) +
+  (pi.courseFees || 0) +
+  (pi.serviceFees || 0) +
+  (pi.swapFees || 0) +
+  (pi.gasFees || 0);
+
+document.getElementById("revenueBox").innerHTML = "";
+
+document.getElementById("totalRevenue").innerHTML =
+`
+🇳🇬 ₦${nairaTotal.toLocaleString()}<br>
+🇺🇸 $${Number(usdTotal).toLocaleString(undefined,{
   minimumFractionDigits:2,
   maximumFractionDigits:2
+})}<br>
+π ${Number(piTotal).toLocaleString(undefined,{
+  minimumFractionDigits:0,
+  maximumFractionDigits:8
+})}
+`;
+
+  document.getElementById("revenueList").innerHTML = `
+<h3>🇳🇬 Naira Revenue</h3>
+<div class="card">🛒 Product Fees: ₦${(ng.productFees || 0).toLocaleString()}</div>
+<div class="card">🚚 Logistics Fees: ₦${(ng.logisticsFees || 0).toLocaleString()}</div>
+<div class="card">💳 Service Fees: ₦${(ng.serviceFees || 0).toLocaleString()}</div>
+
+<h3>🇺🇸 USD Revenue</h3>
+<div class="card">🔄 USD Swap Fees: $${Number(usd.swapFees || 0).toLocaleString(undefined,{
+minimumFractionDigits:2,
+maximumFractionDigits:2
 })}</div>
-  <div class="card">🛒 Product Fees: ₦${(b.productFees || 0).toLocaleString()}</div>
-  <div class="card">🚚 Logistics Fees: ₦${(b.logisticsFees || 0).toLocaleString()}</div>
-  <div class="card">📚 Course Fees: ₦${(b.courseFees || 0).toLocaleString()}</div>
-  <div class="card">💳 Service Fees: ₦${(b.serviceFees || 0).toLocaleString()}</div>
+
+<div class="card">⛽ USD Gas Fees: $${Number(usd.gasFees || 0).toLocaleString(undefined,{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}</div>
+
+<div class="card">📚 Course Fees: $${Number(usd.courseFees || 0).toLocaleString(undefined,{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}</div>
+
+<h3>π Pi Revenue</h3>
+<div class="card">π Swap Fees: π${Number(pi.swapFees || 0).toLocaleString(undefined,{
+  minimumFractionDigits:0,
+  maximumFractionDigits:8
+})}</div>
 `;
 }
 
@@ -231,18 +289,38 @@ async function loadRevenueWallet(){
 
   "</div>";
 
-  const b = data.breakdown || {};
+  const breakdown = data.breakdown || {};
+
+const ng = breakdown.ng || {};
+const usd = breakdown.usd || {};
+const pi = breakdown.pi || {};
 
 document.getElementById("revenueBreakdown").innerHTML = `
-  <div class="card">Swap Fees: ₦${(b.swapFees || 0).toLocaleString()}</div>
-  <div class="card">USD Gas Fees: $${Number(b.usdGasFees || 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})}</div>
-  <div class="card">Product Fees: ₦${(b.productFees || 0).toLocaleString()}</div>
-  <div class="card">Logistics Fees: ₦${(b.logisticsFees || 0).toLocaleString()}</div>
-  <div class="card">Course Fees: ₦${(b.courseFees || 0).toLocaleString()}</div>
-  <div class="card">Service Fees: ₦${(b.serviceFees || 0).toLocaleString()}</div>
+
+<h3>🇳🇬 Naira Revenue</h3>
+<div class="card">Product Fees: ₦${Number(ng.productFees || 0).toLocaleString()}</div>
+<div class="card">Logistics Fees: ₦${Number(ng.logisticsFees || 0).toLocaleString()}</div>
+<div class="card">Course Fees: ₦${Number(ng.courseFees || 0).toLocaleString()}</div>
+<div class="card">Service Fees: ₦${Number(ng.serviceFees || 0).toLocaleString()}</div>
+<div class="card">Swap Fees: ₦${Number(ng.swapFees || 0).toLocaleString()}</div>
+<div class="card">Gas Fees: ₦${Number(ng.gasFees || 0).toLocaleString()}</div>
+
+<h3>🇺🇸 USD Revenue</h3>
+<div class="card">Product Fees: $${Number(usd.productFees || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+<div class="card">Logistics Fees: $${Number(usd.logisticsFees || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+<div class="card">Course Fees: $${Number(usd.courseFees || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+<div class="card">Service Fees: $${Number(usd.serviceFees || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+<div class="card">Swap Fees: $${Number(usd.swapFees || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+<div class="card">Gas Fees: $${Number(usd.gasFees || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+
+<h3>π Pi Revenue</h3>
+<div class="card">Product Fees: π${Number(pi.productFees || 0).toLocaleString(undefined,{maximumFractionDigits:8})}</div>
+<div class="card">Logistics Fees: π${Number(pi.logisticsFees || 0).toLocaleString(undefined,{maximumFractionDigits:8})}</div>
+<div class="card">Course Fees: π${Number(pi.courseFees || 0).toLocaleString(undefined,{maximumFractionDigits:8})}</div>
+<div class="card">Service Fees: π${Number(pi.serviceFees || 0).toLocaleString(undefined,{maximumFractionDigits:8})}</div>
+<div class="card">Swap Fees: π${Number(pi.swapFees || 0).toLocaleString(undefined,{maximumFractionDigits:8})}</div>
+<div class="card">Gas Fees: π${Number(pi.gasFees || 0).toLocaleString(undefined,{maximumFractionDigits:8})}</div>
+
 `;
 }
 function toggleWithdrawFields(){
