@@ -217,18 +217,20 @@ const piTotal =
 
 document.getElementById("revenueBox").innerHTML = "";
 
-document.getElementById("totalRevenue").innerHTML =
-`
-🇳🇬 ₦${nairaTotal.toLocaleString()}<br>
-🇺🇸 $${Number(usdTotal).toLocaleString(undefined,{
+document.getElementById("totalRevenueNG").innerText =
+"₦" + Number(data.NG || 0).toLocaleString();
+
+document.getElementById("totalRevenueUSD").innerText =
+"$" + Number(data.USD || 0).toLocaleString(undefined,{
   minimumFractionDigits:2,
   maximumFractionDigits:2
-})}<br>
-π ${Number(piTotal).toLocaleString(undefined,{
+});
+
+document.getElementById("totalRevenuePI").innerText =
+"π" + Number(data.PI || 0).toLocaleString(undefined,{
   minimumFractionDigits:0,
   maximumFractionDigits:8
-})}
-`;
+});
 
   document.getElementById("revenueList").innerHTML = `
 <h3>🇳🇬 Naira Revenue</h3>
