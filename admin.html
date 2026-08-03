@@ -108,7 +108,14 @@
 <div id="withdrawalsList"></div>
 <h2>📜 System Logs</h2>
 <div id="logsList"></div>
+<label><b>Network:</b></label>
 
+<select id="networkSelector" onchange="changeNetwork()">
+  <option value="mainnet">Mainnet</option>
+  <option value="testnet">Testnet</option>
+</select>
+
+<br><br>
   <h2>Products</h2>
   <div id="productsList"></div>
 
@@ -123,7 +130,21 @@
 
 <script>
 const API = "https://godomcoworld-backend.onrender.com";
+const networkSelector =
+document.getElementById("networkSelector");
 
+function getNetwork() {
+  return localStorage.getItem("walletNetwork") || "mainnet";
+}
+
+function changeNetwork() {
+  localStorage.setItem(
+    "walletNetwork",
+    networkSelector.value
+  );
+
+  loadAll();
+}
 function login() {
   const pass = document.getElementById('adminPass').value;
 
@@ -134,7 +155,8 @@ function login() {
   "Dashboard display:",
   getComputedStyle(document.getElementById("dashboard")).display
 );
-    loadAll();
+    networkSelector.value = getNetwork();
+loadAll();
   } else {
     alert("Wrong password");
   }
@@ -182,7 +204,12 @@ function loadAll() {
 
 // ================= REVENUE SUMMARY =================
 async function loadRevenueSummary() {
-  const res = await fetch(API + '/revenue-wallet');
+  const network = getNetwork();
+
+const res = await fetch(
+API + "/revenue-wallet?network=" +
+encodeURIComponent(network)
+);
   const data = await res.json();
 
   const breakdown = data.breakdown || {};
@@ -264,7 +291,12 @@ maximumFractionDigits:2
 
 // ================= REVENUE WALLET =================
 async function loadRevenueWallet(){
-  const res = await fetch(API + "/revenue-wallet");
+  const network = getNetwork();
+
+const res = await fetch(
+API + "/revenue-wallet?network=" +
+encodeURIComponent(network)
+);
   const data = await res.json();
 
   document.getElementById("revenueBalance").innerHTML =
@@ -398,7 +430,12 @@ async function withdrawRevenue(){
 // WALLET WITHDRAWALS 
 async function loadWithdrawals(){
 
-  const res = await fetch(API + "/withdrawals");
+  const network = getNetwork();
+
+const res = await fetch(
+API + "/withdrawals?network=" +
+encodeURIComponent(network)
+);
   const data = await res.json();
 
   document.getElementById("withdrawalsList").innerHTML =
@@ -434,7 +471,11 @@ async function handleWithdrawal(id, action){
   const res = await fetch(API + "/withdrawals/approve", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ id, action })
+    body: JSON.stringify({
+  id,
+  action,
+  network: getNetwork()
+})
   });
 
   const data = await res.json();
@@ -449,7 +490,10 @@ async function markAsPaid(id){
   const res = await fetch(API + "/withdrawals/paid", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ id })
+    body: JSON.stringify({
+  id,
+  network: getNetwork()
+})
   });
 
   const data = await res.json();
@@ -459,7 +503,12 @@ async function markAsPaid(id){
   loadWithdrawals();
 }
 async function loadLogs(){
-  const res = await fetch(API + "/logs");
+  const network = getNetwork();
+
+const res = await fetch(
+  API + "/logs?network=" +
+  encodeURIComponent(network)
+);
   const data = await res.json();
 
   document.getElementById("logsList").innerHTML =
@@ -535,7 +584,12 @@ async function loadProducts() {
 
 // ================= ORDERS =================
 async function loadOrders() {
-  const res = await fetch(API + '/orders-full');
+  const network = getNetwork();
+
+const res = await fetch(
+  API + "/orders-full?network=" +
+  encodeURIComponent(network)
+);
   const data = await res.json();
 
   const container = document.getElementById('ordersList');

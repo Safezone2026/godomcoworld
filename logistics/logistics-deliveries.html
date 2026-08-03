@@ -12,8 +12,11 @@
 
 <script>
 const rider = localStorage.getItem("logisticsName");
-
-fetch('https://godomcoworld-backend.onrender.com/api/deliveries')
+const network =
+localStorage.getItem("walletNetwork") || "mainnet";
+fetch(
+`https://godomcoworld-backend.onrender.com/api/deliveries?network=${encodeURIComponent(network)}`
+)
 .then(res => res.json())
 .then(data => {
 
@@ -50,10 +53,14 @@ Delivered to Buyer
 function updateStatus(orderId, status){
 
   fetch('https://godomcoworld-backend.onrender.com/api/update-delivery', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ orderId, status })
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({
+    orderId,
+    status,
+    network
   })
+})  
   .then(() => location.reload());
 }
 

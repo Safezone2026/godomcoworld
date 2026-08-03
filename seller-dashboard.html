@@ -171,6 +171,8 @@ View All Orders
 <script>
 const sellerId = localStorage.getItem("sellerId");
 const currentSeller = localStorage.getItem("username") || "";
+const network =
+localStorage.getItem("walletNetwork") || "mainnet";
 
 if(!sellerId){
   alert("Seller session expired. Please register/login again.");
@@ -192,7 +194,7 @@ async function loadEarnings(){
     const API = "https://godomcoworld-backend.onrender.com";
 
 const res = await fetch(
-  `${API}/seller-dashboard/${sellerId}`
+  `${API}/seller-dashboard/${sellerId}?network=${encodeURIComponent(network)}`
 );
 
 const data = await res.json();
@@ -252,7 +254,7 @@ async function loadSalesHistory(){
     const API = "https://godomcoworld-backend.onrender.com";
 
 const res = await fetch(
-  `${API}/seller-dashboard/${sellerId}`
+  `${API}/seller-dashboard/${sellerId}?network=${encodeURIComponent(network)}`
 );
 
 const data = await res.json();
@@ -357,11 +359,12 @@ const res = await fetch(`${API}/seller-withdraw`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        sellerId: sellerId,
-        amount,
-        method,
-        details
-      })
+  sellerId,
+  amount,
+  method,
+  details,
+  network
+})
     });
 
     const data = await res.json();

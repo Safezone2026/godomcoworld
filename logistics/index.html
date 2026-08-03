@@ -125,6 +125,8 @@ if(!rider){
   rider = prompt("Enter logistics name (e.g Godomco Rider)");
   localStorage.setItem("logisticsName", rider);
 }
+const network =
+localStorage.getItem("walletNetwork") || "mainnet";
 console.log("Current rider =", rider);
 document.getElementById("riderName").innerText = "Rider: " + rider;
 
@@ -134,7 +136,9 @@ async function loadDashboard(){
 
   try {
 
-    const res = await fetch(`https://godomcoworld-backend.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}`);
+    const res = await fetch(
+`https://godomcoworld-backend.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
+);
     const data = await res.json();
 
     console.log("LOGISTICS DATA:", data);
@@ -229,7 +233,11 @@ async function updateStatus(orderId, status){
   const res = await fetch('https://godomcoworld-backend.onrender.com/update-delivery-status', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ orderId, status })
+    body: JSON.stringify({
+  orderId,
+  status,
+  network
+})
   });
 
   const data = await res.json();
@@ -256,18 +264,19 @@ async function withdrawFunds(){
   }
 
   const body = {
-    riderName: rider,
-    amount,
-    method
-  };
+  riderName: rider,
+  amount,
+  method,
+  network
+};
 
-  if(method === "bank"){
-    body.bankName = "Bank";
-    body.accountNumber = details;
-  }else{
-    body.cryptoAddress = details;
-    body.network = "TRC20";
-  }
+if(method === "bank"){
+  body.bankName = "Bank";
+  body.accountNumber = details;
+}else{
+  body.cryptoAddress = details;
+  body.withdrawNetwork = "TRC20";
+}
 
   const res = await fetch(
     "https://godomcoworld-backend.onrender.com/rider-withdraw",
@@ -301,8 +310,8 @@ async function withdrawFunds(){
 async function loadWithdrawals(){
 
   const res = await fetch(
-    `https://godomcoworld-backend.onrender.com/rider-withdrawals/${encodeURIComponent(rider)}`
-  );
+`https://godomcoworld-backend.onrender.com/rider-withdrawals/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
+);
 
   const data = await res.json();
 

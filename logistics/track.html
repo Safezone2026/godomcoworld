@@ -64,7 +64,8 @@ console.log("Current user:", username);
 async function trackOrder(){
 
   let orderIdInput = document.getElementById("trackingInput").value.trim();
-
+ const network =
+localStorage.getItem("walletNetwork") || "mainnet";
   if(!orderIdInput){
     alert("Enter tracking number");
     return;
@@ -73,7 +74,7 @@ async function trackOrder(){
   try {
 
    let res = await fetch(
-  `https://godomcoworld-backend.onrender.com/logistics/track/${orderIdInput}`
+`https://godomcoworld-backend.onrender.com/logistics/track/${orderIdInput}?network=${encodeURIComponent(network)}`
 );
     let data = await res.json();
 
@@ -162,8 +163,9 @@ document.getElementById("confirmBtn").onclick = async function(){
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
-      orderId: window.currentOrderId
-    })
+  orderId: window.currentOrderId,
+  network
+})
   });
 
   const data = await res.json();
@@ -189,11 +191,12 @@ document.getElementById("disputeBtn").onclick = async function(){
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
-      orderId: window.currentOrderId,
-      buyer: username,
-      reason,
-      description
-    })
+  orderId: window.currentOrderId,
+  buyer: username,
+  reason,
+  description,
+  network
+})
   });
 
   const data = await res.json();

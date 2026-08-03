@@ -252,11 +252,11 @@ await fetch('https://godomcoworld-backend.onrender.com/api/checkout', {
     address,
     country,
     user: localStorage.getItem("username") || "guest",
+    network: currentNetwork,
 
-    // 🔥 ADD THIS
     lat,
     lng
-  })
+})
 });
 
     alert("✅ Payment successful\nOrder ID: " + orderId);

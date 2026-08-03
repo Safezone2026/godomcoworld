@@ -11,7 +11,13 @@
 <div id="ordersList">Loading...</div>
 
 <script>
-fetch('https://godomcoworld-backend.onrender.com/api/orders')
+const API = "https://godomcoworld-backend.onrender.com";
+
+const network =
+localStorage.getItem("walletNetwork") || "mainnet";
+fetch(
+`${API}/api/orders?network=${encodeURIComponent(network)}`
+)
 .then(res => res.json())
 .then(data => {
   const container = document.getElementById("ordersList");
@@ -38,13 +44,14 @@ function acceptOrder(id){
 
   const rider = localStorage.getItem("logisticsName");
 
-  fetch('/api/assign-order', {
+  fetch(`${API}/api/assign-order`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      orderId: id,
-      rider: rider
-    })
+   body: JSON.stringify({
+  orderId: id,
+  rider,
+  network
+})
   })
   .then(res => res.json())
   .then(data => {

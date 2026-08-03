@@ -292,21 +292,31 @@ async function payWithBackend(method){
     return alert("Click calculate first");
   }
 
-  // ✅ DETERMINE CURRENCY
-  let currency = method === "Pi" ? "PI" : "NG";
+  // ✅ DETERMINE CURRENCY + NETWORK
+let currency = method === "Pi" ? "PI" : "NG";
 
-  try{
+const currentNetwork =
+  localStorage.getItem("walletNetwork") || "mainnet";
 
-    const res = await fetch("https://godomcoworld-backend.onrender.com/wallet/pay", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-  walletId,
-  amount,
-  currency,
-  type: currentService,
-  network: localStorage.getItem("walletNetwork") || "testnet"
-})
+const walletId =
+  localStorage.getItem("walletId_" + currentNetwork);
+
+const res = await fetch(
+  "https://godomcoworld-backend.onrender.com/wallet/pay",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      walletId,
+      amount,
+      currency,
+      type: currentService,
+      network: currentNetwork
+    })
+  }
+);
     });
 
     const data = await res.json();
