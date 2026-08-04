@@ -10,6 +10,32 @@
     .card { border: 1px solid #444; padding: 10px; margin: 10px 0; background:#1a1a1a; color:#fff; border-radius:8px; }
     button { margin-top: 5px; padding: 8px; }
     input, select { padding:8px; margin:5px 0; }
+.network-filter-top{
+    margin:15px 0 20px;
+    padding:12px;
+    border:2px solid #16a34a;
+    border-radius:10px;
+    background:#0d1117;
+}
+
+.network-filter-top label{
+    display:block;
+    margin-bottom:8px;
+    font-size:16px;
+    font-weight:bold;
+    color:#22c55e;
+}
+
+#networkSelect{
+    width:100%;
+    padding:10px;
+    font-size:15px;
+    font-weight:bold;
+    color:#fff;
+    background:#161b22;
+    border:1px solid #22c55e;
+    border-radius:8px;
+}
   </style>
 </head>
 
@@ -26,6 +52,14 @@
 
 <!-- DASHBOARD -->
 <div id="dashboard" style="display:none;">
+<div class="network-filter-top">
+  <label for="networkSelect"><strong>🌐 Active Network</strong></label>
+
+  <select id="networkSelect" onchange="changeNetwork()">
+    <option value="mainnet">Mainnet</option>
+<option value="testnet">Testnet</option>
+  </select>
+</div>
 
   <h2>📊 Platform Revenue</h2>
   <div id="revenueBox"></div>
@@ -108,12 +142,6 @@
 <div id="withdrawalsList"></div>
 <h2>📜 System Logs</h2>
 <div id="logsList"></div>
-<label><b>Network:</b></label>
-
-<select id="networkSelector" onchange="changeNetwork()">
-  <option value="mainnet">Mainnet</option>
-  <option value="testnet">Testnet</option>
-</select>
 
 <br><br>
   <h2>Products</h2>
@@ -131,7 +159,7 @@
 <script>
 const API = "https://godomcoworld-backend.onrender.com";
 const networkSelector =
-document.getElementById("networkSelector");
+document.getElementById("networkSelect");
 
 function getNetwork() {
   return localStorage.getItem("walletNetwork") || "mainnet";
