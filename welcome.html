@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Welcome | Godomcoworld</title>
+
+<style>
+
+body{
+
+margin:0;
+
+padding:0;
+
+font-family:Arial,sans-serif;
+
+background:#0d1117;
+
+color:#fff;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+height:100vh;
+
+}
+
+.card{
+
+width:90%;
+
+max-width:650px;
+
+background:#161b22;
+
+padding:30px;
+
+border-radius:15px;
+
+border:2px solid #22c55e;
+
+text-align:center;
+
+}
+
+img{
+
+width:120px;
+
+margin-bottom:15px;
+
+}
+
+h1{
+
+color:#22c55e;
+
+margin-bottom:5px;
+
+}
+
+.info{
+
+text-align:left;
+
+margin-top:20px;
+
+padding:15px;
+
+background:#0f1720;
+
+border-radius:10px;
+
+}
+
+.info p{
+
+margin:10px 0;
+
+}
+
+button{
+
+margin-top:25px;
+
+padding:14px 30px;
+
+font-size:16px;
+
+font-weight:bold;
+
+background:#22c55e;
+
+color:#fff;
+
+border:none;
+
+border-radius:8px;
+
+cursor:pointer;
+
+}
+
+button:hover{
+
+background:#16a34a;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<img src="./images/logo.png">
+
+<h1>Welcome to Godomcoworld</h1>
+
+<h2 id="username">Loading...</h2>
+
+<div class="info">
+
+<p><strong>UID:</strong> <span id="uid">Loading...</span></p>
+
+<p><strong>Wallet ID:</strong> <span id="wallet">Loading...</span></p>
+
+<p><strong>Network:</strong> <span id="network">Loading...</span></p>
+
+<p><strong>KYC:</strong> <span id="kyc">Loading...</span></p>
+
+</div>
+
+<button onclick="enterApp()">
+
+🚀 Enter Godomcoworld
+
+</button>
+
+</div>
+
+<script>
+
+const API = "https://godomcoworld-backend.onrender.com";
+
+const params = new URLSearchParams(window.location.search);
+
+document.getElementById("username").textContent =
+params.get("username") || "Unknown User";
+
+document.getElementById("uid").textContent =
+params.get("uid") || "-";
+
+document.getElementById("wallet").textContent =
+params.get("wallet") || "Not Assigned";
+
+document.getElementById("network").textContent =
+params.get("network") || "Mainnet";
+
+document.getElementById("kyc").textContent =
+params.get("kyc") || "Verified";
+
+function enterApp(){
+
+location.href = "index.html";
+
+}
+
+</script>
+<script src="js/dev-console.js"></script>
+</body>
+
+</html>

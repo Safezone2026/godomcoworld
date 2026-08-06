@@ -791,86 +791,72 @@ async function loginPi(){
 
     try{
 
+        alert("1. loginPi started");
+
         const scopes = [
             "username",
             "payments"
         ];
 
-        const auth =
-        await Pi.authenticate(scopes);
+        alert("2. About to authenticate");
+
+        const auth = await Pi.authenticate(scopes);
+
+        alert("3. authenticate returned");
+
+        console.log(auth);
 
         if(!auth){
             alert("Authentication cancelled.");
             return;
         }
 
-        const response =
-        await fetch(API + "/api/pi-auth",{
+        alert("4. accessToken received");
 
+        const response = await fetch(API + "/api/pi-auth",{
             method:"POST",
-
             headers:{
                 "Content-Type":"application/json"
             },
-
             body:JSON.stringify({
-
-                accessToken:
-                auth.accessToken
-
+                accessToken: auth.accessToken
             })
-
         });
 
-        const result =
-        await response.json();
+        alert("5. Backend reached");
+
+        const result = await response.json();
+
+        alert("6. Backend replied");
 
         if(!result.success){
-
-            alert(
-                result.message ||
-                "Pi authentication failed"
-            );
-
+            alert(result.message);
             return;
-
         }
 
         location.href =
         "welcome.html?" +
-
-        "username=" +
-        encodeURIComponent(
-        result.user.username
-        ) +
-
-        "&uid=" +
-        encodeURIComponent(
-        result.user.uid
-        ) +
-
+        "username=" + encodeURIComponent(result.user.username) +
+        "&uid=" + encodeURIComponent(result.user.uid) +
         "&network=testnet" +
-
         "&wallet=Pending" +
-
         "&kyc=Verified";
 
-    }
-
-    catch(err){
+    }catch(err){
 
         console.error(err);
 
         alert(
-        "Login failed.\n" +
-        err.message
+            "ERROR:\n" +
+            err.message
         );
 
     }
 
 }
-</script>
 
+</script>
+<script src="js/dev-console.js"></script>
 </body>
 
 </html>
