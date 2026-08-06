@@ -285,7 +285,7 @@ color:#fff;
 
 }
 </style>
-
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 
 <body>
@@ -311,10 +311,10 @@ AI Powered Marketplace • Financial Services • Technology Learning Platform
 
 </p>
 
-<a href="index.html" class="hero-btn">
-
+<a href="javascript:void(0)"
+   class="hero-btn"
+   onclick="loginPi()">
 🔵 Sign in with Pi
-
 </a>
 
 </header>
@@ -777,6 +777,98 @@ closeGuide();
 }
 
 };
+// ================= PI LOGIN =================
+
+const API =
+"https://godomcoworld-backend.onrender.com";
+
+Pi.init({
+    version: "2.0",
+    sandbox: true
+});
+
+async function loginPi(){
+
+    try{
+
+        const scopes = [
+            "username",
+            "payments"
+        ];
+
+        const auth =
+        await Pi.authenticate(scopes);
+
+        if(!auth){
+            alert("Authentication cancelled.");
+            return;
+        }
+
+        const response =
+        await fetch(API + "/api/pi-auth",{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+
+                accessToken:
+                auth.accessToken
+
+            })
+
+        });
+
+        const result =
+        await response.json();
+
+        if(!result.success){
+
+            alert(
+                result.message ||
+                "Pi authentication failed"
+            );
+
+            return;
+
+        }
+
+        location.href =
+        "welcome.html?" +
+
+        "username=" +
+        encodeURIComponent(
+        result.user.username
+        ) +
+
+        "&uid=" +
+        encodeURIComponent(
+        result.user.uid
+        ) +
+
+        "&network=testnet" +
+
+        "&wallet=Pending" +
+
+        "&kyc=Verified";
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+        alert(
+        "Login failed.\n" +
+        err.message
+        );
+
+    }
+
+}
 </script>
 
 </body>
