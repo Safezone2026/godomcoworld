@@ -11,7 +11,11 @@
 <link rel="stylesheet" href="css/style.css">
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-
+<script>
+if (!location.search.includes("skipLanding")) {
+    location.replace("home.html");
+}
+</script>
 </head>
 
 <body>
@@ -324,7 +328,21 @@ alert("Step 2");
 
     const result = await response.json();
 
-    console.log(result);
+console.log(result);
+
+if (!result.success) {
+  alert(result.message || "Pi authentication failed");
+  return;
+}
+
+// Redirect to Welcome Page
+location.href =
+  "welcome.html?" +
+  "username=" + encodeURIComponent(result.user.username) +
+  "&uid=" + encodeURIComponent(result.user.uid) +
+  "&network=testnet" +
+  "&wallet=Pending" +
+  "&kyc=Verified";
 
   }catch(err){
 
