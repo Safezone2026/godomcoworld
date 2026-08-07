@@ -16,7 +16,7 @@ const API = "https://godomcoworld-backend.onrender.com";
 const network =
 localStorage.getItem("walletNetwork") || "mainnet";
 fetch(
-`${API}/api/orders?network=${encodeURIComponent(network)}`
+`${API}/orders-full?network=${encodeURIComponent(network)}`
 )
 .then(res => res.json())
 .then(data => {
@@ -28,16 +28,52 @@ fetch(
     return;
   }
 
-  data.forEach(order => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <p><b>Order:</b> ${order.id}</p>
-      <p>Total: ₦${order.total}</p>
-      <button onclick="acceptOrder('${order.id}')">Accept</button>
-      <hr>
-    `;
-    container.appendChild(div);
-  });
+  (data.orders || []).forEach(order => {
+
+  const items =
+    typeof order.items === "string"
+      ? JSON.parse(order.items)
+      : order.items;
+
+  const div = document.createElement("div");
+  div.className = "card";
+
+  div.innerHTML = `
+<b>🆔 Order:</b> ${order.order_id}<br><br>
+
+<b>👤 Buyer:</b> ${order.buyer_name || "-"}<br>
+<b>📞 Phone:</b> ${order.buyer_phone || "-"}<br>
+<b>📧 Email:</b> ${order.buyer_email || "-"}<br><br>
+
+<b>🏠 Address:</b><br>
+${order.house_address || ""}<br>
+${order.city || ""}<br>
+${order.state || ""}<br>
+${order.country || ""}<br><br>
+
+<b>🏪 Seller:</b> ${order.seller_username || "-"}<br>
+<b>📞 Seller Phone:</b> ${order.seller_phone || "-"}<br>
+<b>📍 Seller Address:</b><br>
+${order.seller_address || ""}<br>
+${order.seller_city || ""}<br>
+${order.seller_state || ""}<br>
+${order.seller_country || ""}<br><br>
+
+<b>🛒 Items:</b><br>
+${items.map(i =>
+`${i.name} × ${i.quantity || 1}`
+).join("<br>")}<br><br>
+
+<b>💰 Total:</b> ₦${Number(order.total).toLocaleString()}<br>
+
+<button onclick="acceptOrder('${order.order_id}')">
+Accept Order
+</button>
+`;
+
+  container.appendChild(div);
+
+});
 });
 
 function acceptOrder(id){

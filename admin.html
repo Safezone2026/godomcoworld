@@ -152,7 +152,29 @@
 
   <h2>Sellers</h2>
   <div id="sellersList"></div>
+<h2>🚚 Logistics Partners</h2>
+<div id="logisticsList"></div>
 
+<h2>🚛 Deliveries</h2>
+<div id="deliveryList"></div>
+
+<h2>📚 Courses</h2>
+<div id="coursesList"></div>
+
+<h2>📈 User Activity</h2>
+<div id="activityList"></div>
+
+<h2>👤 Users</h2>
+<div id="usersList"></div>
+
+<h2>💼 Wallets</h2>
+<div id="walletList"></div>
+
+<h2>📊 Analytics</h2>
+<div id="analyticsBox"></div>
+
+<h2>🆘 Disputes</h2>
+<div id="disputesList"></div>
 </div>
 
 
@@ -195,6 +217,10 @@ let sellersLoaded = false;
 let withdrawalsLoaded = false;
 let logsLoaded = false;
 
+let activityLoaded = false;
+let disputesLoaded = false;
+let logisticsLoaded = false;
+
 function loadAll() {
   // Load only lightweight data first
   loadRevenueSummary();
@@ -227,6 +253,20 @@ function loadAll() {
       loadLogs();
       logsLoaded = true;
     }
+   if (!activityLoaded) {
+    loadActivity();
+    activityLoaded = true;
+}
+
+if (!disputesLoaded) {
+    loadDisputes();
+    disputesLoaded = true;
+}
+
+if (!logisticsLoaded) {
+    loadLogistics();
+    logisticsLoaded = true;
+}
   }, 500);
 }
 
@@ -668,7 +708,109 @@ console.log(
 );
   });
 }
-        
+// ================= LOGISTICS =================
+async function loadLogistics(){
+
+  const res = await fetch(
+    API + "/logistics"
+  );
+
+  const data = await res.json();
+
+  const container =
+  document.getElementById("logisticsList");
+
+  container.innerHTML = "";
+
+  (data || []).forEach(l=>{
+
+    const div =
+    document.createElement("div");
+
+    div.className = "card";
+
+    div.innerHTML =
+      "Name: " + l.name + "<br>" +
+      "Phone: " + (l.phone || "-") + "<br>" +
+      "Country: " + (l.country || "-");
+
+    container.appendChild(div);
+
+  });
+
+}
+
+// ================= ACTIVITY =================
+async function loadActivity(){
+
+  const res =
+  await fetch(API + "/activity");
+
+  const data =
+  await res.json();
+
+  const container =
+  document.getElementById("activityList");
+
+  container.innerHTML = "";
+
+  data.forEach(a=>{
+
+    const div =
+    document.createElement("div");
+
+    div.className = "card";
+
+    div.innerHTML =
+      "<strong>" + a.action + "</strong><br>" +
+      (a.wallet_id || "") + "<br>" +
+      new Date(a.created_at).toLocaleString();
+
+    container.appendChild(div);
+
+  });
+
+}
+
+// ================= DISPUTES =================
+async function loadDisputes(){
+
+  const network =
+  getNetwork();
+
+  const res =
+  await fetch(
+    API +
+    "/disputes?network=" +
+    encodeURIComponent(network)
+  );
+
+  const data =
+  await res.json();
+
+  const container =
+  document.getElementById("disputesList");
+
+  container.innerHTML = "";
+
+  (data.disputes || []).forEach(d=>{
+
+    const div =
+    document.createElement("div");
+
+    div.className = "card";
+
+    div.innerHTML =
+      "Order: " + d.order_id + "<br>" +
+      "Buyer: " + d.buyer + "<br>" +
+      "Seller: " + d.seller + "<br>" +
+      "Status: " + d.status;
+
+    container.appendChild(div);
+
+  });
+
+}        
 </script>
 
 <script src="js/dev-console.js"></script>
