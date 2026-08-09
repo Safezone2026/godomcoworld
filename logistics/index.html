@@ -72,6 +72,12 @@ button {
     id="withdrawAmount"
     placeholder="Enter amount">
 
+  <select id="withdrawCurrency">
+    <option value="NG">₦ NGN</option>
+    <option value="USD">$ USD</option>
+    <option value="PI">π PI</option>
+  </select>
+
   <select id="withdrawMethod">
     <option value="bank">Bank</option>
     <option value="crypto">Crypto</option>
@@ -256,6 +262,9 @@ async function withdrawFunds(){
   const method =
     document.getElementById("withdrawMethod").value;
 
+  const withdrawalCurrency =
+    document.getElementById("withdrawCurrency").value;
+
   const details =
     document.getElementById("withdrawDetails").value;
 
@@ -266,6 +275,7 @@ async function withdrawFunds(){
   const body = {
   riderName: rider,
   amount,
+  currency: withdrawalCurrency,
   method,
   network
 };
@@ -309,42 +319,85 @@ if(method === "bank"){
 // ================= LOAD WITHDRAWALS =================
 async function loadWithdrawals(){
 
-  const res = await fetch(
+  try {
+
+    const res = await fetch(
 `https://godomcoworld-backend.onrender.com/rider-withdrawals/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
-);
+    );
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if(!data.success){
-    return;
-  }
+    if(!data.success){
+      document.getElementById("withdrawHistory").innerHTML =
+        "<p>Failed to load withdrawal history.</p>";
+      return;
+    }
 
-  const history = data.withdrawals || [];
+    const history = data.withdrawals || [];
 
-document.getElementById("withdrawHistory").innerHTML =
-history.length
-? history.map(w=>`
+    document.getElementById("withdrawHistory").innerHTML =
+      history.length
+      ? history.map(w => {
 
+          const currency = String(w.currency || "NG").toUpperCase();
+
+          const symbol =
+            currency === "USD"
+              ? "$"
+              : currency === "PI"
+                ? "π "
+                : "₦";
+
+          const amount = Number(w.amount || 0).toLocaleString(undefined,{
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+
+          const fee = Number(w.fee || 0).toLocaleString(undefined,{
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+
+          const destination =
+            w.method === "bank"
+              ? `Bank: ${w.bank_name || "-"}<br>Account: ${w.account_number || "-"}`
+              : `Crypto: ${w.crypto_address || "-"}<br>Network: ${w.network || "-"}`;
+
+          return `
 <p>
+💸 <b>${symbol}${amount} ${currency}</b><br>
 
-💸 ₦${Number(w.amount || 0).toLocaleString(undefined,{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-})}<br>
+Fee: ${fee} ${currency}<br>
 
 Method: ${w.method || "-"}<br>
 
+${destination}<br>
+
 Status:
-<b>${w.status}</b><br>
+<b>${w.status || "-"}</b><br>
 
-ID: ${w.withdrawal_id}<br>
+Withdrawal ID:
+<code>${w.withdrawal_id || w.id || "-"}</code><br>
 
-${new Date(w.created_at).toLocaleString()}
+Created:
+${w.created_at ? new Date(w.created_at).toLocaleString() : "-"}<br>
+
+Paid:
+${w.paid_at ? new Date(w.paid_at).toLocaleString() : "Not paid yet"}
 
 </p>
+<hr>
+`;
+        }).join("")
+      : "<p>No withdrawals yet.</p>";
 
-`).join("")
-: "<p>No withdrawals yet.</p>";
+  } catch(err){
+
+    console.error("RIDER WITHDRAWAL HISTORY:", err);
+
+    document.getElementById("withdrawHistory").innerHTML =
+      "<p>Failed to load withdrawal history.</p>";
+  }
 
 }
 

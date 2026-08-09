@@ -131,6 +131,12 @@ View All Orders
 
   <h3>💸 Withdraw Funds</h3>
 
+  <select id="withdrawCurrency">
+    <option value="NG">₦ NGN</option>
+    <option value="USD">$ USD</option>
+    <option value="PI">π PI</option>
+  </select>
+
   <select id="withdrawMethod">
   <option value="">Select Method</option>
   <option value="bank">Bank Transfer</option>
@@ -164,6 +170,11 @@ View All Orders
 <div class="card">
   <h3>📊 Sales Breakdown</h3>
   <div id="salesHistory">Loading...</div>
+</div>
+
+<div class="card">
+  <h3>📜 Withdrawal History</h3>
+  <div id="withdrawalHistory">Loading...</div>
 </div>
 <script>
 </script>
@@ -328,53 +339,196 @@ async function loadRecentOrders(){
 // ================= SUBMIT WITHDRAW =================
 async function submitWithdrawal(){
 
-  const method = document.getElementById("withdrawMethod").value;
-  const amount = Number(prompt("Enter amount to withdraw"));
+  const method =
+    document.getElementById("withdrawMethod").value;
+
+  const currency =
+    document.getElementById("withdrawCurrency").value;
+
+  const amount =
+    Number(document.getElementById("amount").value);
+
+  if(!method){
+    return alert("Select withdrawal method");
+  }
 
   if(!amount || amount <= 0){
-    return alert("Invalid amount");
+    return alert("Enter a valid withdrawal amount");
   }
 
-  let details = {};
+  let bankName = null;
+  let accountNumber = null;
+  let cryptoAddress = null;
 
   if(method === "bank"){
-    details = {
-      bank: document.getElementById("bankName").value,
-      accountNumber: document.getElementById("accountNumber").value,
-      accountName: document.getElementById("accountName").value
-    };
-  }
 
-  if(method === "pi"){
-    details = {
-      piAddress: document.getElementById("piAddress").value
-    };
+    bankName =
+      document.getElementById("bankName").value;
+
+    accountNumber =
+      document.getElementById("accountNumber").value.trim();
+
+    if(!accountNumber){
+      return alert("Enter account number");
+    }
+
+  }else if(method === "pi"){
+
+    cryptoAddress =
+      document.getElementById("piAddress").value.trim();
+
+    if(!cryptoAddress){
+      return alert("Enter Pi wallet address");
+    }
+
   }
 
   try {
 
-    const API = "https://godomcoworld-backend.onrender.com";
+    const API =
+      "https://godomcoworld-backend.onrender.com";
 
-const res = await fetch(`${API}/seller-withdraw`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-  sellerId,
-  amount,
-  method,
-  details,
-  network
-})
-    });
+    const res = await fetch(
+      `${API}/seller-withdraw`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sellerId,
+          amount,
+          currency,
+          method,
+          bankName,
+          accountNumber,
+          cryptoAddress,
+          network
+        })
+      }
+    );
 
     const data = await res.json();
+
     alert(data.message);
 
-    loadEarnings();
+    if(data.success){
+
+      document.getElementById("amount").value = "";
+
+      document.getElementById("accountNumber").value = "";
+      document.getElementById("accountName").value = "";
+      document.getElementById("piAddress").value = "";
+
+      loadEarnings();
+
+    }
 
   } catch(err){
-    console.error(err);
+
+    console.error("SELLER WITHDRAW:", err);
+
     alert("Withdrawal failed");
+
+  }
+}
+
+// ================= LOAD WITHDRAWAL HISTORY =================
+async function loadWithdrawalHistory(){
+
+  try {
+
+    const API =
+      "https://godomcoworld-backend.onrender.com";
+
+    const res = await fetch(
+      `${API}/seller-withdrawals/${encodeURIComponent(currentSeller)}`
+    );
+
+    const data = await res.json();
+
+    if(!data.success){
+      document.getElementById("withdrawalHistory").innerHTML =
+        "<p>Failed to load withdrawal history.</p>";
+      return;
+    }
+
+    const history = data.withdrawals || [];
+
+    document.getElementById("withdrawalHistory").innerHTML =
+      history.length
+      ? history.map(w => {
+
+          const currency =
+            String(w.currency || "NG").toUpperCase();
+
+          const symbol =
+            currency === "USD"
+              ? "$"
+              : currency === "PI"
+                ? "π "
+                : "₦";
+
+          const amount =
+            Number(w.amount || 0).toLocaleString(undefined,{
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+
+          const fee =
+            Number(w.fee || 0).toLocaleString(undefined,{
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+
+          const destination =
+            w.method === "bank"
+              ? `Bank: ${w.bank_name || "-"}<br>
+                 Account: ${w.account_number || "-"}`
+              : `Crypto: ${w.crypto_address || "-"}<br>
+                 Network: ${w.network || "-"}`;
+
+          return `
+            <p>
+              💸 <b>${symbol}${amount} ${currency}</b><br>
+
+              Fee: ${fee} ${currency}<br>
+
+              Method: ${w.method || "-"}<br>
+
+              ${destination}<br>
+
+              Status:
+              <b>${w.status || "-"}</b><br>
+
+              Withdrawal ID:
+              <code>${w.withdrawal_id || w.id || "-"}</code><br>
+
+              Created:
+              ${w.created_at
+                ? new Date(w.created_at).toLocaleString()
+                : "-"}<br>
+
+              Paid:
+              ${w.paid_at
+                ? new Date(w.paid_at).toLocaleString()
+                : "Not paid yet"}
+            </p>
+            <hr>
+          `;
+
+        }).join("")
+      : "<p>No withdrawals yet.</p>";
+
+  } catch(err){
+
+    console.error(
+      "SELLER WITHDRAWAL HISTORY:",
+      err
+    );
+
+    document.getElementById("withdrawalHistory").innerHTML =
+      "<p>Failed to load withdrawal history.</p>";
   }
 }
 
@@ -383,11 +537,13 @@ window.onload = function() {
 
   loadEarnings();
   loadSalesHistory();
+  loadWithdrawalHistory();
 
   loadRecentProducts();
   loadRecentOrders();
 
   setInterval(loadEarnings, 5000);
+  setInterval(loadWithdrawalHistory, 5000);
 
 };
 
