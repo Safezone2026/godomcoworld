@@ -58,8 +58,10 @@ button {
   <h3>⏳ Pending Balance</h3>
   <h2 id="pendingBalance">₦0</h2>
 
-  <h3>💵 Available Balance</h3>
-  <h2 id="availableBalance">₦0</h2>
+  <h3>💵 Available Balances</h3>
+  <p id="ngBalance">₦0.00</p>
+  <p id="usdBalance">$0.00</p>
+  <p id="piBalance">π 0.00</p>
 
   <h3>📦 Deliveries Completed</h3>
   <h2 id="completed">0</h2>
@@ -157,9 +159,26 @@ async function loadDashboard(){
     document.getElementById("pendingBalance").innerText =
       "₦" + Number(data.pendingBalance || 0).toLocaleString();
 
-    // 💵 AVAILABLE
-    document.getElementById("availableBalance").innerText =
-      "₦" + Number(data.availableBalance || 0).toLocaleString();
+    // 💵 MULTI-CURRENCY AVAILABLE BALANCES
+    const balances = data.balances || {};
+
+    document.getElementById("ngBalance").innerText =
+      "₦" + Number(balances.NG || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+    document.getElementById("usdBalance").innerText =
+      "$" + Number(balances.USD || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+    document.getElementById("piBalance").innerText =
+      "π " + Number(balances.PI || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6
+      });
 
     // 📦 COMPLETED
     document.getElementById("completed").innerText =
