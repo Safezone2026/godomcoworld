@@ -127,10 +127,11 @@ button {
 <script>
 
 // ================= USER =================
-let rider = localStorage.getItem("logisticsName");
+let rider = (localStorage.getItem("logisticsName") || "").trim();
 
 if(!rider){
   rider = prompt("Enter logistics name (e.g Godomco Rider)");
+  rider = (rider || "").trim();
   localStorage.setItem("logisticsName", rider);
 }
 const network =
