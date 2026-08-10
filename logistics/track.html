@@ -48,6 +48,7 @@
 
 </div>
 
+<script src="../js/network.js"></script>
 <script>
 
 // ================= USER =================
@@ -65,7 +66,7 @@ async function trackOrder(){
 
   let orderIdInput = document.getElementById("trackingInput").value.trim();
  const network =
-localStorage.getItem("walletNetwork") || "mainnet";
+getWalletNetwork();
   if(!orderIdInput){
     alert("Enter tracking number");
     return;

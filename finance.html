@@ -94,6 +94,7 @@ body{
 
 </main>
 
+<script src="js/network.js"></script>
 <script src="js/payment.js"></script>
 <script src="js/wallet-init.js"></script>
 
@@ -296,7 +297,7 @@ async function payWithBackend(method){
 let currency = method === "Pi" ? "PI" : "NG";
 
 const currentNetwork =
-  localStorage.getItem("walletNetwork") || "mainnet";
+  getWalletNetwork();
 
 const walletId =
   localStorage.getItem("walletId_" + currentNetwork);

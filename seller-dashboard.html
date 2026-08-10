@@ -176,6 +176,7 @@ View All Orders
   <h3>📜 Withdrawal History</h3>
   <div id="withdrawalHistory">Loading...</div>
 </div>
+<script src="js/network.js"></script>
 <script>
 </script>
 
@@ -183,7 +184,7 @@ View All Orders
 const sellerId = localStorage.getItem("sellerId");
 const currentSeller = localStorage.getItem("username") || "";
 const network =
-localStorage.getItem("walletNetwork") || "mainnet";
+getWalletNetwork();
 
 if(!sellerId){
   alert("Seller session expired. Please register/login again.");

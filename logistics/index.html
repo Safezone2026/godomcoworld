@@ -124,6 +124,7 @@ button {
   <button>🚚 Become a Logistics Partner</button>
 </a>
 
+<script src="../js/network.js"></script>
 <script>
 
 // ================= USER =================
@@ -135,7 +136,7 @@ if(!rider){
   localStorage.setItem("logisticsName", rider);
 }
 const network =
-localStorage.getItem("walletNetwork") || "mainnet";
+getWalletNetwork();
 console.log("Current rider =", rider);
 document.getElementById("riderName").innerText = "Rider: " + rider;
 

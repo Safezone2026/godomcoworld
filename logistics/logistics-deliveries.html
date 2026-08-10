@@ -10,10 +10,11 @@
 
 <div id="deliveryList">Loading...</div>
 
+<script src="../js/network.js"></script>
 <script>
 const rider = localStorage.getItem("logisticsName");
 const network =
-localStorage.getItem("walletNetwork") || "mainnet";
+getWalletNetwork();
 fetch(
 `https://godomcoworld-backend.onrender.com/api/deliveries?network=${encodeURIComponent(network)}`
 )

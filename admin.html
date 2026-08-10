@@ -178,13 +178,14 @@
 </div>
 
 
+<script src="js/network.js"></script>
 <script>
 const API = "https://godomcoworld-backend.onrender.com";
 const networkSelector =
 document.getElementById("networkSelect");
 
 function getNetwork() {
-  return localStorage.getItem("walletNetwork") || "mainnet";
+  return getWalletNetwork();
 }
 
 function changeNetwork() {

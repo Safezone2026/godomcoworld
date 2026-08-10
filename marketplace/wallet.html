@@ -59,7 +59,6 @@ select, input[type=number]{
 <button onclick="
 localStorage.removeItem('walletId_mainnet');
 localStorage.removeItem('walletId_testnet');
-localStorage.removeItem('walletNetwork');
 localStorage.removeItem('username');
 location.reload();
 ">
@@ -174,6 +173,7 @@ Reset Wallet
 <div id="withdrawHistory"></div>
 
 </main>
+<script src="../js/network.js"></script>
 <script src="../js/payment.js"></script>
 
 <script>
@@ -233,7 +233,7 @@ async function loadRates() {
   }
 }
 let currentNetwork =
-localStorage.getItem("walletNetwork") || "mainnet";
+getWalletNetwork();
 
 // ================= USER =================
 let username = localStorage.getItem("username");

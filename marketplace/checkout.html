@@ -120,6 +120,7 @@ button{
 <!-- 🛒 CART -->
 <div id="cartItems"></div>
 
+<script src="../js/network.js"></script>
 <script id="gps1">
 navigator.geolocation.getCurrentPosition(
   (pos) => {
@@ -200,7 +201,7 @@ async function completeCheckout(method){
     let currency = method === "Fiat" ? "NG" : "PI";
 
     const currentNetwork =
-  localStorage.getItem("walletNetwork") || "mainnet";
+  getWalletNetwork();
 
 const walletId =
   localStorage.getItem(

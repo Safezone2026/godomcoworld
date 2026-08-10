@@ -10,11 +10,12 @@
 
 <div id="ordersList">Loading...</div>
 
+<script src="../js/network.js"></script>
 <script>
 const API = "https://godomcoworld-backend.onrender.com";
 
 const network =
-localStorage.getItem("walletNetwork") || "mainnet";
+getWalletNetwork();
 fetch(
 `${API}/orders-full?network=${encodeURIComponent(network)}`
 )

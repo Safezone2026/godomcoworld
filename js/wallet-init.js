@@ -1,6 +1,12 @@
 
   const API_URL = 'https://godomcoworld-backend.onrender.com';
 
+if (typeof getWalletNetwork !== "function") {
+  window.getWalletNetwork = function () {
+    return localStorage.getItem("walletNetwork") || "mainnet";
+  };
+}
+
 async function initWallet() {
 
   let username = localStorage.getItem("username");
@@ -15,7 +21,7 @@ let walletId = localStorage.getItem("walletId");
 
 if (walletId) {
 
-    const network = localStorage.getItem("walletNetwork") || "testnet";
+    const network = getWalletNetwork();
 
 const check = await fetch(
   `${API_URL}/wallet/${walletId}?network=${network}`
@@ -36,7 +42,7 @@ const check = await fetch(
 }
 
 // Create new wallet
-const network = localStorage.getItem("walletNetwork") || "testnet";
+const network = getWalletNetwork();
 
 const res = await fetch(`${API_URL}/wallet/create`, {
   method: "POST",
