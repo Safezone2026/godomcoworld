@@ -16,39 +16,78 @@ const rider = localStorage.getItem("logisticsName");
 const network =
 getWalletNetwork();
 fetch(
-`https://godomcoworld-backend.onrender.com/api/deliveries?network=${encodeURIComponent(network)}`
+  `https://godomcoworld-backend.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
 )
-.then(res => res.json())
+.then(r => r.json())
 .then(data => {
 
-  const myDeliveries = data.filter(d => d.rider === rider);
-
   const container = document.getElementById("deliveryList");
-  container.innerHTML = "";
 
-  if(!myDeliveries.length){
-    container.innerHTML = "No deliveries yet";
+  if (!data || data.success === false) {
+    container.innerHTML =
+      `<p>❌ ${data?.message || "Unable to load deliveries"}</p>`;
     return;
   }
 
-  myDeliveries.forEach(d => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <p>Order: ${d.order_id}</p>
-<p>Status: ${d.status}</p>
+  const myDeliveries = Array.isArray(data.deliveries)
+    ? data.deliveries
+    : [];
 
-<button onclick="updateStatus('${d.order_id}','in_transit')">
-Start Journey
-</button>
+  if (!myDeliveries.length) {
+    container.innerHTML = "<p>No deliveries yet</p>";
+    return;
+  }
 
-<button onclick="updateStatus('${d.order_id}','delivered_pending')">
-Delivered to Buyer
-</button>
+  container.innerHTML = myDeliveries.map(d => `
 
-      <hr>
-    `;
-    container.appendChild(div);
-  });
+    <div class="delivery-card">
+
+      <h3>🚚 Order ${d.order_id || "-"}</h3>
+
+      <h4>👤 Buyer Details</h4>
+      <p><b>Name:</b> ${d.buyer_name || "-"}</p>
+      <p><b>Phone:</b> ${d.buyer_phone || "-"}</p>
+      <p><b>Email:</b> ${d.buyer_email || "-"}</p>
+      <p><b>Address:</b> ${d.buyer_address || "-"}</p>
+      <p><b>House:</b> ${d.house_address || "-"}</p>
+      <p><b>City:</b> ${d.buyer_city || "-"}</p>
+      <p><b>State:</b> ${d.buyer_state || "-"}</p>
+      <p><b>Country:</b> ${d.buyer_country || "-"}</p>
+
+      <h4>🏪 Seller Details</h4>
+      <p><b>Username:</b> ${d.seller_username || "-"}</p>
+      <p><b>Phone:</b> ${d.seller_phone || "-"}</p>
+      <p><b>Address:</b> ${d.seller_address || "-"}</p>
+      <p><b>City:</b> ${d.seller_city || "-"}</p>
+      <p><b>State:</b> ${d.seller_state || "-"}</p>
+      <p><b>Country:</b> ${d.seller_country || "-"}</p>
+
+      <h4>📦 Delivery</h4>
+      <p><b>Status:</b> ${d.status || "-"}</p>
+      <p><b>Network:</b> ${d.network || d.order_network || network}</p>
+
+      ${
+        d.status !== "delivered_pending"
+        ? `<button onclick="updateStatus('${d.order_id}','in_transit')">
+             🚚 Mark In Transit
+           </button>
+
+           <button onclick="updateStatus('${d.order_id}','delivered_pending')">
+             ✅ Delivered to Buyer
+           </button>`
+        : `<p>✅ Delivery marked as delivered</p>`
+      }
+
+    </div>
+
+  `).join("");
+
+})
+.catch(err => {
+  console.error("LOGISTICS DELIVERIES:", err);
+  document.getElementById("deliveryList").innerHTML =
+    "<p>❌ Failed to load deliveries</p>";
+});
 
 });
 function updateStatus(orderId, status){
