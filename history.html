@@ -484,25 +484,46 @@ document.addEventListener(
 
 "click",
 
-e=>{
+async e=>{
 
 if(
-
-e.target.classList.contains(
-
-"receipt-btn"
-
-)
-
+!e.target.classList.contains("receipt-btn")
 ){
+  return;
+}
 
-alert(
+const card =
+e.target.closest(".activity-card");
 
-"PDF Receipt download will be enabled in the next update."
+if(!card){
+  return;
+}
 
+const orderText =
+Array.from(card.querySelectorAll("p"))
+.find(p =>
+  p.textContent.includes("Order ID")
 );
 
+if(!orderText){
+  alert("Order ID not found.");
+  return;
 }
+
+const orderId =
+orderText.textContent
+.replace("Order ID:", "")
+.trim();
+
+const username =
+localStorage.getItem("username") ||
+localStorage.getItem("piUser") ||
+localStorage.getItem("logisticsName");
+
+await downloadOrderReceipt(
+  orderId,
+  username
+);
 
 }
 
@@ -515,6 +536,7 @@ window.onload=loadHistory;
 </script>
 <script src="js/wallet-init.js"></script>
 <script src="js/dev-console.js"></script>
+<script src="js/receipt.js"></script>
 </body>
 
 </html>

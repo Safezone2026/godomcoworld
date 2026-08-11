@@ -211,12 +211,124 @@ function renderDeliveries(deliveries){
 
     container.innerHTML += `
       <div class="delivery">
-        <b>Order:</b> ${d.orderId} <br>
-        <b>Status:</b> ${d.status} <br>
-        <b>Distance:</b> ${d.distance || 0} km <br>
-        <b>Fee:</b> ₦${Number(d.fee || 0).toLocaleString()} <br>
+
+        <b>🆔 Order:</b>
+        ${d.order_id || d.orderId || "-"}
+        <br>
+
+        <b>📦 Product:</b>
+        ${d.product_name || "-"}
+        <br>
+
+        <b>Status:</b>
+        ${d.status || "-"}
+        <br>
+
+        <b>Distance:</b>
+        ${d.distance || 0} km
+        <br>
+
+        <b>Fee:</b>
+        ₦${Number(d.fee || 0).toLocaleString()}
+        <br><br>
+
+        <div style="
+          background:#151515;
+          padding:10px;
+          border-radius:8px;
+          margin-top:8px;
+        ">
+
+          <b>👤 BUYER DETAILS</b>
+          <br>
+
+          Name:
+          ${d.buyer_name || "-"}
+          <br>
+
+          Phone:
+          ${d.buyer_phone || "-"}
+          <br>
+
+          Email:
+          ${d.buyer_email || "-"}
+          <br>
+
+          Address:
+          ${d.buyer_address || "-"}
+          <br>
+
+          House/Street:
+          ${d.house_address || "-"}
+          <br>
+
+          City:
+          ${d.buyer_city || "-"}
+          <br>
+
+          State:
+          ${d.buyer_state || "-"}
+          <br>
+
+          Country:
+          ${d.buyer_country || "-"}
+          <br>
+
+        </div>
+
+        <div style="
+          background:#151515;
+          padding:10px;
+          border-radius:8px;
+          margin-top:8px;
+        ">
+
+          <b>🏪 SELLER DETAILS</b>
+          <br>
+
+          Username:
+          ${d.seller_username || "-"}
+          <br>
+
+          Phone:
+          ${d.seller_phone || "-"}
+          <br>
+
+          Address:
+          ${d.seller_address || "-"}
+          <br>
+
+          City:
+          ${d.seller_city || "-"}
+          <br>
+
+          State:
+          ${d.seller_state || "-"}
+          <br>
+
+          Country:
+          ${d.seller_country || "-"}
+          <br>
+
+        </div>
+
+        <button
+          class="small-btn"
+          onclick="downloadOrderReceipt(
+            '${d.order_id || d.orderId || ""}',
+            '${(
+              d.username ||
+              localStorage.getItem("username") ||
+              localStorage.getItem("logisticsName") ||
+              ""
+            ).replace(/'/g, "\\'")}'
+          )"
+        >
+          📄 Download Order Receipt
+        </button>
 
         ${renderButtons(d)}
+
       </div>
     `;
   });
@@ -437,5 +549,6 @@ setInterval(() => {
 </script>
 
 <script src="../js/dev-console.js"></script>
+<script src="../js/receipt.js"></script>
 </body>
 </html>
