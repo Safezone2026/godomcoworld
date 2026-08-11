@@ -39,8 +39,9 @@ button{
 <!-- 👤 BUYER FORM -->
 <h3>Buyer Details</h3>
 
-<input type="text" id="name" placeholder="Full Name">
+<input type="text" id="buyerName" placeholder="Full Name">
 <input type="text" id="phone" placeholder="Phone Number">
+<input type="email" id="email" placeholder="Email Address">
 
 <input 
   type="text" 
@@ -48,6 +49,16 @@ button{
   placeholder="Delivery Address"
   oninput="handleAddressInput()"
 >
+
+<input
+  type="text"
+  id="houseAddress"
+  placeholder="House / Street Address"
+>
+
+<input type="text" id="city" placeholder="City">
+
+<input type="text" id="state" placeholder="State">
 
 <!-- 🌍 COUNTRY -->
 <h3>🌍 Country</h3>
@@ -237,11 +248,32 @@ alert(
 
     const orderId = shipmentData.orderId;
 
-    const address = document.getElementById("address").value;
-    const country = document.getElementById("country").value;
+    const buyerName =
+      document.getElementById("buyerName")?.value?.trim() || "";
 
-    const lat = Number(localStorage.getItem("deliveryLat"));
-const lng = Number(localStorage.getItem("deliveryLng"));
+    const phone =
+      document.getElementById("phone")?.value?.trim() || "";
+
+    const email =
+      document.getElementById("email")?.value?.trim() || "";
+
+    const address =
+      document.getElementById("address")?.value?.trim() || "";
+
+    const houseAddress =
+      document.getElementById("houseAddress")?.value?.trim() || "";
+
+    const city =
+      document.getElementById("city")?.value?.trim() || "";
+
+    const state =
+      document.getElementById("state")?.value?.trim() || "";
+
+    const country =
+      document.getElementById("country")?.value?.trim() || "";
+
+    const lat = Number(localStorage.getItem("deliveryLat") || 0);
+    const lng = Number(localStorage.getItem("deliveryLng") || 0);
 
 await fetch('https://godomcoworld-backend.onrender.com/api/checkout', {
   method: 'POST',
@@ -250,9 +282,20 @@ await fetch('https://godomcoworld-backend.onrender.com/api/checkout', {
     method,
     cart,
     orderId,
+
+    // Buyer details — must match backend orders columns
+    buyerName,
+    phone,
+    email,
     address,
+    houseAddress,
+    city,
+    state,
     country,
+
     user: localStorage.getItem("username") || "guest",
+
+    // Preserve Mainnet/Testnet isolation
     network: currentNetwork,
 
     lat,
