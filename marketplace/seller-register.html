@@ -128,118 +128,310 @@
 
 </div>
 <script>
-  let username = (localStorage.getItem("username") || "").trim();
+const API = "https://godomcoworld-backend.onrender.com";
+
+let username = (localStorage.getItem("username") || "").trim();
 
 if (!username) {
-    username = prompt("Enter your seller username (e.g seller1234)");
+    username = prompt("Enter your seller username (e.g seller1)");
+
     if (username) {
         username = username.trim();
         localStorage.setItem("username", username);
     }
 }
-const API = "https://godomcoworld-backend.onrender.com";
 
-(async () => {
+if (document.getElementById("username")) {
+    document.getElementById("username").value = username;
+}
 
-    if (!username) return;
+console.log("Current seller username:", username);
+console.log("Current seller ID:", localStorage.getItem("sellerId"));
 
-    const res = await 
-const sellerPayload = {
-  username: document.getElementById("username").value.trim(),
-  phone: document.getElementById("phone").value.trim(),
-  city: document.getElementById("city").value.trim(),
-  state: document.getElementById("state").value.trim(),
-  country: document.getElementById("country").value.trim(),
-  shopAddress: document.getElementById("shopAddress").value.trim(),
-  shopCountry: document.getElementById("shopCountry").value.trim(),
-  latitude: Number(document.getElementById("latitude").value) || 0,
-  longitude: Number(document.getElementById("longitude").value) || 0
-};
 
-fetch(`${API}/register-seller`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(sellerPayload)
-    });
+/*
+============================================================
+GODOMCOWORLD SELLER REGISTRATION
+============================================================
 
-    const data = await res.json();
+Supabase sellers columns handled by this form:
 
-    if (data.success && data.seller) {
+username
+phone
+city
+state
+country
+shop_address
+shop_country
+latitude
+longitude
+============================================================
+*/
 
-        localStorage.setItem("sellerId", data.seller.id);
-        localStorage.setItem("username", data.seller.username);
+window.registerSeller = async function registerSeller() {
 
-        // Existing seller?
-        if (data.message === "Seller already registered") {
+    try {
 
-            window.location.href = "../seller-dashboard.html";
-            return;
+        const usernameEl = document.getElementById("username");
+        const phoneEl = document.getElementById("phone");
+        const cityEl = document.getElementById("city");
+        const stateEl = document.getElementById("state");
+        const countryEl = document.getElementById("country");
+        const shopAddressEl = document.getElementById("shopAddress");
+        const shopCountryEl = document.getElementById("shopCountry");
+        const latitudeEl = document.getElementById("latitude");
+        const longitudeEl = document.getElementById("longitude");
+        const walletEl = document.getElementById("wallet");
+        const agreeEl = document.getElementById("agree");
 
+        /*
+        --------------------------------------------------------
+        Verify required HTML elements
+        --------------------------------------------------------
+        */
+
+        const requiredElements = {
+            username: usernameEl,
+            phone: phoneEl,
+            city: cityEl,
+            state: stateEl,
+            country: countryEl,
+            shopAddress: shopAddressEl,
+            shopCountry: shopCountryEl,
+            latitude: latitudeEl,
+            longitude: longitudeEl,
+            agree: agreeEl
+        };
+
+        for (const [name, element] of Object.entries(requiredElements)) {
+            if (!element) {
+                throw new Error(
+                    `Registration form field "${name}" is missing from seller-register.html`
+                );
+            }
         }
 
+        /*
+        --------------------------------------------------------
+        Read and normalize seller details
+        --------------------------------------------------------
+        */
+
+        const sellerUsername = usernameEl.value.trim();
+        const phone = phoneEl.value.trim();
+        const city = cityEl.value.trim();
+        const state = stateEl.value.trim();
+        const country = countryEl.value.trim();
+        const shopAddress = shopAddressEl.value.trim();
+        const shopCountry = shopCountryEl.value.trim();
+
+        const latitudeText = latitudeEl.value.trim();
+        const longitudeText = longitudeEl.value.trim();
+
+        const latitude =
+            latitudeText === "" ? 0 : Number(latitudeText);
+
+        const longitude =
+            longitudeText === "" ? 0 : Number(longitudeText);
+
+        /*
+        --------------------------------------------------------
+        Validation
+        --------------------------------------------------------
+        */
+
+        if (!sellerUsername) {
+            alert("Enter your seller username.");
+            return;
+        }
+
+        if (!phone) {
+            alert("Enter your phone number.");
+            return;
+        }
+
+        if (!city) {
+            alert("Enter your city.");
+            return;
+        }
+
+        if (!state) {
+            alert("Enter your state.");
+            return;
+        }
+
+        if (!country) {
+            alert("Enter your country.");
+            return;
+        }
+
+        if (!shopAddress) {
+            alert("Enter your shop address.");
+            return;
+        }
+
+        if (!shopCountry) {
+            alert("Select your shop country.");
+            return;
+        }
+
+        if (!Number.isFinite(latitude)) {
+            alert("Enter a valid latitude.");
+            return;
+        }
+
+        if (!Number.isFinite(longitude)) {
+            alert("Enter a valid longitude.");
+            return;
+        }
+
+        if (!agreeEl.checked) {
+            alert("You must agree to the Terms & Conditions.");
+            return;
+        }
+
+        /*
+        --------------------------------------------------------
+        Wallet is retained for the existing frontend workflow.
+        It is NOT sent as a seller-table column because the
+        current sellers table does not contain a wallet column.
+        --------------------------------------------------------
+        */
+
+        const wallet = walletEl
+            ? walletEl.value.trim()
+            : "";
+
+        /*
+        --------------------------------------------------------
+        EXACT SELLER PAYLOAD
+        --------------------------------------------------------
+        */
+
+        const sellerPayload = {
+            username: sellerUsername,
+            phone: phone,
+            city: city,
+            state: state,
+            country: country,
+            shopAddress: shopAddress,
+            shopCountry: shopCountry,
+            latitude: latitude,
+            longitude: longitude
+        };
+
+        console.log(
+            "REGISTER SELLER PAYLOAD:",
+            sellerPayload
+        );
+
+        /*
+        --------------------------------------------------------
+        Submit to Render backend
+        --------------------------------------------------------
+        */
+
+        const result = await fetch(
+            `${API}/register-seller`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(sellerPayload)
+            }
+        );
+
+        if (!result.ok) {
+            throw new Error(
+                `Backend returned HTTP ${result.status}`
+            );
+        }
+
+        const data = await result.json();
+
+        console.log(
+            "REGISTER SELLER RESPONSE:",
+            data
+        );
+
+        /*
+        --------------------------------------------------------
+        Successful registration OR existing seller
+        --------------------------------------------------------
+        */
+
+        if (data.success && data.seller) {
+
+            localStorage.setItem(
+                "sellerId",
+                String(data.seller.id)
+            );
+
+            localStorage.setItem(
+                "username",
+                data.seller.username || sellerUsername
+            );
+
+            if (wallet) {
+                localStorage.setItem(
+                    "seller_wallet",
+                    wallet
+                );
+            }
+
+            /*
+            Existing seller1 is intentionally allowed.
+
+            This is important because seller1 already owns
+            the product currently displayed on the marketplace.
+            */
+
+            if (
+                data.message === "Seller already registered"
+            ) {
+                alert(
+                    "✅ Seller already registered. Seller account restored."
+                );
+            } else {
+                alert(
+                    "✅ Seller registration successful!"
+                );
+            }
+
+            /*
+            Go to the seller upload page so seller1 can
+            continue managing/uploading products.
+            */
+            window.location.href = "upload.html";
+
+            return;
+        }
+
+        /*
+        --------------------------------------------------------
+        Backend rejected registration
+        --------------------------------------------------------
+        */
+
+        alert(
+            data.message ||
+            "Seller registration failed."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "REGISTER SELLER FRONTEND ERROR:",
+            error
+        );
+
+        alert(
+            "❌ Seller registration error:\n" +
+            error.message
+        );
     }
-
-})();
-document.getElementById("username").value = username;
-
-console.log("Current user:", username);
-document.body.insertAdjacentHTML(
-  "afterbegin",
-  "<div style='background:yellow;color:black;padding:10px;font-size:18px'>" +
-  "Username: " + localStorage.getItem("username") +
-  "<br>Seller ID: " + localStorage.getItem("sellerId") +
-  "</div>"
-);
-async function registerSeller(){
-
-let wallet = document.getElementById("wallet").value;
-let agree = document.getElementById("agree").checked;
-
-if(wallet === ""){
-  alert("Enter wallet address");
-  return;
-}
-
-if(!agree){
-  alert("You must agree to terms");
-  return;
-}
-
-const result = await fetch("https://godomcoworld-backend.onrender.com/register-seller", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    username: document.getElementById("username").value.trim(),
-    shopAddress: document.getElementById("shopAddress").value,
-    shopCountry: document.getElementById("shopCountry").value
-  })
-});
-
-const data = await result.json();
-
-if (data.success) {
-
-  localStorage.setItem("sellerId", data.seller.id);
-  localStorage.setItem("username", data.seller.username);
-  localStorage.setItem("seller_wallet", wallet);
-
-  if (data.message === "Seller registered") {
-    alert("✅ Registration successful!");
-  }
-
-  window.location.href = "upload.html";
-
-} else {
-
-  alert(data.message);
-
-}
-
-}
+};
 </script>
   
 <a href="../index.html">
