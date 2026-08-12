@@ -36,12 +36,20 @@
 
 <input type="email" placeholder="Email Address" required><br><br>
 
-<input type="text" placeholder="Phone Number" required><br><br>
+<input type="text" placeholder="Phone Number" required id="phone"<br><br>
 
 <input type="text" placeholder="Business Location" required><br><br>
 <h3>🏪 Shop Location</h3>
 
 <input type="text" id="shopAddress" placeholder="Shop Address (e.g Lagos, Ikeja)" required>
+
+<input type="text" id="city" placeholder="City" required><br><br>
+<input type="text" id="state" placeholder="State" required><br><br>
+
+<input type="text" id="country" placeholder="Country" value="Nigeria" required><br><br>
+
+<input type="number" id="latitude" placeholder="Latitude" step="any"><br><br>
+<input type="number" id="longitude" placeholder="Longitude" step="any"><br><br>
 <select id="shopCountry">
 <option value="Nigeria">🇳🇬 Nigeria</option>
 <option value="Ghana">🇬🇭 Ghana</option>
@@ -135,14 +143,25 @@ const API = "https://godomcoworld-backend.onrender.com";
 
     if (!username) return;
 
-    const res = await fetch(`${API}/register-seller`, {
+    const res = await 
+const sellerPayload = {
+  username: document.getElementById("username").value.trim(),
+  phone: document.getElementById("phone").value.trim(),
+  city: document.getElementById("city").value.trim(),
+  state: document.getElementById("state").value.trim(),
+  country: document.getElementById("country").value.trim(),
+  shopAddress: document.getElementById("shopAddress").value.trim(),
+  shopCountry: document.getElementById("shopCountry").value.trim(),
+  latitude: Number(document.getElementById("latitude").value) || 0,
+  longitude: Number(document.getElementById("longitude").value) || 0
+};
+
+fetch(`${API}/register-seller`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-            username
-        })
+        body: JSON.stringify(sellerPayload)
     });
 
     const data = await res.json();

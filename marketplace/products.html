@@ -389,6 +389,62 @@ if (form) {
 
     const formData = new FormData(form);
 
+    // ========================================================
+    // REGISTERED SELLER IDENTITY
+    // ========================================================
+
+    const sellerUsername =
+      localStorage.getItem("username");
+
+    const sellerId =
+      localStorage.getItem("sellerId");
+
+    if (!sellerUsername || !sellerId) {
+
+      alert(
+        "Seller account information is missing. Please log in again."
+      );
+
+      return;
+
+    }
+
+    formData.set(
+      "sellerUsername",
+      sellerUsername
+    );
+
+    formData.set(
+      "sellerId",
+      sellerId
+    );
+
+    console.log(
+      "UPLOAD SELLER:",
+      {
+        sellerUsername,
+        sellerId
+      }
+    );
+
+    // ========================================================
+    // WEIGHT
+    // ========================================================
+
+    const weightInput =
+      document.getElementById("weight");
+
+    if (weightInput) {
+
+      formData.set(
+        "weight",
+        Number(weightInput.value) || 1
+      );
+
+    }
+
+
+
     // ==================================================
     // GODOMCOWORLD SELLER IDENTITY
     // ==================================================
