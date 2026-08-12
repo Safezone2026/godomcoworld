@@ -63,12 +63,16 @@ button{
 <!-- ======================= -->
 <form id="productForm">
   <h2>Add New Product</h2>
-
   <input type="text" name="name" placeholder="Product Name" required />
   <input type="text" name="description" placeholder="Description" required />
-  <input type="number" name="price" placeholder="Price (₦)" required />
-
-  <!-- ✅ CATEGORY -->
+  <input type="number" name="price" placeholder="Price" required />
+  <select name="currency" required>
+    <option value="₦">₦ Naira</option>
+    <option value="$">$ Dollar</option>
+  </select>
+  <input type="text" name="sellerUsername" placeholder="Seller Username" required />
+  <input type="file" name="image" accept="image/*" required />
+  <input type="number" id="weight" placeholder="Weight (kg)">
   <select name="category" required>
     <option value="">Select Category</option>
     <option value="Vegetables">Vegetables</option>
@@ -76,24 +80,14 @@ button{
     <option value="Tubers">Tubers</option>
     <option value="Fruits">Fruits</option>
     <option value="Livestock">Livestock</option>
-    <option value="Crafts">Crafts</option>
+    <option value="Crafts">Craft Products</option>
     <option value="Electronics">Electronics</option>
     <option value="Automobile">Automobile</option>
     <option value="Fashion">Fashion</option>
-    <option value="Home">Home</option>
-    <option value="Beauty">Beauty</option>
+    <option value="Home">Home & Kitchen</option>
+    <option value="Beauty">Beauty & Personal Care</option>
     <option value="Services">Services</option>
   </select>
-
-  <!-- ✅ WEIGHT -->
-  <input type="number" name="weight" placeholder="Weight (kg)" required />
-
-  <!-- ✅ SELLER AUTO -->
-  <input type="text" name="sellerUsername" id="sellerUsername" readonly />
-
-  <!-- IMAGE -->
-  <input type="file" name="image" accept="image/*" required />
-  
   <button type="submit">Add Product</button>
 </form>
 
