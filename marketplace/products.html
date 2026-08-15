@@ -143,9 +143,9 @@ const nairaToUSD = 1500;
 const PI_RATE = 471238500;
 console.log("SCRIPT START");
 
-let currentUser = localStorage.getItem("username") || prompt("Enter your seller username (e.g. myshop001)");
-localStorage.setItem("username", currentUser);
-let currentSellerUsername = currentUser;
+let productCurrentUser = localStorage.getItem("username") || prompt("Enter your seller username (e.g. myshop001)");
+localStorage.setItem("username", productCurrentUser);
+let currentSellerUsername = productCurrentUser;
 
 const form = document.getElementById('productForm');
 const statusDiv = document.getElementById('status');
@@ -155,7 +155,6 @@ const cartList = document.getElementById('cartList');
 let allProducts = [];
 let currentCategory = 'All';
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
-renderCart();
 
 form.style.display = 'block';
 document.querySelector('input[name="sellerUsername"]').value = currentSellerUsername;
@@ -443,62 +442,7 @@ if (form) {
 
     }
 
-
-
-    // ==================================================
-    // GODOMCOWORLD SELLER IDENTITY
-    // ==================================================
-
-    const sellerUsername =
-      localStorage.getItem("username");
-
-    const sellerId =
-      localStorage.getItem("sellerId");
-
-    if (!sellerUsername || !sellerId) {
-
-      alert(
-        "Seller account information is missing. Please register/login as a seller first."
-      );
-
-      return;
-
-    }
-
-    formData.set(
-      "sellerUsername",
-      sellerUsername
-    );
-
-    formData.set(
-      "sellerId",
-      sellerId
-    );
-
-    console.log(
-      "UPLOAD SELLER:",
-      {
-        sellerUsername,
-        sellerId
-      }
-    );
-
-    // Send product weight explicitly.
-    const weightInput =
-      document.getElementById("weight");
-
-    if (weightInput) {
-
-      formData.set(
-        "weight",
-        Number(weightInput.value) || 1
-      );
-
-    }
-
-
-
-    try {
+      try {
       const response = await fetch(`${API_URL}/products`, {
         method: 'POST',
         body: formData
@@ -524,7 +468,9 @@ window.addEventListener("storage", () => {
   updateCartCount();
 });
 
-// ✅ LOAD PRODUCTS
+// ✅ INITIALIZE AFTER ALL FUNCTIONS ARE DEFINED
+updateCartCount();
+renderCart();
 loadProducts();
 </script>
 <script src="../js/dev-console.js"></script>
