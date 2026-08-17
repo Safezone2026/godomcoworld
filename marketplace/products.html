@@ -155,10 +155,33 @@
 <div id="cartList"></div>
 
 
+<script src="../js/network.js"></script>
 <script>
 const API_URL = 'https://godomcoworld-backend.onrender.com';
-const nairaToUSD = 1500;
-const PI_RATE = 471238500;
+let nairaToUSD = null;
+let PI_RATE = null;
+
+async function loadExchangeRates() {
+  try {
+    const response = await fetch(`${API_URL}/exchange-rates`);
+    const data = await response.json();
+
+    if (!data.success || !data.rates?.NG?.rate) {
+      throw new Error("Invalid exchange-rate response");
+    }
+
+    nairaToUSD = Number(data.rates.NG.rate);
+    PI_RATE = nairaToUSD * 314159;
+
+    console.log("💱 LIVE EXCHANGE RATE:", {
+      NGN_per_USD: nairaToUSD,
+      PI_RATE: PI_RATE
+    });
+  } catch (err) {
+    console.error("❌ Failed to load live exchange rates:", err);
+    throw err;
+  }
+}
 console.log("SCRIPT START");
 
 let productCurrentUser = localStorage.getItem("username") || prompt("Enter your seller username (e.g. myshop001)");
@@ -172,18 +195,7 @@ const cartList = document.getElementById('cartList');
 
 
 // ================= NETWORK AWARENESS =================
-function getSelectedNetwork() {
-  const network =
-    String(
-      localStorage.getItem("network") ||
-      localStorage.getItem("selectedNetwork") ||
-      "testnet"
-    ).trim().toLowerCase();
-
-  return network === "mainnet" ? "mainnet" : "testnet";
-}
-
-const CURRENT_NETWORK = getSelectedNetwork();
+const CURRENT_NETWORK = getWalletNetwork();
 
 console.log("🌐 MARKETPLACE NETWORK:", CURRENT_NETWORK);
 
@@ -218,6 +230,7 @@ document.querySelector('input[name="sellerUsername"]').value = currentSellerUser
 
 // -------------------- LOAD PRODUCTS --------------------
 async function loadProducts() {
+  await loadExchangeRates();
   try {
     const response = await fetch(`${API_URL}/products?network=${encodeURIComponent(CURRENT_NETWORK)}`);
     const data = await response.json();
