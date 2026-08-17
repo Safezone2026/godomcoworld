@@ -65,6 +65,24 @@
   }
   input, select { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: none; }
 </style>
+
+<style>
+/* ================= PRODUCT DESCRIPTION ================= */
+.product-card .product-description {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.45;
+  max-height: 6.5em;
+  overflow: hidden;
+  margin: 8px 0;
+}
+</style>
+
 </head>
 <body>
 
@@ -152,6 +170,23 @@ const statusDiv = document.getElementById('status');
 const productList = document.getElementById('productList');
 const cartList = document.getElementById('cartList');
 
+
+// ================= NETWORK AWARENESS =================
+function getSelectedNetwork() {
+  const network =
+    String(
+      localStorage.getItem("network") ||
+      localStorage.getItem("selectedNetwork") ||
+      "testnet"
+    ).trim().toLowerCase();
+
+  return network === "mainnet" ? "mainnet" : "testnet";
+}
+
+const CURRENT_NETWORK = getSelectedNetwork();
+
+console.log("🌐 MARKETPLACE NETWORK:", CURRENT_NETWORK);
+
 let allProducts = [];
 let currentCategory = 'All';
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -184,7 +219,7 @@ document.querySelector('input[name="sellerUsername"]').value = currentSellerUser
 // -------------------- LOAD PRODUCTS --------------------
 async function loadProducts() {
   try {
-    const response = await fetch(`${API_URL}/products`);
+    const response = await fetch(`${API_URL}/products?network=${encodeURIComponent(CURRENT_NETWORK)}`);
     const data = await response.json();
     allProducts = Array.isArray(data) ? data : data.products || [];
     console.log("LOADING PRODUCTS...");
@@ -223,7 +258,10 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
     div.innerHTML = `
       <img src="${API_URL}${product.imagePath}" alt="${product.name}">
       <h4>${product.name}</h4>
-      <p>${product.description}</p>
+
+      <p class="product-description">
+        ${product.description || "No description available."}
+      </p>
 
       <strong>₦${naira.toLocaleString()}</strong>
 
@@ -234,6 +272,19 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
 
       <p>Category: ${product.category || 'N/A'}</p>
     `;
+
+    // ================= PRODUCT DETAILS =================
+    // Open the network-aware product detail page when the
+    // product card itself is clicked.
+    div.style.cursor = "pointer";
+
+    div.addEventListener("click", (event) => {
+      // Do not navigate when clicking buttons inside the card.
+      if (event.target.closest("button")) return;
+
+      window.location.href =
+        `product.html?id=${encodeURIComponent(product.id)}&network=${encodeURIComponent(CURRENT_NETWORK)}`;
+    });
 
     // 🗑️ DELETE BUTTON
     if (product.sellerUsername === currentSellerUsername) {
@@ -249,7 +300,10 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
           const res = await fetch(`${API_URL}/delete-product`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: product.id })
+            body: JSON.stringify({
+              id: product.id,
+              network: CURRENT_NETWORK
+            })
           });
 
           const result = await res.json();
@@ -281,7 +335,8 @@ cartBtn.onclick = () => {
     category: product.category || "General",
     sellerAddress: product.sellerAddress || "",
     sellerCountry: product.sellerCountry || "",
-    sellerUsername: product.sellerUsername
+    sellerUsername: product.sellerUsername,
+    network: product.network || CURRENT_NETWORK
   };
 
   // ✅ DEBUG (SAFE HERE)

@@ -110,6 +110,23 @@ console.log("Current user:", username);
 // AUTO FILL SELLER
 document.getElementById("sellerUsername").value = username;
 
+
+// ================= NETWORK AWARENESS =================
+function getSelectedNetwork() {
+  const network =
+    String(
+      localStorage.getItem("network") ||
+      localStorage.getItem("selectedNetwork") ||
+      "testnet"
+    ).trim().toLowerCase();
+
+  return network === "mainnet" ? "mainnet" : "testnet";
+}
+
+const CURRENT_NETWORK = getSelectedNetwork();
+
+console.log("🌐 UPLOAD NETWORK:", CURRENT_NETWORK);
+
 const form = document.getElementById('productForm');
 const statusDiv = document.getElementById('status');
 
@@ -229,6 +246,9 @@ form.addEventListener('submit', async (e) => {
   const weight = Number(formData.get("weight")) || 1;
   formData.set("weight", weight);
 
+  // 🌐 Store product in the selected network
+  formData.set("network", CURRENT_NETWORK);
+
   // ✅ VALIDATE CATEGORY
   const category = formData.get("category");
   if (!category) {
@@ -264,7 +284,7 @@ form.addEventListener('submit', async (e) => {
 // ================= LOAD PRODUCTS =================
 async function loadProducts() {
   try {
-    const res = await fetch("https://godomcoworld-backend.onrender.com/products");
+    const res = await fetch(`https://godomcoworld-backend.onrender.com/products?network=${encodeURIComponent(CURRENT_NETWORK)}`);
     const products = await res.json();
 
     const container = document.getElementById('productsContainer');
