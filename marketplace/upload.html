@@ -267,7 +267,13 @@ form.addEventListener('submit', async (e) => {
 
     if (result.product) {
       console.log("Added product:", result.product);
-      loadProducts();
+
+      alert("✅ Product successfully added to the products listing page.");
+
+      window.location.href =
+        `products.html?network=${encodeURIComponent(CURRENT_NETWORK)}`;
+
+      return;
     }
 
     form.reset();
