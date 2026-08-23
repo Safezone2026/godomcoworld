@@ -46,8 +46,13 @@
   ⚠️ Report Issue
 </button>
 
+<button id="receiptBtn" style="display:none;">
+  🧾 Download Payment Receipt (PDF)
+</button>
+
 </div>
 
+<script src="../js/receipt.js"></script>
 <script src="../js/network.js"></script>
 <script>
 
@@ -98,6 +103,8 @@ renderTimeline(status);
 
     // ✅ SAVE globally for buttons
     window.currentOrderId = orderIdInput;
+
+    document.getElementById("receiptBtn").style.display = "block";
 
     document.getElementById("status").innerText =
       "Status: " + status;
@@ -151,6 +158,20 @@ function renderTimeline(status){
 
   document.getElementById("timeline").innerHTML = html;
 }
+
+// ================= DOWNLOAD PAYMENT RECEIPT =================
+document.getElementById("receiptBtn").onclick = function(){
+
+  if(!window.currentOrderId){
+    alert("No order selected");
+    return;
+  }
+
+  downloadReceipt({
+    orderId: window.currentOrderId,
+    username: username
+  });
+};
 
 // ================= CONFIRM DELIVERY =================
 document.getElementById("confirmBtn").onclick = async function(){
