@@ -174,7 +174,36 @@ View All Orders
 
 <div class="card">
   <h3>📜 Withdrawal History</h3>
-  <div id="withdrawalHistory">Loading...</div>
+  
+<div style="margin:20px 0;padding:15px;border:1px solid #ddd;border-radius:12px;">
+  <h3>Seller Wallet Balances</h3>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+
+    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
+      <strong>🇳🇬 NGN</strong>
+      <div id="ngBalance">₦0.00</div>
+    </div>
+
+    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
+      <strong>🇺🇸 USD</strong>
+      <div id="usdBalance">$0.00</div>
+    </div>
+
+    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
+      <strong>π PI</strong>
+      <div id="piBalance">π0.000000</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:10px;">
+    Network:
+    <strong id="sellerNetwork">MAINNET</strong>
+  </div>
+</div>
+
+<div id="withdrawalHistory">Loading...</div>
 </div>
 <script src="js/network.js"></script>
 <script>
@@ -214,16 +243,16 @@ const data = await res.json();
 console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
 document.getElementById("profileName").innerText =
-  seller.username || "-";
+  seller.username ?? "-";
 
 document.getElementById("profileId").innerText =
-  seller.id || "-";
+  seller.id ?? "-";
 
 document.getElementById("profileCountry").innerText =
-  seller.shopCountry || "-";
+  seller.shopCountry ?? "-";
 
 document.getElementById("profileAddress").innerText =
-  seller.shopAddress || "-";
+  seller.shopAddress ?? "-";
 
 document.getElementById("profileDate").innerText =
   seller.createdAt
@@ -248,6 +277,61 @@ document.getElementById("pendingBalance").innerText =
 // 💵 Available Balance
 document.getElementById("availableBalance").innerText =
   "₦" + Number(seller.availableBalance || 0).toLocaleString();
+  // ================= MULTI-CURRENCY BALANCES =================
+  // ================= MULTI-CURRENCY BALANCES =================
+  // Backend fields: ng_balance, usd_balance, pi_balance
+  const ngBalance = Number(
+    seller.ngBalance ??
+    seller.ng_balance ??
+    0
+  );
+
+  const usdBalance = Number(
+    seller.usdBalance ??
+    seller.usd_balance ??
+    0
+  );
+
+  const piBalance = Number(
+    seller.piBalance ??
+    seller.pi_balance ??
+    0
+  );
+
+  const ngEl = document.getElementById("ngBalance");
+  const usdEl = document.getElementById("usdBalance");
+  const piEl = document.getElementById("piBalance");
+
+  if (ngEl) {
+    ngEl.textContent =
+      "₦" + ngBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+  }
+
+  if (usdEl) {
+    usdEl.textContent =
+      "$" + usdBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+  }
+
+  if (piEl) {
+    piEl.textContent =
+      "π" + piBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6
+      });
+  }
+
+  const networkEl = document.getElementById("sellerNetwork");
+  if (networkEl) {
+    networkEl.textContent =
+      String(seller.network ?? network ?? "mainnet").toUpperCase();
+  }
+
 
   } catch(err){
     console.error(err);
