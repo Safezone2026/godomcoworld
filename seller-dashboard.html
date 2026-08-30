@@ -205,6 +205,19 @@ View All Orders
 
 <div id="withdrawalHistory">Loading...</div>
 </div>
+
+<section class="card" style="margin-top:20px;">
+  <h3>👤 Seller Profile</h3>
+  <form id="sellerProfileForm">
+    <input id="profilePhone" placeholder="Phone" required>
+    <input id="profileAddress" placeholder="Shop / Street Address" required>
+    <input id="profileCity" placeholder="City" required>
+    <input id="profileState" placeholder="State">
+    <input id="profileCountry" placeholder="Country" required>
+    <button type="submit">💾 Update Profile</button>
+  </form>
+</section>
+
 <script src="js/network.js"></script>
 <script>
 </script>
@@ -242,6 +255,12 @@ const data = await res.json();
 
 console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
+    document.getElementById("profilePhone").value = seller.phone || "";
+    document.getElementById("profileAddress").value = seller.shopAddress || "";
+    document.getElementById("profileCity").value = seller.city || "";
+    document.getElementById("profileState").value = seller.state || "";
+    document.getElementById("profileCountry").value = seller.country || "";
+
 document.getElementById("profileName").innerText =
   seller.username ?? "-";
 
@@ -635,5 +654,40 @@ window.onload = function() {
 </script>
 <script src="js/dev-console.js"></script>
 <script src="js/receipt.js"></script>
+
+<script>
+document.getElementById("sellerProfileForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  try {
+    const response = await fetch(`${API}/seller-profile/${sellerId}`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        phone: document.getElementById("profilePhone").value.trim(),
+        shopAddress: document.getElementById("profileAddress").value.trim(),
+        city: document.getElementById("profileCity").value.trim(),
+        state: document.getElementById("profileState").value.trim(),
+        country: document.getElementById("profileCountry").value.trim(),
+        network
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      return alert(data.message || "Profile update failed");
+    }
+
+    alert("✅ Profile updated successfully");
+    location.reload();
+
+  } catch (err) {
+    console.error("PROFILE UPDATE:", err);
+    alert("❌ Profile update failed");
+  }
+});
+</script>
+
 </body>
 </html>
