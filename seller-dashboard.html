@@ -255,11 +255,20 @@ const data = await res.json();
 
 console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
-    document.getElementById("profilePhone").value = seller.phone || "";
-    document.getElementById("profileAddress").value = seller.shopAddress || "";
-    document.getElementById("profileCity").value = seller.city || "";
-    document.getElementById("profileState").value = seller.state || "";
-    document.getElementById("profileCountry").value = seller.country || "";
+    const profileFields = {
+      profilePhone: seller.phone || "",
+      profileAddress: seller.shopAddress || "",
+      profileCity: seller.city || "",
+      profileState: seller.state || "",
+      profileCountry: seller.country || ""
+    };
+
+    Object.entries(profileFields).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el && document.activeElement !== el) {
+        el.value = value;
+      }
+    });
 
 document.getElementById("profileName").innerText =
   seller.username ?? "-";
