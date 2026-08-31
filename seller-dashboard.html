@@ -255,6 +255,8 @@ const data = await res.json();
 
 console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
+
+    // Populate profile fields only when the seller is not actively editing them.
     const profileFields = {
       profilePhone: seller.phone || "",
       profileAddress: seller.shopAddress || "",
@@ -265,9 +267,15 @@ console.log("Seller dashboard response:", data);
 
     Object.entries(profileFields).forEach(([id, value]) => {
       const el = document.getElementById(id);
-      if (el && document.activeElement !== el) {
-        el.value = value;
-      }
+      if (!el) return;
+
+      // Never overwrite a field that the seller has started editing.
+      if (el.dataset.userEditing === "true") return;
+
+      // Also protect the field while it currently has focus.
+      if (document.activeElement === el) return;
+
+      el.value = value;
     });
 
 document.getElementById("profileName").innerText =
@@ -276,11 +284,7 @@ document.getElementById("profileName").innerText =
 document.getElementById("profileId").innerText =
   seller.id ?? "-";
 
-document.getElementById("profileCountry").innerText =
-  seller.shopCountry ?? "-";
-
-document.getElementById("profileAddress").innerText =
-  seller.shopAddress ?? "-";
+// Profile input values are managed by the profile form above.
 
 document.getElementById("profileDate").innerText =
   seller.createdAt
@@ -665,6 +669,19 @@ window.onload = function() {
 <script src="js/receipt.js"></script>
 
 <script>
+["profilePhone","profileAddress","profileCity","profileState","profileCountry"].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener("input", () => {
+    el.dataset.userEditing = "true";
+  });
+
+  el.addEventListener("focus", () => {
+    el.dataset.userEditing = "true";
+  });
+});
+
 document.getElementById("sellerProfileForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
