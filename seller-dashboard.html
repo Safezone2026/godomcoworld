@@ -225,8 +225,8 @@ View All Orders
 <script>
 const sellerId = localStorage.getItem("sellerId");
 const currentSeller = localStorage.getItem("username") || "";
-const network =
-getWalletNetwork();
+const API = "https://godomcoworld-backend.onrender.com";
+const network = getWalletNetwork();
 
 if(!sellerId){
   alert("Seller session expired. Please register/login again.");
@@ -245,8 +245,6 @@ async function loadEarnings(){
 "<br>Seller ID: " + sellerId;
 
   try {
-    const API = "https://godomcoworld-backend.onrender.com";
-
 const res = await fetch(
   `${API}/seller-dashboard/${sellerId}?network=${encodeURIComponent(network)}`
 );
@@ -256,27 +254,8 @@ const data = await res.json();
 console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
 
-    // Populate profile fields only when the seller is not actively editing them.
-    const profileFields = {
-      profilePhone: seller.phone || "",
-      profileAddress: seller.shopAddress || "",
-      profileCity: seller.city || "",
-      profileState: seller.state || "",
-      profileCountry: seller.country || ""
-    };
-
-    Object.entries(profileFields).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-
-      // Never overwrite a field that the seller has started editing.
-      if (el.dataset.userEditing === "true") return;
-
-      // Also protect the field while it currently has focus.
-      if (document.activeElement === el) return;
-
-      el.value = value;
-    });
+    // Profile inputs intentionally remain empty until the seller types.
+    // Do NOT auto-fill profile fields from the seller record.
 
 document.getElementById("profileName").innerText =
   seller.username ?? "-";
@@ -366,8 +345,8 @@ document.getElementById("availableBalance").innerText =
 
 
   } catch(err){
-    console.error(err);
-    alert("Failed to load earnings");
+    console.error("LOAD EARNINGS ERROR:", err);
+    alert("Failed to load earnings: " + (err.message || err));
   }
 }
 
