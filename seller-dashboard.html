@@ -648,49 +648,57 @@ window.onload = function() {
 <script src="js/receipt.js"></script>
 
 <script>
-["profilePhone","profileAddress","profileCity","profileState","profileCountry"].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("sellerProfileForm");
 
-  el.addEventListener("input", () => {
-    el.dataset.userEditing = "true";
-  });
-
-  el.addEventListener("focus", () => {
-    el.dataset.userEditing = "true";
-  });
-});
-
-document.getElementById("sellerProfileForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-
-  try {
-    const response = await fetch(`${API}/seller-profile/${sellerId}`, {
-      method: "PUT",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        phone: document.getElementById("profilePhone").value.trim(),
-        shopAddress: document.getElementById("profileAddress").value.trim(),
-        city: document.getElementById("profileCity").value.trim(),
-        state: document.getElementById("profileState").value.trim(),
-        country: document.getElementById("profileCountry").value.trim(),
-        network
-      })
-    });
-
-    const data = await response.json();
-
-    if (!data.success) {
-      return alert(data.message || "Profile update failed");
-    }
-
-    alert("✅ Profile updated successfully");
-    location.reload();
-
-  } catch (err) {
-    console.error("PROFILE UPDATE:", err);
-    alert("❌ Profile update failed");
+  if (!form) {
+    console.error("PROFILE UPDATE: sellerProfileForm not found");
+    return;
   }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      phone: document.getElementById("profilePhone")?.value.trim() || "",
+      shopAddress: document.getElementById("profileAddress")?.value.trim() || "",
+      city: document.getElementById("profileCity")?.value.trim() || "",
+      state: document.getElementById("profileState")?.value.trim() || "",
+      country: document.getElementById("profileCountry")?.value.trim() || "",
+      network: typeof network !== "undefined" ? network : "testnet"
+    };
+
+    console.log("PROFILE UPDATE SUBMIT:", payload);
+
+    try {
+      const response = await fetch(
+        `${API}/seller-profile/${sellerId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const data = await response.json();
+
+      console.log("PROFILE UPDATE RESPONSE:", data);
+
+      if (!data.success) {
+        alert(data.message || "Profile update failed");
+        return;
+      }
+
+      alert("✅ Profile updated successfully");
+      location.reload();
+
+    } catch (err) {
+      console.error("PROFILE UPDATE ERROR:", err);
+      alert("❌ Profile update failed: " + (err.message || err));
+    }
+  });
 });
 </script>
 
