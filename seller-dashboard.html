@@ -208,6 +208,7 @@ View All Orders
 
 <section class="card" style="margin-top:20px;">
   <h3>👤 Seller Profile</h3>
+
   <form id="sellerProfileForm">
     <input id="profilePhone" placeholder="Phone">
     <input id="profileAddress" placeholder="Shop / Street Address">
@@ -217,17 +218,17 @@ View All Orders
     <button type="submit">💾 Update Profile</button>
   </form>
 
-  <div id="sellerProfileSummary" style="margin-top:15px;padding:15px;border:1px solid #ddd;border-radius:10px;background:#f8f8f8;">
+  <div style="margin-top:15px;padding:15px;border:1px solid #ddd;border-radius:10px;">
     <h4>📋 Saved Profile</h4>
     <div>Seller: <strong id="profileName">-</strong></div>
     <div>Seller ID: <strong id="profileId">-</strong></div>
-    <div>Phone: <span id="profilePhoneDisplay">-</span></div>
-    <div>Address: <span id="profileAddressDisplay">-</span></div>
-    <div>City: <span id="profileCityDisplay">-</span></div>
-    <div>State: <span id="profileStateDisplay">-</span></div>
-    <div>Country: <span id="profileCountryDisplay">-</span></div>
-    <div>Status: <span id="profileStatus">-</span></div>
-    <div>Registration Date: <span id="profileDate">-</span></div>
+    <div>Phone: <span id="profilePhoneDisplay">Not provided</span></div>
+    <div>Country: <span id="profileCountryDisplay">Not provided</span></div>
+    <div>Address: <span id="profileAddressDisplay">Not provided</span></div>
+    <div>City: <span id="profileCityDisplay">Not provided</span></div>
+    <div>State: <span id="profileStateDisplay">Not provided</span></div>
+    <div>Status: <span id="profileStatus">Not available</span></div>
+    <div>Registration Date: <span id="profileDate">Not available</span></div>
   </div>
 </section>
 
@@ -266,6 +267,35 @@ const data = await res.json();
 
 console.log("Seller dashboard response:", data);
     const seller = data.seller || {};
+
+    // Saved profile summary ONLY.
+    // The editable inputs above intentionally remain empty.
+    const setProfileText = (id, value, fallback = "Not provided") => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value || fallback;
+    };
+
+    setProfileText("profileName", seller.username, "-");
+    setProfileText("profileId", seller.id, "-");
+    setProfileText("profilePhoneDisplay", seller.phone);
+    setProfileText(
+      "profileCountryDisplay",
+      seller.country || seller.shopCountry
+    );
+    setProfileText(
+      "profileAddressDisplay",
+      seller.shopAddress || seller.shop_address
+    );
+    setProfileText("profileCityDisplay", seller.city);
+    setProfileText("profileStateDisplay", seller.state);
+    setProfileText("profileStatus", seller.status, "Not available");
+
+    const dateEl = document.getElementById("profileDate");
+    if (dateEl) {
+      dateEl.textContent = seller.createdAt
+        ? new Date(seller.createdAt).toLocaleDateString()
+        : "Not available";
+    }
 
     // Profile inputs intentionally remain empty until the seller types.
     // Do NOT auto-fill profile fields from the seller record.
