@@ -216,6 +216,19 @@ View All Orders
     <input id="profileCountry" placeholder="Country">
     <button type="submit">💾 Update Profile</button>
   </form>
+
+  <div id="sellerProfileSummary" style="margin-top:15px;padding:15px;border:1px solid #ddd;border-radius:10px;background:#f8f8f8;">
+    <h4>📋 Saved Profile</h4>
+    <div>Seller: <strong id="profileName">-</strong></div>
+    <div>Seller ID: <strong id="profileId">-</strong></div>
+    <div>Phone: <span id="profilePhoneDisplay">-</span></div>
+    <div>Address: <span id="profileAddressDisplay">-</span></div>
+    <div>City: <span id="profileCityDisplay">-</span></div>
+    <div>State: <span id="profileStateDisplay">-</span></div>
+    <div>Country: <span id="profileCountryDisplay">-</span></div>
+    <div>Status: <span id="profileStatus">-</span></div>
+    <div>Registration Date: <span id="profileDate">-</span></div>
+  </div>
 </section>
 
 <script src="js/network.js"></script>
@@ -263,7 +276,62 @@ document.getElementById("profileName").innerText =
 document.getElementById("profileId").innerText =
   seller.id ?? "-";
 
-// Profile input values are managed by the profile form above.
+// IMPORTANT:
+// The five editable profile inputs must NEVER be auto-filled.
+// They remain empty so the seller only enters values they want to update.
+
+// Saved profile summary
+const profilePhoneDisplay =
+  document.getElementById("profilePhoneDisplay");
+
+const profileAddressDisplay =
+  document.getElementById("profileAddressDisplay");
+
+const profileCityDisplay =
+  document.getElementById("profileCityDisplay");
+
+const profileStateDisplay =
+  document.getElementById("profileStateDisplay");
+
+const profileCountryDisplay =
+  document.getElementById("profileCountryDisplay");
+
+const profileStatus =
+  document.getElementById("profileStatus");
+
+if (profilePhoneDisplay) {
+  profilePhoneDisplay.innerText =
+    seller.phone || "Not provided";
+}
+
+if (profileAddressDisplay) {
+  profileAddressDisplay.innerText =
+    seller.shopAddress ||
+    seller.shop_address ||
+    "Not provided";
+}
+
+if (profileCityDisplay) {
+  profileCityDisplay.innerText =
+    seller.city || "Not provided";
+}
+
+if (profileStateDisplay) {
+  profileStateDisplay.innerText =
+    seller.state || "Not provided";
+}
+
+if (profileCountryDisplay) {
+  profileCountryDisplay.innerText =
+    seller.country ||
+    seller.shopCountry ||
+    "Not provided";
+}
+
+if (profileStatus) {
+  profileStatus.innerText =
+    seller.status || "Not available";
+}
 
 document.getElementById("profileDate").innerText =
   seller.createdAt
