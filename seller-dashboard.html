@@ -746,39 +746,35 @@ window.onload = function() {
 <script src="js/receipt.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("sellerProfileForm");
+const profileForm = document.getElementById("sellerProfileForm");
 
-  if (!form) {
-    console.error("PROFILE UPDATE: sellerProfileForm not found");
-    return;
-  }
-
-  form.addEventListener("submit", async (e) => {
+if (profileForm) {
+  profileForm.addEventListener("submit", async function(e) {
     e.preventDefault();
+
+    console.log("PROFILE BUTTON CLICKED");
 
     const payload = {
       phone: document.getElementById("profilePhone")?.value.trim() || "",
       shopAddress: document.getElementById("profileAddress")?.value.trim() || "",
       city: document.getElementById("profileCity")?.value.trim() || "",
       state: document.getElementById("profileState")?.value.trim() || "",
-      country: document.getElementById("profileCountry")?.value.trim() || "",
-      network: typeof network !== "undefined" ? network : "testnet"
+      country: document.getElementById("profileCountry")?.value.trim() || ""
     };
 
     console.log("PROFILE UPDATE SUBMIT:", payload);
+    console.log("PROFILE UPDATE URL:", `${API}/seller-profile/${sellerId}`);
 
     try {
-      const response = await fetch(
-        `${API}/seller-profile/${sellerId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        }
-      );
+      const response = await fetch(`${API}/seller-profile/${sellerId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log("PROFILE UPDATE HTTP STATUS:", response.status);
 
       const data = await response.json();
 
@@ -790,14 +786,42 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       alert("✅ Profile updated successfully");
-      location.reload();
+
+      // Clear all editable fields after successful save.
+      document.getElementById("profilePhone").value = "";
+      document.getElementById("profileAddress").value = "";
+      document.getElementById("profileCity").value = "";
+      document.getElementById("profileState").value = "";
+      document.getElementById("profileCountry").value = "";
+
+      // Immediately update saved summary.
+      const seller = data.seller || {};
+
+      const setText = (id, value, fallback = "Not provided") => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || fallback;
+      };
+
+      setText("profileName", seller.username, "-");
+      setText("profileId", seller.id, "-");
+      setText("profilePhoneDisplay", seller.phone);
+      setText("profileCountryDisplay", seller.country);
+      setText("profileAddressDisplay", seller.shop_address);
+      setText("profileCityDisplay", seller.city);
+      setText("profileStateDisplay", seller.state);
+      setText("profileStatus", seller.status, "Active");
 
     } catch (err) {
       console.error("PROFILE UPDATE ERROR:", err);
       alert("❌ Profile update failed: " + (err.message || err));
     }
   });
-});
+
+  console.log("✅ PROFILE FORM HANDLER ATTACHED");
+} else {
+  console.error("❌ PROFILE FORM NOT FOUND");
+}
+
 </script>
 
 </body>
