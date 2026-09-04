@@ -749,24 +749,51 @@ window.onload = function() {
 const profileForm = document.getElementById("sellerProfileForm");
 
 if (profileForm) {
+
   profileForm.addEventListener("submit", async function(e) {
+
     e.preventDefault();
 
     console.log("PROFILE BUTTON CLICKED");
 
+    function getProfileValue(id) {
+      const el = document.getElementById(id);
+
+      if (!el) {
+        console.error("PROFILE FIELD NOT FOUND:", id);
+        return "";
+      }
+
+      return String(el.value ?? "").trim();
+    }
+
     const payload = {
-      phone: document.getElementById("profilePhone")?.value.trim() || "",
-      shopAddress: document.getElementById("profileAddress")?.value.trim() || "",
-      city: document.getElementById("profileCity")?.value.trim() || "",
-      state: document.getElementById("profileState")?.value.trim() || "",
-      country: document.getElementById("profileCountry")?.value.trim() || ""
+      phone: getProfileValue("profilePhone"),
+      shopAddress: getProfileValue("profileAddress"),
+      city: getProfileValue("profileCity"),
+      state: getProfileValue("profileState"),
+      country: getProfileValue("profileCountry")
     };
 
     console.log("PROFILE UPDATE SUBMIT:", payload);
-    console.log("PROFILE UPDATE URL:", `${API}/seller-profile/${sellerId}`);
+
+    if (!payload.phone &&
+        !payload.shopAddress &&
+        !payload.city &&
+        !payload.state &&
+        !payload.country) {
+
+      alert("Please enter at least one profile detail.");
+      return;
+    }
+
+    const url = `${API}/seller-profile/${sellerId}`;
+
+    console.log("PROFILE UPDATE URL:", url);
 
     try {
-      const response = await fetch(`${API}/seller-profile/${sellerId}`, {
+
+      const response = await fetch(url, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
@@ -787,39 +814,65 @@ if (profileForm) {
 
       alert("✅ Profile updated successfully");
 
-      // Clear all editable fields after successful save.
-      document.getElementById("profilePhone").value = "";
-      document.getElementById("profileAddress").value = "";
-      document.getElementById("profileCity").value = "";
-      document.getElementById("profileState").value = "";
-      document.getElementById("profileCountry").value = "";
-
-      // Immediately update saved summary.
       const seller = data.seller || {};
 
-      const setText = (id, value, fallback = "Not provided") => {
+      function setProfileText(id, value, fallback = "Not provided") {
         const el = document.getElementById(id);
-        if (el) el.textContent = value || fallback;
-      };
+        if (el) {
+          el.textContent = value || fallback;
+        }
+      }
 
-      setText("profileName", seller.username, "-");
-      setText("profileId", seller.id, "-");
-      setText("profilePhoneDisplay", seller.phone);
-      setText("profileCountryDisplay", seller.country);
-      setText("profileAddressDisplay", seller.shop_address);
-      setText("profileCityDisplay", seller.city);
-      setText("profileStateDisplay", seller.state);
-      setText("profileStatus", seller.status, "Active");
+      setProfileText("profileName", seller.username, "-");
+      setProfileText("profileId", seller.id, "-");
+      setProfileText("profilePhoneDisplay", seller.phone);
+      setProfileText("profileCountryDisplay", seller.country);
+      setProfileText(
+        "profileAddressDisplay",
+        seller.shop_address || seller.shopAddress
+      );
+      setProfileText("profileCityDisplay", seller.city);
+      setProfileText("profileStateDisplay", seller.state);
+      setProfileText("profileStatus", seller.status, "Active");
+
+      const dateEl = document.getElementById("profileDate");
+
+      if (dateEl) {
+        dateEl.textContent = seller.createdAt
+          ? new Date(seller.createdAt).toLocaleDateString()
+          : "Not available";
+      }
+
+      // Keep all five editable fields EMPTY after saving.
+      [
+        "profilePhone",
+        "profileAddress",
+        "profileCity",
+        "profileState",
+        "profileCountry"
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
 
     } catch (err) {
+
       console.error("PROFILE UPDATE ERROR:", err);
-      alert("❌ Profile update failed: " + (err.message || err));
+
+      alert(
+        "❌ Profile update failed: " +
+        (err?.message || String(err))
+      );
     }
+
   });
 
   console.log("✅ PROFILE FORM HANDLER ATTACHED");
+
 } else {
+
   console.error("❌ PROFILE FORM NOT FOUND");
+
 }
 
 </script>
