@@ -177,6 +177,8 @@ View All Orders
 <div class="card">
   <h3>📜 Withdrawal History</h3>
   
+<div id="withdrawalHistory">Loading...</div>
+
 <div style="margin:20px 0;padding:15px;border:1px solid #ddd;border-radius:12px;">
   <h3>Seller Wallet Balances</h3>
 
@@ -205,7 +207,8 @@ View All Orders
   </div>
 </div>
 
-<div id="withdrawalHistory">Loading...</div>
+
+
 </div>
 
 <section class="card" style="margin-top:20px;">
@@ -475,6 +478,34 @@ console.log("Seller dashboard data:", data);
           Earned: ₦${Number(t.earned).toLocaleString()} <br>
           <small>${t.date}</small>
         </div>
+
+<div style="margin:20px 0;padding:15px;border:1px solid #ddd;border-radius:12px;">
+  <h3>Seller Wallet Balances</h3>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+
+    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
+      <strong>🇳🇬 NGN</strong>
+      <div id="ngBalance">₦0.00</div>
+    </div>
+
+    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
+      <strong>🇺🇸 USD</strong>
+      <div id="usdBalance">$0.00</div>
+    </div>
+
+    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
+      <strong>π PI</strong>
+      <div id="piBalance">π0.000000</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:10px;">
+    Network:
+    <strong id="sellerNetwork">MAINNET</strong>
+  </div>
+</div>
       `;
     });
 
