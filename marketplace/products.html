@@ -276,11 +276,11 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
         ${product.description || "No description available."}
       </p>
 
-      <strong>₦${naira.toLocaleString()}</strong>
+      <strong style="font-size:18px;">π${pi.toFixed(8)}</strong>
 
       <div style="margin-top:5px; font-size:13px; color:#ccc;">
-        <div>$${usd.toFixed(2)}</div>
-        <div>${pi.toFixed(8)} π</div>
+        <div>₦${naira.toLocaleString()} (Ref)</div>
+        <div>$${usd.toFixed(2)} (Ref)</div>
       </div>
 
       <p>Category: ${product.category || 'N/A'}</p>

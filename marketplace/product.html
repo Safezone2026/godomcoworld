@@ -51,6 +51,34 @@ async function loadProduct() {
       return;
     }
 
+    // ============================================================
+    // PI is the primary marketplace currency.
+    // Naira and USD are reference values only.
+    // ============================================================
+    let nairaToUSD = 1500;
+
+    try {
+      const ratesRes = await fetch(
+        `https://godomcoworld-backend.onrender.com/exchange-rates`
+      );
+
+      if (ratesRes.ok) {
+        const ratesData = await ratesRes.json();
+        const detectedRate = Number(ratesData?.rates?.NG?.rate);
+
+        if (Number.isFinite(detectedRate) && detectedRate > 0) {
+          nairaToUSD = detectedRate;
+        }
+      }
+    } catch (rateErr) {
+      console.warn("PRODUCT DETAIL: using fallback NGN/USD rate", rateErr);
+    }
+
+    const naira = Number(product.price) || 0;
+    const usd = naira / nairaToUSD;
+    const piRate = nairaToUSD * 314159;
+    const pi = naira / piRate;
+
     productDetails.innerHTML = `
       <div style="max-width:400px;">
         <img
@@ -63,7 +91,14 @@ async function loadProduct() {
 >
         <h2>${product.name}</h2>
         <p>${product.description}</p>
-        <h3>${product.currency || '₦'}${product.price}</h3>
+        <h3 style="font-size:24px;">
+          π${pi.toFixed(8)}
+        </h3>
+
+        <div style="font-size:14px; color:#777; margin-top:-5px;">
+          <div>₦${naira.toLocaleString()} (Ref)</div>
+          <div>$${usd.toFixed(2)} (Ref)</div>
+        </div>
         <p><strong>Category:</strong> ${product.category}</p>
 
         <button onclick='addToCart(${JSON.stringify(product)})'>
