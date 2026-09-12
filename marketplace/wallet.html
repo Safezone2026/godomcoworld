@@ -95,9 +95,7 @@ Reset Wallet
 
 <button onclick="depositPi()">Deposit Pi</button>
 <button onclick="sendPi()">Send Pi</button>
-<button id="testFundBtn" onclick="addTestFund()">
-  ⚡ Add Test Funds
-</button>
+
 
 </div>
 <h2>💸 Withdraw Funds</h2>
@@ -173,6 +171,7 @@ Reset Wallet
 <div id="withdrawHistory"></div>
 
 </main>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script src="../js/network.js"></script>
 <script src="../js/payment.js"></script>
 
@@ -359,21 +358,14 @@ async function switchWalletNetwork(){
 
 function updateWalletUI(){
 
-  const btn =
-    document.getElementById("testFundBtn");
-
   const status =
     document.getElementById("networkStatus");
 
   if(currentNetwork==="mainnet"){
 
-    btn.style.display="none";
-
     status.innerHTML="🟢 Mainnet Wallet";
 
   }else{
-
-    btn.style.display="inline-block";
 
     status.innerHTML="🟣 Testnet Wallet";
 
@@ -381,39 +373,383 @@ function updateWalletUI(){
 
 }
 
-// ================= TEST FUND =================
-async function addTestFund() {
-  console.log("🔥 Button clicked"); // 👈 ADD THIS
-
-  const walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  );
-
-  try {
-    const res = await fetch(API + "/wallet/test-fund", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walletId,
-network: currentNetwork })
-    });
-
-    const data = await res.json();
-    alert(data.message);
-
-    loadBalance(); // refresh UI
-
-  } catch (err) {
-    console.error("Test fund error:", err);
-  }
-}
-
 function depositFiat() {
   alert("Fiat deposit coming soon");
 }
 
-function depositPi() {
-  alert("Pi deposit coming soon");
+// ==================================================
+// REAL PI TESTNET PAYMENT
+// ==================================================
+
+let piAccessToken = null;
+let piAuthenticatedUser = null;
+let piSdkReady = false;
+
+function initPiSDK() {
+
+  if (piSdkReady) {
+    return true;
+  }
+
+  if (typeof Pi === "undefined") {
+    console.error("❌ Pi SDK is not available");
+    alert(
+      "Pi payments must be opened inside the Pi Browser."
+    );
+    return false;
+  }
+
+  try {
+
+    Pi.init({
+      version: "2.0",
+      sandbox: true
+    });
+
+    piSdkReady = true;
+
+    console.log("✅ Pi SDK initialized in sandbox mode");
+
+    return true;
+
+  } catch (err) {
+
+    console.error("❌ Pi SDK initialization failed:", err);
+
+    alert("Unable to initialize Pi payments.");
+
+    return false;
+  }
+}
+
+
+async function authenticatePi() {
+
+  if (!initPiSDK()) {
+    return false;
+  }
+
+  if (piAccessToken && piAuthenticatedUser) {
+    return true;
+  }
+
+  try {
+
+    const auth = await Pi.authenticate(
+      ["username", "payments"],
+      async function onIncompletePaymentFound(payment) {
+
+        console.log(
+          "⚠️ Incomplete Pi payment found:",
+          payment
+        );
+
+        try {
+
+          if (
+            payment &&
+            payment.identifier &&
+            payment.transaction &&
+            payment.transaction.txid
+          ) {
+
+            const response = await fetch(
+              API + "/pi/payment/complete",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  paymentId: payment.identifier,
+                  txid: payment.transaction.txid,
+                  accessToken: piAccessToken
+                })
+              }
+            );
+
+            const data = await response.json();
+
+            console.log(
+              "📥 Incomplete payment recovery:",
+              data
+            );
+
+            if (data.success) {
+              await loadBalance();
+            }
+
+          }
+
+        } catch (err) {
+
+          console.error(
+            "❌ Incomplete payment recovery failed:",
+            err
+          );
+        }
+      }
+    );
+
+    piAccessToken = auth.accessToken;
+    piAuthenticatedUser = auth.user;
+
+    console.log("✅ Pi authentication successful:", {
+      username: auth.user?.username,
+      uid: auth.user?.uid
+    });
+
+    return true;
+
+  } catch (err) {
+
+    console.error("❌ Pi authentication failed:", err);
+
+    alert(
+      "Pi authentication failed. Please try again inside Pi Browser."
+    );
+
+    return false;
+  }
+}
+
+
+async function depositPi() {
+
+  if (currentNetwork !== "testnet") {
+
+    alert(
+      "Real Test-Pi deposits are currently enabled only for the Testnet wallet."
+    );
+
+    return;
+  }
+
+  const authenticated = await authenticatePi();
+
+  if (!authenticated) {
+    return;
+  }
+
+  const amountText = prompt(
+    "Enter the amount of Test-Pi to deposit:"
+  );
+
+  if (amountText === null) {
+    return;
+  }
+
+  const amount = Number(amountText);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+
+    alert("Please enter a valid Pi amount.");
+
+    return;
+  }
+
+  if (!walletId) {
+
+    alert("Wallet not found. Please initialize your wallet first.");
+
+    return;
+  }
+
+  console.log("📤 Creating REAL Pi Testnet payment:", {
+    amount,
+    walletId,
+    network: currentNetwork
+  });
+
+  try {
+
+    const payment = await Pi.createPayment(
+      {
+        amount: amount,
+
+        memo:
+          "Godomcoworld Test-Pi wallet deposit",
+
+        metadata: {
+          walletId: walletId,
+          network: currentNetwork
+        }
+      },
+
+      {
+        onReadyForServerApproval: async function(paymentId) {
+
+          console.log(
+            "🔐 Pi payment ready for server approval:",
+            paymentId
+          );
+
+          try {
+
+            const response = await fetch(
+              API + "/pi/payment/approve",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                  paymentId: paymentId,
+                  accessToken: piAccessToken,
+                  walletId: walletId,
+                  network: currentNetwork
+                })
+              }
+            );
+
+            const data = await response.json();
+
+            console.log(
+              "📥 Pi approval response:",
+              data
+            );
+
+            if (!response.ok || !data.success) {
+
+              console.error(
+                "❌ Pi server approval failed:",
+                data
+              );
+
+              alert(
+                data.message ||
+                "Pi payment approval failed."
+              );
+            }
+
+          } catch (err) {
+
+            console.error(
+              "❌ Pi approval request failed:",
+              err
+            );
+
+            alert(
+              "Unable to approve the Pi payment."
+            );
+          }
+        },
+
+
+        onReadyForServerCompletion:
+          async function(paymentId, txid) {
+
+            console.log(
+              "🔗 Pi payment ready for completion:",
+              {
+                paymentId,
+                txid
+              }
+            );
+
+            try {
+
+              const response = await fetch(
+                API + "/pi/payment/complete",
+                {
+                  method: "POST",
+
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+
+                  body: JSON.stringify({
+                    paymentId: paymentId,
+                    txid: txid,
+                    accessToken: piAccessToken
+                  })
+                }
+              );
+
+              const data = await response.json();
+
+              console.log(
+                "📥 Pi completion response:",
+                data
+              );
+
+              if (!response.ok || !data.success) {
+
+                alert(
+                  data.message ||
+                  "Pi payment completion failed."
+                );
+
+                return;
+              }
+
+              alert(
+                "✅ Real Test-Pi deposit completed!\n\n" +
+                "Amount: " +
+                Number(data.amount).toFixed(6) +
+                " π"
+              );
+
+              await loadBalance();
+
+            } catch (err) {
+
+              console.error(
+                "❌ Pi completion request failed:",
+                err
+              );
+
+              alert(
+                "Pi payment was processed, but wallet confirmation failed. Please refresh your wallet."
+              );
+            }
+          },
+
+
+        onCancel: function(paymentId) {
+
+          console.log(
+            "⚠️ Pi payment cancelled:",
+            paymentId
+          );
+
+          alert("Pi payment cancelled.");
+        },
+
+
+        onError: function(error, payment) {
+
+          console.error(
+            "❌ Pi payment error:",
+            error,
+            payment
+          );
+
+          alert(
+            "Pi payment failed. Please try again."
+          );
+        }
+      }
+    );
+
+    console.log(
+      "✅ Pi.createPayment completed:",
+      payment
+    );
+
+  } catch (err) {
+
+    console.error(
+      "❌ Pi payment creation failed:",
+      err
+    );
+
+    alert(
+      "Unable to create Pi payment. Please try again."
+    );
+  }
 }
 // updateWalletDisplay
 let walletCurrency = "USD";
