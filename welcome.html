@@ -161,8 +161,18 @@ params.get("username") || "Unknown User";
 document.getElementById("uid").textContent =
 params.get("uid") || "-";
 
+const welcomeNetwork = params.get("network") || "mainnet";
+const storedWalletId =
+localStorage.getItem("walletId_" + welcomeNetwork);
+
+const urlWalletId = params.get("wallet");
+
 document.getElementById("wallet").textContent =
-params.get("wallet") || "Not Assigned";
+(storedWalletId && storedWalletId.toLowerCase() !== "pending")
+    ? storedWalletId
+    : (urlWalletId && urlWalletId.toLowerCase() !== "pending"
+        ? urlWalletId
+        : "Not Assigned");
 
 document.getElementById("network").textContent =
 params.get("network") || "Mainnet";

@@ -16,20 +16,32 @@ async function initWallet() {
     localStorage.setItem("username", username);
   }
 
-  // Check cached wallet
-let walletId = localStorage.getItem("walletId");
+  // Check cached wallet for the currently selected network
+const network = getWalletNetwork();
+const walletKey = "walletId_" + network;
+
+let walletId = localStorage.getItem(walletKey);
+
+// Backward compatibility with the old generic walletId
+if (!walletId) {
+    const legacyWalletId = localStorage.getItem("walletId");
+
+    if (legacyWalletId) {
+        walletId = legacyWalletId;
+        localStorage.setItem(walletKey, walletId);
+        localStorage.removeItem("walletId");
+    }
+}
 
 if (walletId) {
 
-    const network = getWalletNetwork();
-
-const check = await fetch(
-  `${API_URL}/wallet/${walletId}?network=${network}`
-);
+    const check = await fetch(
+      `${API_URL}/wallet/${walletId}?network=${network}`
+    );
 
     if (check.ok) {
 
-        console.log("Using existing wallet:", walletId);
+        console.log("Using existing wallet:", walletId, "Network:", network);
 
         return;
 
@@ -37,12 +49,11 @@ const check = await fetch(
 
     console.warn("Cached wallet not found. Creating a new wallet...");
 
-    localStorage.removeItem("walletId");
+    localStorage.removeItem(walletKey);
 
 }
 
 // Create new wallet
-const network = getWalletNetwork();
 
 const res = await fetch(`${API_URL}/wallet/create`, {
   method: "POST",
@@ -57,9 +68,9 @@ const res = await fetch(`${API_URL}/wallet/create`, {
 
 const wallet = await res.json();
 
-localStorage.setItem("walletId", wallet.walletId);
+localStorage.setItem(walletKey, wallet.walletId);
 
-console.log("Wallet created:", wallet.walletId);
+console.log("Wallet created:", wallet.walletId, "Network:", network);
 }
 
 initWallet();
