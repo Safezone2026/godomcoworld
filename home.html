@@ -834,40 +834,24 @@ async function loginPi(){
             return;
         }
 
-        // Create or retrieve the Godomcoworld Testnet wallet
-        const walletResponse = await fetch(API + "/wallet/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username: result.user.username,
-                network: "testnet"
-            })
-        });
+        // Godomcoworld Testnet uses the existing seller1 test wallet.
+        // Pi identity remains separate and is supplied by Pi authentication.
+        const godomcoworldUsername = "seller1";
+        const testnetWalletId = "TEST-WALLET-001";
 
-        const walletResult = await walletResponse.json();
-
-        if (!walletResponse.ok || !walletResult.walletId) {
-            console.error("Wallet creation/retrieval failed:", walletResult);
-            alert(
-                "Pi authentication succeeded, but the Godomcoworld wallet could not be loaded.\n\n" +
-                (walletResult.message || "Please try again.")
-            );
-            return;
-        }
-
-        // Keep the same network-specific wallet identity used by wallet.html
-        localStorage.setItem("username", result.user.username);
+        localStorage.setItem("username", godomcoworldUsername);
+        localStorage.setItem("piUsername", result.user.username);
+        localStorage.setItem("piUid", result.user.uid);
         localStorage.setItem("walletNetwork", "testnet");
-        localStorage.setItem("walletId_testnet", walletResult.walletId);
+        localStorage.setItem("walletId_testnet", testnetWalletId);
 
         location.href =
         "welcome.html?" +
-        "username=" + encodeURIComponent(result.user.username) +
+        "username=" + encodeURIComponent(godomcoworldUsername) +
+        "&piUsername=" + encodeURIComponent(result.user.username) +
         "&uid=" + encodeURIComponent(result.user.uid) +
         "&network=testnet" +
-        "&wallet=" + encodeURIComponent(walletResult.walletId) +
+        "&wallet=" + encodeURIComponent(testnetWalletId) +
         "&kyc=Verified";
 
     }catch(err){
