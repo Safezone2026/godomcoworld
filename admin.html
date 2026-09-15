@@ -136,6 +136,10 @@
     <input type="checkbox" id="toggleFiat"> Enable Fiat Payments
   </label><br><br>
 
+  <label>
+    <input type="checkbox" id="toggleDevConsole"> Enable Godomcoworld Developer Console
+  </label><br><br>
+
   <button onclick="savePaymentSettings()">💾 Save Settings</button>
 </div>
   <h2>👥 User Withdrawal Requests</h2>
@@ -599,17 +603,19 @@ async function loadPaymentSettings(){
 
   document.getElementById("togglePi").checked = settings.enablePi;
   document.getElementById("toggleFiat").checked = settings.enableFiat;
+  document.getElementById("toggleDevConsole").checked = settings.enableDevConsole;
 }
 // SAVE PAYMENT SETTINGS 
 async function savePaymentSettings(){
 
   const enablePi = document.getElementById("togglePi").checked;
   const enableFiat = document.getElementById("toggleFiat").checked;
+  const enableDevConsole = document.getElementById("toggleDevConsole").checked;
 
   const res = await fetch(API + "/admin/payment-settings", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ enablePi, enableFiat })
+    body: JSON.stringify({ enablePi, enableFiat, enableDevConsole })
   });
 
   const data = await res.json();

@@ -834,16 +834,37 @@ async function loginPi(){
             return;
         }
 
-        // Godomcoworld Testnet uses the existing seller1 test wallet.
-        // Pi identity remains separate and is supplied by Pi authentication.
-        const godomcoworldUsername = "seller1";
-        const testnetWalletId = "TEST-WALLET-001";
+        // Ordinary Pi users are identified by their Pi username.
+        // Registered sellers can be linked to their seller account separately.
+        const godomcoworldUsername = result.user.username;
+
+        // Find or create this user's Testnet wallet.
+        const walletResponse = await fetch(API + "/wallet/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: godomcoworldUsername,
+                network: "testnet"
+            })
+        });
+
+        const walletResult = await walletResponse.json();
+
+        if (!walletResponse.ok || !walletResult.walletId) {
+            alert(
+                "Wallet creation failed:\n" +
+                (walletResult.message || "No wallet ID returned")
+            );
+            return;
+        }
 
         localStorage.setItem("username", godomcoworldUsername);
         localStorage.setItem("piUsername", result.user.username);
         localStorage.setItem("piUid", result.user.uid);
         localStorage.setItem("walletNetwork", "testnet");
-        localStorage.setItem("walletId_testnet", testnetWalletId);
+        localStorage.setItem("walletId_testnet", walletResult.walletId);
 
         location.href =
         "welcome.html?" +
@@ -851,7 +872,7 @@ async function loginPi(){
         "&piUsername=" + encodeURIComponent(result.user.username) +
         "&uid=" + encodeURIComponent(result.user.uid) +
         "&network=testnet" +
-        "&wallet=" + encodeURIComponent(testnetWalletId) +
+        "&wallet=" + encodeURIComponent(walletResult.walletId) +
         "&kyc=Verified";
 
     }catch(err){

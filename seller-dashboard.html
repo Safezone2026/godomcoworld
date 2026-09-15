@@ -3,6 +3,7 @@
 <head>
 <title>Seller Dashboard</title>
 <link rel="stylesheet" href="../css/style.css">
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <style>
 body{
@@ -211,6 +212,45 @@ View All Orders
 
 </div>
 
+
+<section class="card" style="margin-top:20px;">
+  <h3>🔗 Pi Identity & Wallet</h3>
+
+  <p>
+    <strong>Godomcoworld Username:</strong>
+    <span id="linkedSellerUsername">-</span>
+  </p>
+
+  <p>
+    <strong>Pi Username:</strong>
+    <span id="linkedPiUsername">Not linked</span>
+  </p>
+
+  <p>
+    <strong>Pi UID:</strong>
+    <span id="linkedPiUid">Not linked</span>
+  </p>
+
+  <p>
+    <strong>Seller Wallet:</strong>
+    <span id="linkedWalletId">-</span>
+  </p>
+
+  <p>
+    <strong>Network:</strong>
+    <span id="linkedWalletNetwork">-</span>
+  </p>
+
+  <p>
+    <strong>Status:</strong>
+    <span id="piLinkStatus">Not linked</span>
+  </p>
+
+  <button type="button" onclick="linkSellerPiIdentity()">
+    🔐 Link / Verify Pi Account
+  </button>
+</section>
+
 <section class="card" style="margin-top:20px;">
   <h3>👤 Seller Profile</h3>
 
@@ -376,6 +416,160 @@ document.getElementById("fees").innerText =
 // ⏳ Pending Balance
 document.getElementById("pendingBalance").innerText =
   "₦" + Number(seller.pendingBalance || 0).toLocaleString();
+
+
+// ================= SELLER PI IDENTITY LINK =================
+
+let sellerPiAccessToken = null;
+let sellerPiUser = null;
+
+function initSellerPiSDK() {
+  if (typeof Pi === "undefined") {
+    alert("Pi authentication must be opened inside the Pi Browser.");
+    return false;
+  }
+
+  try {
+    Pi.init({
+      version: "2.0",
+      sandbox: network === "testnet"
+    });
+
+    return true;
+  } catch (err) {
+    console.error("Pi SDK initialization failed:", err);
+    alert("Unable to initialize Pi authentication.");
+    return false;
+  }
+}
+
+async function loadSellerPiIdentity() {
+  try {
+    const res = await fetch(
+      `${API}/seller-dashboard/${sellerId}?network=${encodeURIComponent(network)}`
+    );
+
+    const data = await res.json();
+    const seller = data.seller || {};
+
+    document.getElementById("linkedSellerUsername").textContent =
+      seller.username || currentSeller || "-";
+
+    // The wallet identity itself is loaded separately below.
+    await loadSellerPiWallet();
+
+  } catch (err) {
+    console.error("Failed to load seller Pi identity:", err);
+  }
+}
+
+async function loadSellerPiWallet() {
+  try {
+    const res = await fetch(
+      `${API}/seller/pi-identity/${sellerId}?network=${encodeURIComponent(network)}`
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      document.getElementById("piLinkStatus").textContent =
+        data.message || "Not linked";
+      return;
+    }
+
+    const wallet = data.wallet || {};
+    const pi = data.pi || {};
+
+    document.getElementById("linkedSellerUsername").textContent =
+      data.seller?.username || currentSeller || "-";
+
+    document.getElementById("linkedWalletId").textContent =
+      wallet.walletId || "Not found";
+
+    document.getElementById("linkedWalletNetwork").textContent =
+      wallet.network || network;
+
+    document.getElementById("linkedPiUsername").textContent =
+      pi.username || "Not linked";
+
+    document.getElementById("linkedPiUid").textContent =
+      pi.uid || "Not linked";
+
+    document.getElementById("piLinkStatus").textContent =
+      pi.uid ? "✅ Linked" : "Not linked";
+
+  } catch (err) {
+    console.error("Failed to load seller Pi wallet:", err);
+  }
+}
+
+async function linkSellerPiIdentity() {
+
+  if (!sellerId) {
+    alert("Seller session expired. Please login again.");
+    return;
+  }
+
+  if (!initSellerPiSDK()) {
+    return;
+  }
+
+  try {
+
+    const auth = await Pi.authenticate(
+      ["username", "payments"],
+      function onIncompletePaymentFound(payment) {
+        console.log("Incomplete Pi payment found:", payment);
+      }
+    );
+
+    sellerPiAccessToken = auth.accessToken;
+    sellerPiUser = auth.user;
+
+    if (!sellerPiAccessToken || !sellerPiUser?.uid) {
+      throw new Error("Pi authentication did not return a valid identity.");
+    }
+
+    const response = await fetch(
+      `${API}/seller/pi-identity/link`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sellerId,
+          accessToken: sellerPiAccessToken,
+          network
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      alert(data.message || "Pi identity linking failed.");
+      return;
+    }
+
+    alert(
+      "Pi account linked successfully.\n\n" +
+      "Godomcoworld: " + (data.seller?.username || currentSeller) + "\n" +
+      "Pi: " + (data.pi?.username || sellerPiUser.username)
+    );
+
+    await loadSellerPiWallet();
+
+  } catch (err) {
+    console.error("Seller Pi identity linking failed:", err);
+
+    alert(
+      "Pi identity linking failed.\n\n" +
+      (err.message || "Please try again inside Pi Browser.")
+    );
+  }
+}
+
 
 // 💵 Available Balance
 document.getElementById("availableBalance").innerText =
@@ -750,6 +944,8 @@ async function loadWithdrawalHistory(){
 
 // ================= INIT =================
 window.onload = function() {
+
+  loadSellerPiIdentity();
 
   loadEarnings();
   loadSalesHistory();

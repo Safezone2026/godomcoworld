@@ -16,7 +16,7 @@ window.onerror = function (msg, src, line, col, err) {
     );
     console.error(err || msg);
 };
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
 const DEV_USERS = [
   "seller1",
@@ -25,6 +25,32 @@ const DEV_USERS = [
 ];
 
 const currentUser = (localStorage.getItem("username") || "").toLowerCase();
+
+// Global admin-controlled developer console switch.
+// The backend setting is the master switch; the existing
+// DEV_USERS restriction remains in effect afterwards.
+let devConsoleEnabled = false;
+
+try {
+  const response = await fetch(
+    "https://godomcoworld-backend.onrender.com/admin/payment-settings"
+  );
+
+  if (!response.ok) return;
+
+  const settings = await response.json();
+
+  devConsoleEnabled =
+    settings.enableDevConsole !== false;
+
+} catch (err) {
+  // Fail closed: if the global setting cannot be verified,
+  // do not expose the developer console.
+  console.error("Developer Console setting check failed:", err);
+  return;
+}
+
+if (!devConsoleEnabled) return;
 
 if (!DEV_USERS.includes(currentUser)) return;
 
