@@ -418,6 +418,71 @@ document.getElementById("pendingBalance").innerText =
   "₦" + Number(seller.pendingBalance || 0).toLocaleString();
 
 
+// 💵 Available Balance
+document.getElementById("availableBalance").innerText =
+  "₦" + Number(seller.availableBalance || 0).toLocaleString();
+  // ================= MULTI-CURRENCY BALANCES =================
+  // ================= MULTI-CURRENCY BALANCES =================
+  // Backend fields: ng_balance, usd_balance, pi_balance
+  const ngBalance = Number(
+    seller.ngBalance ??
+    seller.ng_balance ??
+    0
+  );
+
+  const usdBalance = Number(
+    seller.usdBalance ??
+    seller.usd_balance ??
+    0
+  );
+
+  const piBalance = Number(
+    seller.piBalance ??
+    seller.pi_balance ??
+    0
+  );
+
+  const ngEl = document.getElementById("ngBalance");
+  const usdEl = document.getElementById("usdBalance");
+  const piEl = document.getElementById("piBalance");
+
+  if (ngEl) {
+    ngEl.textContent =
+      "₦" + ngBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+  }
+
+  if (usdEl) {
+    usdEl.textContent =
+      "$" + usdBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+  }
+
+  if (piEl) {
+    piEl.textContent =
+      "π" + piBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6
+      });
+  }
+
+  const networkEl = document.getElementById("sellerNetwork");
+  if (networkEl) {
+    networkEl.textContent =
+      String(seller.network ?? network ?? "mainnet").toUpperCase();
+  }
+
+
+  } catch(err){
+    console.error("LOAD EARNINGS ERROR:", err);
+    alert("Failed to load earnings: " + (err.message || err));
+  }
+}
+
 // ================= SELLER PI IDENTITY LINK =================
 
 let sellerPiAccessToken = null;
@@ -571,70 +636,6 @@ async function linkSellerPiIdentity() {
 }
 
 
-// 💵 Available Balance
-document.getElementById("availableBalance").innerText =
-  "₦" + Number(seller.availableBalance || 0).toLocaleString();
-  // ================= MULTI-CURRENCY BALANCES =================
-  // ================= MULTI-CURRENCY BALANCES =================
-  // Backend fields: ng_balance, usd_balance, pi_balance
-  const ngBalance = Number(
-    seller.ngBalance ??
-    seller.ng_balance ??
-    0
-  );
-
-  const usdBalance = Number(
-    seller.usdBalance ??
-    seller.usd_balance ??
-    0
-  );
-
-  const piBalance = Number(
-    seller.piBalance ??
-    seller.pi_balance ??
-    0
-  );
-
-  const ngEl = document.getElementById("ngBalance");
-  const usdEl = document.getElementById("usdBalance");
-  const piEl = document.getElementById("piBalance");
-
-  if (ngEl) {
-    ngEl.textContent =
-      "₦" + ngBalance.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-  }
-
-  if (usdEl) {
-    usdEl.textContent =
-      "$" + usdBalance.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-  }
-
-  if (piEl) {
-    piEl.textContent =
-      "π" + piBalance.toLocaleString(undefined, {
-        minimumFractionDigits: 6,
-        maximumFractionDigits: 6
-      });
-  }
-
-  const networkEl = document.getElementById("sellerNetwork");
-  if (networkEl) {
-    networkEl.textContent =
-      String(seller.network ?? network ?? "mainnet").toUpperCase();
-  }
-
-
-  } catch(err){
-    console.error("LOAD EARNINGS ERROR:", err);
-    alert("Failed to load earnings: " + (err.message || err));
-  }
-}
 
 // ================= LOAD SALES HISTORY =================
 async function loadSalesHistory(){
