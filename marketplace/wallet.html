@@ -146,6 +146,72 @@ Reset Wallet
   <div id="qr-container" style="margin-top:15px;"></div>
 </div>
 
+<!-- ================= TRANSACTION SECURITY ================= -->
+<div class="balance-card" id="transactionSecurityCard">
+  <h2>🔐 Transaction Security</h2>
+
+  <p id="securityStatus">Checking Transaction PIN status...</p>
+
+  <div id="pinSetupArea">
+    <input
+      type="password"
+      id="transactionPin"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="Create 4-6 digit PIN"
+      autocomplete="new-password"
+    >
+
+    <input
+      type="password"
+      id="transactionPinConfirm"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="Confirm PIN"
+      autocomplete="new-password"
+    >
+
+    <button onclick="setupTransactionPin()">
+      Set Transaction PIN
+    </button>
+  </div>
+
+  <div id="pinChangeArea" style="display:none;">
+    <input
+      type="password"
+      id="currentTransactionPin"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="Current PIN"
+      autocomplete="current-password"
+    >
+
+    <input
+      type="password"
+      id="newTransactionPin"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="New 4-6 digit PIN"
+      autocomplete="new-password"
+    >
+
+    <input
+      type="password"
+      id="newTransactionPinConfirm"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="Confirm new PIN"
+      autocomplete="new-password"
+    >
+
+    <button onclick="changeTransactionPin()">
+      Change Transaction PIN
+    </button>
+  </div>
+
+  <p id="securityMessage"></p>
+</div>
+
 <h2>💱 Swap Currency</h2>
 
 <input type="number" id="swapAmount" placeholder="Enter amount" />
@@ -163,9 +229,9 @@ Reset Wallet
 
 <p id="swapResult"></p>
 
-<h2>🧾 Swap History</h2>
+<h2>🧾 Transaction History</h2>
 <div id="swapHistory"></div>
-<h2>📜 Withdrawal History</h2>
+<h2>📜 Withdrawal Requests</h2>
 <div id="withdrawHistory"></div>
 
 </main>
@@ -326,7 +392,8 @@ console.log("loadBalance()", {
   // Let toggle system handle fiat display
   updateWalletDisplay();
 
-  loadSwapHistory();
+  await loadSwapHistory();
+  await loadSecurityStatus();
 }
 
 function connectWallet(){
@@ -805,29 +872,426 @@ function toggleWalletCurrency(){
   updateWalletDisplay();
 }
 
+// ================= TRANSACTION SECURITY =================
+
+let transactionAuthorizationToken = null;
+let transactionAuthorizationExpiresAt = 0;
+
+function clearTransactionAuthorization(){
+  transactionAuthorizationToken = null;
+  transactionAuthorizationExpiresAt = 0;
+}
+
+async function loadSecurityStatus(){
+
+  if(!walletId){
+    return;
+  }
+
+  try{
+
+    const res = await fetch(
+      API +
+      "/wallet/security/status/" +
+      encodeURIComponent(walletId) +
+      "?network=" +
+      encodeURIComponent(currentNetwork)
+    );
+
+    const data = await res.json();
+
+    const status = document.getElementById("securityStatus");
+    const setupArea = document.getElementById("pinSetupArea");
+    const changeArea = document.getElementById("pinChangeArea");
+
+    if(!res.ok){
+      status.textContent =
+        data.message || "Unable to load Transaction PIN status.";
+      return;
+    }
+
+    if(data.pinSet){
+
+      if(data.locked){
+
+        status.textContent =
+          "🔒 Transaction PIN is locked until " +
+          new Date(data.lockedUntil).toLocaleString();
+
+      }else{
+
+        status.textContent =
+          "✅ Transaction PIN is active.";
+
+      }
+
+      setupArea.style.display = "none";
+      changeArea.style.display = "block";
+
+    }else{
+
+      status.textContent =
+        "⚠️ Set a Transaction PIN before sending, swapping, or withdrawing funds.";
+
+      setupArea.style.display = "block";
+      changeArea.style.display = "none";
+
+    }
+
+  }catch(err){
+
+    console.error("Security status error:", err);
+
+    document.getElementById("securityStatus").textContent =
+      "Unable to load Transaction PIN status.";
+
+  }
+}
+
+
+async function setupTransactionPin(){
+
+  const pin =
+    document.getElementById("transactionPin").value.trim();
+
+  const confirmPin =
+    document.getElementById("transactionPinConfirm").value.trim();
+
+  const message =
+    document.getElementById("securityMessage");
+
+  if(!/^\d{4,6}$/.test(pin)){
+    message.textContent =
+      "PIN must contain 4 to 6 digits.";
+    return;
+  }
+
+  if(pin !== confirmPin){
+    message.textContent =
+      "PIN confirmation does not match.";
+    return;
+  }
+
+  try{
+
+    const res = await fetch(
+      API + "/wallet/security/setup-pin",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          walletId,
+          network:currentNetwork,
+          pin
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    message.textContent =
+      data.message || "Unable to set Transaction PIN.";
+
+    if(data.success){
+
+      document.getElementById("transactionPin").value = "";
+      document.getElementById("transactionPinConfirm").value = "";
+
+      await loadSecurityStatus();
+
+    }
+
+  }catch(err){
+
+    console.error("Setup PIN error:", err);
+
+    message.textContent =
+      "Unable to set Transaction PIN.";
+
+  }
+}
+
+
+async function changeTransactionPin(){
+
+  const currentPin =
+    document.getElementById("currentTransactionPin").value.trim();
+
+  const newPin =
+    document.getElementById("newTransactionPin").value.trim();
+
+  const confirmPin =
+    document.getElementById("newTransactionPinConfirm").value.trim();
+
+  const message =
+    document.getElementById("securityMessage");
+
+  if(!/^\d{4,6}$/.test(currentPin)){
+    message.textContent =
+      "Enter your current PIN.";
+    return;
+  }
+
+  if(!/^\d{4,6}$/.test(newPin)){
+    message.textContent =
+      "New PIN must contain 4 to 6 digits.";
+    return;
+  }
+
+  if(newPin !== confirmPin){
+    message.textContent =
+      "New PIN confirmation does not match.";
+    return;
+  }
+
+  try{
+
+    const res = await fetch(
+      API + "/wallet/security/change-pin",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          walletId,
+          network:currentNetwork,
+          currentPin,
+          newPin
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    message.textContent =
+      data.message || "Unable to change Transaction PIN.";
+
+    if(data.success){
+
+      clearTransactionAuthorization();
+
+      document.getElementById("currentTransactionPin").value = "";
+      document.getElementById("newTransactionPin").value = "";
+      document.getElementById("newTransactionPinConfirm").value = "";
+
+      await loadSecurityStatus();
+
+    }
+
+  }catch(err){
+
+    console.error("Change PIN error:", err);
+
+    message.textContent =
+      "Unable to change Transaction PIN.";
+
+  }
+}
+
+
+async function requestTransactionAuthorization(operationName){
+
+  clearTransactionAuthorization();
+
+  if(!walletId){
+    alert("Wallet not initialized.");
+    return null;
+  }
+
+  const statusRes = await fetch(
+    API +
+    "/wallet/security/status/" +
+    encodeURIComponent(walletId) +
+    "?network=" +
+    encodeURIComponent(currentNetwork)
+  );
+
+  const statusData = await statusRes.json();
+
+  if(!statusData.pinSet){
+
+    alert(
+      "Please set your Transaction PIN before " +
+      operationName.toLowerCase() +
+      "."
+    );
+
+    await loadSecurityStatus();
+
+    return null;
+  }
+
+  if(statusData.locked){
+
+    alert(
+      "Transaction PIN is locked until " +
+      new Date(statusData.lockedUntil).toLocaleString()
+    );
+
+    return null;
+  }
+
+  const pin = prompt(
+    "Enter your Transaction PIN to " +
+    operationName.toLowerCase() +
+    ":"
+  );
+
+  if(pin === null){
+    return null;
+  }
+
+  if(!/^\d{4,6}$/.test(pin)){
+
+    alert("PIN must contain 4 to 6 digits.");
+
+    return null;
+  }
+
+  try{
+
+    const res = await fetch(
+      API + "/wallet/security/verify-pin",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          walletId,
+          network:currentNetwork,
+          pin
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if(!res.ok || !data.success || !data.authorizationToken){
+
+      alert(
+        data.message ||
+        "Transaction PIN verification failed."
+      );
+
+      await loadSecurityStatus();
+
+      return null;
+    }
+
+    transactionAuthorizationToken =
+      data.authorizationToken;
+
+    transactionAuthorizationExpiresAt =
+      data.expiresAt
+        ? new Date(data.expiresAt).getTime()
+        : Date.now() + (5 * 60 * 1000);
+
+    return transactionAuthorizationToken;
+
+  }catch(err){
+
+    console.error(
+      "Transaction PIN verification error:",
+      err
+    );
+
+    alert(
+      "Unable to verify Transaction PIN."
+    );
+
+    return null;
+  }
+}
+
+
 // ================= TRANSFER PI =================
 async function sendPi(){
-  let toWalletId = prompt("Enter receiver wallet ID:");
-  let amount = Number(prompt("Enter Pi to send:"));
 
-  if(!amount || amount <= 0) return alert("Invalid amount");
+  const toWalletId =
+    prompt("Enter receiver wallet ID:");
 
-  const res = await fetch(API + "/wallet/transfer", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-  fromWalletId,
-  toWalletId,
-  network: currentNetwork,
-  amount,
-  currency
-})
-  });
+  if(toWalletId === null || !toWalletId.trim()){
+    return;
+  }
 
-  const data = await res.json();
-  alert(data.message);
+  const amountText =
+    prompt("Enter Pi to send:");
 
-  loadBalance();
+  if(amountText === null){
+    return;
+  }
+
+  const amount = Number(amountText);
+
+  if(!Number.isFinite(amount) || amount <= 0){
+    return alert("Invalid Pi amount.");
+  }
+
+  const authorizationToken =
+    await requestTransactionAuthorization("send Pi");
+
+  if(!authorizationToken){
+    return;
+  }
+
+  try{
+
+    const res = await fetch(
+      API + "/wallet/transfer",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          fromWalletId: walletId,
+          toWalletId: toWalletId.trim(),
+          network: currentNetwork,
+          amount,
+          currency: "PI",
+          authorizationToken
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    clearTransactionAuthorization();
+
+    alert(
+      data.message ||
+      (data.success
+        ? "Pi transfer completed."
+        : "Pi transfer failed.")
+    );
+
+    if(data.success){
+
+      await loadBalance();
+      await updateWalletDisplay();
+      await loadSwapHistory();
+      await loadWithdrawals();
+
+    }
+
+  }catch(err){
+
+    clearTransactionAuthorization();
+
+    console.error(
+      "Pi transfer error:",
+      err
+    );
+
+    alert(
+      "Unable to complete Pi transfer."
+    );
+
+  }
 }
 
 // ================= SWAP PREVIEW =================
@@ -997,25 +1461,56 @@ async function performSwap(){
 
   }
 
+  // ================= TRANSACTION PIN =================
+  const authorizationToken =
+    await requestTransactionAuthorization("perform this swap");
+
+  if(!authorizationToken){
+    return;
+  }
+
   // ================= CALL BACKEND =================
-  const res = await fetch(
-    API + "/wallet/swap",
-    {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        walletId,
-        fromCurrency,
-        toCurrency,
-        amount,
-        network:currentNetwork
-      })
-    }
-  );
+  let res;
+
+  try{
+
+    res = await fetch(
+      API + "/wallet/swap",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          walletId,
+          fromCurrency,
+          toCurrency,
+          amount,
+          network:currentNetwork,
+          authorizationToken
+        })
+      }
+    );
+
+  }catch(err){
+
+    clearTransactionAuthorization();
+
+    console.error(
+      "Swap request failed:",
+      err
+    );
+
+    resultDiv.textContent =
+      "Unable to complete swap.";
+
+    return;
+  }
 
   const data = await res.json();
+
+  // Authorization tokens are one-time credentials.
+  clearTransactionAuthorization();
 
   if(!data.success){
     resultDiv.textContent = data.message;
@@ -1069,172 +1564,610 @@ async function performSwap(){
 
 // ================= HISTORY =================
 async function loadSwapHistory(){
-console.log("loadSwapHistory()", {
-  walletId: localStorage.getItem("walletId_" + currentNetwork),
-  currentNetwork
-});
-  const walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  );
 
-  const res = await fetch(
-    API +
-    "/transactions/" +
-    walletId +
-    "?network=" +
+  console.log("loadSwapHistory()", {
+    walletId:
+      localStorage.getItem(
+        "walletId_" + currentNetwork
+      ),
     currentNetwork
-  );
+  });
 
-  const txs = await res.json();
+  const walletId =
+    localStorage.getItem(
+      "walletId_" + currentNetwork
+    );
 
-  const container = document.getElementById("swapHistory");
+  if(!walletId){
+    return;
+  }
 
-  container.innerHTML = txs
-  .filter(t => t.type === "swap")
-.map(t => {
+  const container =
+    document.getElementById("swapHistory");
 
-  const amountSymbol =
-    t.from_currency === "PI" ? "π" :
-    t.from_currency === "USD" ? "$" :
-    "₦";
+  try{
 
-  const receiveSymbol =
-    t.to_currency === "PI" ? "π" :
-    t.to_currency === "USD" ? "$" :
-    "₦";
+    const res = await fetch(
+      API +
+      "/transactions/" +
+      encodeURIComponent(walletId) +
+      "?network=" +
+      encodeURIComponent(currentNetwork)
+    );
 
-  const feeSymbol = amountSymbol;
+    const txs = await res.json();
 
-  const amountDecimals =
-    t.from_currency === "PI" ? 6 : 2;
+    if(!res.ok || !Array.isArray(txs)){
 
-  const receiveDecimals =
-    t.to_currency === "PI" ? 8 : 2;
+      container.innerHTML =
+        "<p>Unable to load transaction history.</p>";
 
-  const feeDecimals =
-    t.from_currency === "PI" ? 8 : 2;
+      return;
+    }
 
-  return `
-  <p>
-    <b>${t.from_currency} → ${t.to_currency}</b><br>
+    if(txs.length === 0){
 
-    Amount:
-    ${amountSymbol}${Number(t.amount).toLocaleString(undefined,{
-      minimumFractionDigits: amountDecimals,
-      maximumFractionDigits: amountDecimals
-    })}<br>
+      container.innerHTML =
+        "<p>No transactions recorded yet.</p>";
 
-    Received:
-    ${receiveSymbol}${Number(t.received ?? 0).toLocaleString(undefined,{
-      minimumFractionDigits: receiveDecimals,
-      maximumFractionDigits: receiveDecimals
-    })}<br>
+      return;
+    }
 
-    Fee:
-    ${feeSymbol}${Number(t.fee ?? 0).toLocaleString(undefined,{
-      minimumFractionDigits: feeDecimals,
-      maximumFractionDigits: feeDecimals
-    })}<br>
+    function escapeHtml(value){
 
-    Gas:
-    $${Number(t.gas ?? 0).toLocaleString(undefined,{
-      minimumFractionDigits:2,
-      maximumFractionDigits:2
-    })}<br>
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
-    ${new Date(t.created_at).toLocaleString()}
-  </p>
-  `;
-})
-.join("");
+    }
+
+    function symbol(currency){
+
+      const symbols = {
+        PI:"π",
+        USD:"$",
+        NG:"₦",
+        GH:"₵",
+        KE:"KSh",
+        ZA:"R",
+        EG:"E£",
+        CM:"FCFA",
+        UG:"USh",
+        TZ:"TSh",
+        ET:"Br",
+        RW:"FRw",
+        SN:"FCFA",
+        CI:"FCFA",
+        DZ:"DZD",
+        MA:"MAD",
+        AO:"Kz",
+        ZM:"ZK",
+        ZW:"ZWL",
+        MW:"MK",
+        BW:"P",
+        NA:"N$",
+        SL:"Le",
+        LR:"L$",
+        TG:"FCFA",
+        BJ:"FCFA",
+        NE:"FCFA",
+        ML:"FCFA",
+        BF:"FCFA",
+        GA:"FCFA",
+        CG:"FCFA",
+        CD:"CDF"
+      };
+
+      return symbols[currency] || "";
+
+    }
+
+    function decimals(currency){
+
+      return currency === "PI" ? 8 : 2;
+
+    }
+
+    function formatMoney(value, currency){
+
+      const number = Number(value ?? 0);
+
+      if(!Number.isFinite(number)){
+        return symbol(currency) + "0";
+      }
+
+      return (
+        symbol(currency) +
+        number.toLocaleString(undefined,{
+          minimumFractionDigits: decimals(currency),
+          maximumFractionDigits: decimals(currency)
+        })
+      );
+
+    }
+
+    function transactionTitle(tx){
+
+      const type =
+        String(tx.type || "transaction")
+          .replace(/_/g," ")
+          .replace(/\b\w/g,c => c.toUpperCase());
+
+      if(
+        tx.from_currency &&
+        tx.to_currency
+      ){
+
+        return (
+          escapeHtml(type) +
+          ": " +
+          escapeHtml(tx.from_currency) +
+          " → " +
+          escapeHtml(tx.to_currency)
+        );
+
+      }
+
+      return escapeHtml(type);
+
+    }
+
+    container.innerHTML = txs.map(tx => {
+
+      const type =
+        String(tx.type || "").toLowerCase();
+
+      const amountCurrency =
+        tx.from_currency ||
+        tx.currency ||
+        "";
+
+      const receiveCurrency =
+        tx.to_currency ||
+        tx.currency ||
+        "";
+
+      const amount =
+        formatMoney(
+          tx.amount,
+          amountCurrency
+        );
+
+      const received =
+        formatMoney(
+          tx.received,
+          receiveCurrency
+        );
+
+      const fee =
+        formatMoney(
+          tx.fee,
+          amountCurrency
+        );
+
+      const gas =
+        Number(tx.gas ?? 0);
+
+      const gasDisplay =
+        Number.isFinite(gas)
+          ? "$" +
+            gas.toLocaleString(undefined,{
+              minimumFractionDigits:2,
+              maximumFractionDigits:2
+            })
+          : "$0.00";
+
+      const created =
+        tx.created_at
+          ? new Date(tx.created_at).toLocaleString()
+          : "Unknown date";
+
+      let details = "";
+
+      if(type === "swap"){
+
+        details = `
+          <br>Amount: ${amount}
+          <br>Received: ${received}
+          <br>Fee: ${fee}
+          <br>Gas: ${gasDisplay}
+        `;
+
+      }else if(type === "withdrawal"){
+
+        details = `
+          <br>Amount: ${amount}
+          <br>Received: ${received}
+          <br>Fee: ${fee}
+        `;
+
+      }else if(type === "transfer"){
+
+        details = `
+          <br>Amount: ${amount}
+          <br>Fee: ${fee}
+          <br>Gas: ${gasDisplay}
+        `;
+
+      }else{
+
+        details = `
+          <br>Amount: ${amount}
+          <br>Fee: ${fee}
+        `;
+
+        if(Number(tx.received ?? 0) !== 0){
+          details +=
+            `<br>Received: ${received}`;
+        }
+
+      }
+
+      return `
+        <div
+          style="
+            padding:12px;
+            margin:8px 0;
+            border:1px solid #333;
+            border-radius:10px;
+          "
+        >
+          <b>${transactionTitle(tx)}</b>
+          ${details}
+          <br>
+          <small>
+            Network: ${escapeHtml(tx.network || currentNetwork)}
+          </small>
+          <br>
+          <small>
+            ${escapeHtml(created)}
+          </small>
+          ${
+            tx.tx_id
+              ? `<br><small>TX: ${escapeHtml(tx.tx_id)}</small>`
+              : ""
+          }
+        </div>
+      `;
+
+    }).join("");
+
+  }catch(err){
+
+    console.error(
+      "Transaction history error:",
+      err
+    );
+
+    container.innerHTML =
+      "<p>Unable to load transaction history.</p>";
+
+  }
 }
+
 // WITHDRAW Fiat
 async function requestWithdrawal(){
 
-  const amount = Number(document.getElementById("withdrawAmount").value);
-  const currency = document.getElementById("withdrawCurrency").value;
+  const amount =
+    Number(
+      document.getElementById(
+        "withdrawAmount"
+      ).value
+    );
 
-  const bankName = document.getElementById("bankName").value;
-  const accountNumber = document.getElementById("accountNumber").value;
-  const accountName = document.getElementById("accountName").value;
+  const currency =
+    document.getElementById(
+      "withdrawCurrency"
+    ).value;
 
-  if(!amount || amount <= 0){
-    return alert("Enter valid amount");
+  const method =
+    document.getElementById(
+      "withdrawMethod"
+    ).value;
+
+  const bankName =
+    document.getElementById(
+      "bankName"
+    ).value.trim();
+
+  const accountNumber =
+    document.getElementById(
+      "accountNumber"
+    ).value.trim();
+
+  const accountName =
+    document.getElementById(
+      "accountName"
+    ).value.trim();
+
+  const withdrawDetails =
+    document.getElementById(
+      "withdrawDetails"
+    ).value.trim();
+
+  if(!Number.isFinite(amount) || amount <= 0){
+
+    return alert(
+      "Enter a valid withdrawal amount."
+    );
+
   }
 
-  if(currency === "NG"){
+  let details = {};
+
+  if(method === "bank"){
+
     if(!bankName || !accountNumber || !accountName){
-      return alert("Fill bank details");
+
+      return alert(
+        "Fill in bank name, account number and account name."
+      );
+
     }
+
+    details = {
+      bankName,
+      accountNumber,
+      accountName
+    };
+
+  }else{
+
+    if(!withdrawDetails){
+
+      return alert(
+        "Enter the destination crypto/Pi wallet address."
+      );
+
+    }
+
+    details = {
+      cryptoAddress: withdrawDetails
+    };
+
   }
 
-  const walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  );
+  const currentWalletId =
+    localStorage.getItem(
+      "walletId_" + currentNetwork
+    );
 
-  const res = await fetch(API + "/wallet/withdraw", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-  walletId,
-  network: currentNetwork,
-  amount,
-  currency,
-  method: "bank",
-  details: {
-    bankName,
-    accountNumber,
-    accountName
+  if(!currentWalletId){
+
+    return alert(
+      "Wallet not initialized."
+    );
+
   }
-})
-  });
 
-  const data = await res.json();
+  const authorizationToken =
+    await requestTransactionAuthorization(
+      "request this withdrawal"
+    );
 
-  alert(data.message);
+  if(!authorizationToken){
+    return;
+  }
+
+  try{
+
+    const res = await fetch(
+      API + "/wallet/withdraw",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          walletId: currentWalletId,
+          network: currentNetwork,
+          amount,
+          currency,
+          method,
+          details,
+          authorizationToken
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    clearTransactionAuthorization();
+
+    alert(
+      data.message ||
+      (
+        data.success
+          ? "Withdrawal request submitted."
+          : "Withdrawal failed."
+      )
+    );
+
+    if(data.success){
+
+      await loadBalance();
+      await updateWalletDisplay();
+      await loadSwapHistory();
+      await loadWithdrawals();
+
+    }
+
+  }catch(err){
+
+    clearTransactionAuthorization();
+
+    console.error(
+      "Withdrawal request error:",
+      err
+    );
+
+    alert(
+      "Unable to submit withdrawal."
+    );
+
+  }
 }
 
 // WITHDRAWAL HISTORY 
 async function loadWithdrawals(){
-console.log("loadWithdrawals()", {
-  walletId: localStorage.getItem("walletId_" + currentNetwork),
-  currentNetwork
-});
+
+  console.log("loadWithdrawals()", {
+    walletId:
+      localStorage.getItem(
+        "walletId_" + currentNetwork
+      ),
+    currentNetwork
+  });
+
   const walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  );
+    localStorage.getItem(
+      "walletId_" + currentNetwork
+    );
 
-  const res = await fetch(API + "/withdrawals");
-  const data = await res.json();
+  if(!walletId){
+    return;
+  }
 
-  const userData = data.filter(w => w.walletId === walletId);
+  try{
 
-  document.getElementById("withdrawHistory").innerHTML =
-    userData.map(w => `
-      <p>
-💸 ₦${Number(w.amount ?? 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})}<br>
+    const res = await fetch(
+      API +
+      "/withdrawals?network=" +
+      encodeURIComponent(currentNetwork)
+    );
 
-Fee: ₦${Number(w.fee ?? 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})}<br>
+    const data = await res.json();
 
-Received: ₦${Number(w.finalAmount ?? 0).toLocaleString(undefined,{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
-})}<br>
+    if(!res.ok || !Array.isArray(data)){
 
-Status: ${w.status}<br>
-${new Date(w.date).toLocaleString()}
-</p>
-    `).join('');
+      document.getElementById(
+        "withdrawHistory"
+      ).innerHTML =
+        "<p>Unable to load withdrawal history.</p>";
+
+      return;
+    }
+
+    const userData =
+      data.filter(
+        w => w.wallet_id === walletId
+      );
+
+    if(userData.length === 0){
+
+      document.getElementById(
+        "withdrawHistory"
+      ).innerHTML =
+        "<p>No withdrawal requests yet.</p>";
+
+      return;
+    }
+
+    function escapeHtml(value){
+
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    }
+
+    function symbol(currency){
+
+      return currency === "PI"
+        ? "π"
+        : currency === "USD"
+          ? "$"
+          : currency === "NG"
+            ? "₦"
+            : "";
+
+    }
+
+    document.getElementById(
+      "withdrawHistory"
+    ).innerHTML = userData.map(w => {
+
+      const currency =
+        w.currency || "NG";
+
+      const amount =
+        Number(w.amount ?? 0);
+
+      const amountDisplay =
+        Number.isFinite(amount)
+          ? symbol(currency) +
+            amount.toLocaleString(undefined,{
+              minimumFractionDigits:
+                currency === "PI" ? 6 : 2,
+              maximumFractionDigits:
+                currency === "PI" ? 8 : 2
+            })
+          : symbol(currency) + "0";
+
+      const created =
+        w.created_at
+          ? new Date(w.created_at).toLocaleString()
+          : "Unknown date";
+
+      const destination =
+        w.method === "bank"
+          ? (
+              "Bank: " +
+              escapeHtml(w.bank_name || "") +
+              "<br>Account: " +
+              escapeHtml(w.account_number || "")
+            )
+          : (
+              "Crypto/Pi address: " +
+              escapeHtml(w.crypto_address || "")
+            );
+
+      return `
+        <div
+          style="
+            padding:12px;
+            margin:8px 0;
+            border:1px solid #333;
+            border-radius:10px;
+          "
+        >
+          <b>💸 Withdrawal</b>
+          <br>
+          Amount: ${amountDisplay}
+          <br>
+          Method: ${escapeHtml(w.method || "")}
+          <br>
+          ${destination}
+          <br>
+          Status: ${escapeHtml(w.status || "unknown")}
+          <br>
+          <small>${escapeHtml(created)}</small>
+        </div>
+      `;
+
+    }).join("");
+
+  }catch(err){
+
+    console.error(
+      "Withdrawal history error:",
+      err
+    );
+
+    document.getElementById(
+      "withdrawHistory"
+    ).innerHTML =
+      "<p>Unable to load withdrawal history.</p>";
+
+  }
 }
+
 // ================= POPULATE COUNTRIES =================
 function populateCountries(){
   const select = document.getElementById("currencySelect");

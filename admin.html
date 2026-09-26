@@ -140,6 +140,10 @@
     <input type="checkbox" id="toggleDevConsole"> Enable Godomcoworld Developer Console
   </label><br><br>
 
+  <label>
+    <input type="checkbox" id="toggleSwap"> Enable Currency Swap
+  </label><br><br>
+
   <button onclick="savePaymentSettings()">💾 Save Settings</button>
 </div>
   <h2>👥 User Withdrawal Requests</h2>
@@ -604,6 +608,7 @@ async function loadPaymentSettings(){
   document.getElementById("togglePi").checked = settings.enablePi;
   document.getElementById("toggleFiat").checked = settings.enableFiat;
   document.getElementById("toggleDevConsole").checked = settings.enableDevConsole;
+  document.getElementById("toggleSwap").checked = settings.enableSwap;
 }
 // SAVE PAYMENT SETTINGS 
 async function savePaymentSettings(){
@@ -611,11 +616,17 @@ async function savePaymentSettings(){
   const enablePi = document.getElementById("togglePi").checked;
   const enableFiat = document.getElementById("toggleFiat").checked;
   const enableDevConsole = document.getElementById("toggleDevConsole").checked;
+  const enableSwap = document.getElementById("toggleSwap").checked;
 
   const res = await fetch(API + "/admin/payment-settings", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ enablePi, enableFiat, enableDevConsole })
+    body: JSON.stringify({
+      enablePi,
+      enableFiat,
+      enableDevConsole,
+      enableSwap
+    })
   });
 
   const data = await res.json();
