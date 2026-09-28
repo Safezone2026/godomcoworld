@@ -834,6 +834,11 @@ console.log("updateWalletDisplay()", {
 );
   const wallet = await res.json();
 
+  // Refresh PI balance from the latest backend wallet data
+  const pi = wallet.balances?.PI || 0;
+  document.getElementById("piBalance").innerText =
+    Number(pi).toFixed(8) + " π";
+
   const usd = wallet.balances?.USD || 0;
   const ngn = wallet.balances?.NG || 0;
 
