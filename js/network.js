@@ -3,5 +3,5 @@
 // Other wallet-related pages read the same localStorage value.
 
 function getWalletNetwork() {
-  return localStorage.getItem("walletNetwork") || "mainnet";
+  return localStorage.getItem("walletNetwork") || "testnet";
 }

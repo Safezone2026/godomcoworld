@@ -3,7 +3,7 @@
 
 if (typeof getWalletNetwork !== "function") {
   window.getWalletNetwork = function () {
-    return localStorage.getItem("walletNetwork") || "mainnet";
+    return localStorage.getItem("walletNetwork") || "testnet";
   };
 }
 
