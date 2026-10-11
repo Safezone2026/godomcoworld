@@ -88,197 +88,218 @@ let totalNaira = 0;
 let totalUSD = 0;
 let totalPi = 0;
 
-// 💰 CALCULATE
-function calculateTotal(){
+// ================= API AND TOTALS =================
+const API = "https://godomcoworld-backend.onrender.com";
 
-  let shipping = Number(document.getElementById("shipping").value);
-  let platformFee = subtotal * 0.05;
+function calculateTotal() {
+  const shippingInput = document.getElementById("shipping");
+  const shipping = Number(shippingInput ? shippingInput.value : 0);
+  const platformFee = subtotal * 0.05;
 
   totalNaira = subtotal + shipping + platformFee;
 
   const rates = JSON.parse(localStorage.getItem("countryRates") || "{}");
+  const nairaRate = Number(rates.NG?.rate || 1500);
+  const piRate = Number(localStorage.getItem("PI_RATE")) || 471238500;
 
-const nairaRate = Number(rates.NG?.rate || 1500);
+  totalUSD = totalNaira / nairaRate;
+  totalPi = totalNaira / piRate;
+}
 
-const piRate =
-Number(localStorage.getItem("PI_RATE")) ||
-471238500;
-
-totalUSD = totalNaira / nairaRate;
-totalPi = totalNaira / piRate;
-
-  // ================= PAYMENT =================
-
-async function payWithBackend(type){
-
-  try{
-
-    const paymentCurrency =
-      type === "Pi" ? "PI" : "NG";
-
-    const amount =
-      paymentCurrency === "PI"
-      ? totalPi
-      : totalNaira;
-
-    // ---------------- 1. Deduct wallet ----------------
-
-    const payRes = await fetch(
-      API + "/pay",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-          walletId:localStorage.getItem("walletId"),
-          amount,
-          currency:paymentCurrency
-        })
-      }
+// ================= TRANSACTION PIN AUTHORIZATION =================
+async function requestCheckoutAuthorization(walletId, network) {
+  try {
+    const statusRes = await fetch(
+      API + "/wallet/security/status/" +
+      encodeURIComponent(walletId) +
+      "?network=" + encodeURIComponent(network)
     );
+
+    const statusData = await statusRes.json();
+
+    if (!statusRes.ok) {
+      alert(statusData.message || "Could not check Transaction PIN status.");
+      return null;
+    }
+
+    if (!statusData.pinSet) {
+      alert("Set your Transaction PIN in Wallet Security before checkout.");
+      return null;
+    }
+
+    if (statusData.locked) {
+      alert("Your Transaction PIN is temporarily locked. Please try again later.");
+      return null;
+    }
+
+    const pin = prompt("Enter your Transaction PIN to complete checkout:");
+
+    if (pin === null) return null;
+
+    if (!/^\d{4,6}$/.test(pin)) {
+      alert("Your Transaction PIN must contain 4 to 6 digits.");
+      return null;
+    }
+
+    const verifyRes = await fetch(API + "/wallet/security/verify-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletId, network, pin })
+    });
+
+    const verifyData = await verifyRes.json();
+
+    if (
+      !verifyRes.ok ||
+      !verifyData.success ||
+      !verifyData.authorizationToken
+    ) {
+      alert(verifyData.message || "Transaction PIN verification failed.");
+      return null;
+    }
+
+    return verifyData.authorizationToken;
+  } catch (err) {
+    console.error("Checkout PIN authorization failed:", err);
+    alert("Could not verify your Transaction PIN. Please try again.");
+    return null;
+  }
+}
+
+// ================= PAYMENT =================
+async function payWithBackend(type) {
+  try {
+    calculateTotal();
+
+    const walletId = localStorage.getItem("walletId");
+    const network = localStorage.getItem("walletNetwork") || "testnet";
+
+    if (!walletId) {
+      alert("Wallet not found. Please open your wallet and try again.");
+      return;
+    }
+
+    if (!["testnet", "mainnet"].includes(network)) {
+      alert("Invalid wallet network. Please select your wallet network again.");
+      return;
+    }
+
+    const paymentCurrency = type === "Pi" ? "PI" : "NG";
+    const amount = paymentCurrency === "PI" ? totalPi : totalNaira;
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("The checkout total is invalid. Please check your cart and shipping.");
+      return;
+    }
+
+    // Verify the PIN before attempting to deduct funds.
+    const authorizationToken = await requestCheckoutAuthorization(walletId, network);
+    if (!authorizationToken) return;
+
+    // 1. Deduct payment from the selected network's wallet.
+    const payRes = await fetch(API + "/wallet/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        walletId,
+        amount,
+        currency: paymentCurrency,
+        type: "product",
+        network,
+        authorizationToken
+      })
+    });
 
     const payData = await payRes.json();
 
-    if(!payData.success){
-      return alert(payData.message);
+    if (!payRes.ok || !payData.success) {
+      alert(payData.message || "Wallet payment failed.");
+      return;
     }
 
-    // ---------------- 2. Checkout ----------------
+    // 2. Create the checkout order.
+    const checkoutRes = await fetch(API + "/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderId: "ORD-" + Date.now(),
+        paymentMethod: type,
+        paymentCurrency,
+        network,
+        totalNaira,
+        totalUSD,
+        totalPi,
+        cart,
+        user: localStorage.getItem("piUser"),
+        buyerName: document.getElementById("buyerName").value,
+        phone: document.getElementById("phone").value,
+        email: document.getElementById("email").value,
+        address: document.getElementById("address").value,
+        houseAddress: document.getElementById("houseAddress").value,
+        city: document.getElementById("city").value,
+        state: document.getElementById("state").value,
+        country: document.getElementById("country").value,
+        lat: Number(document.getElementById("lat").value || 0),
+        lng: Number(document.getElementById("lng").value || 0),
+        shippingMethod: document.getElementById("shipping").value
+      })
+    });
 
-    const checkoutRes = await fetch(
-      API + "/api/checkout",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
+    const checkoutData = await checkoutRes.json();
 
-          orderId:"ORD-" + Date.now(),
-
-          paymentMethod:type,
-          paymentCurrency,
-
-          totalNaira,
-          totalUSD,
-          totalPi,
-
-          cart,
-
-          user:
-            localStorage.getItem("piUser"),
-
-          buyerName:
-            document.getElementById("buyerName").value,
-
-          phone:
-            document.getElementById("phone").value,
-
-          email:
-            document.getElementById("email").value,
-
-          address:
-            document.getElementById("address").value,
-
-          houseAddress:
-            document.getElementById("houseAddress").value,
-
-          city:
-            document.getElementById("city").value,
-
-          state:
-            document.getElementById("state").value,
-
-          country:
-            document.getElementById("country").value,
-
-          lat:Number(
-            document.getElementById("lat").value || 0
-          ),
-
-          lng:Number(
-            document.getElementById("lng").value || 0
-          ),
-
-          shippingMethod:
-            document.getElementById("shipping").value
-
-        })
-      }
-    );
-
-    const checkoutData =
-      await checkoutRes.json();
-
-    if(!checkoutData.success){
-      return alert(
+    if (!checkoutRes.ok || !checkoutData.success) {
+      alert(
         checkoutData.message ||
-        "Checkout failed"
+        "Payment was processed, but order creation failed. Contact support before retrying."
       );
+      return;
     }
 
-    alert("✅ Payment successful");
-
+    alert("Payment and checkout successful.");
     localStorage.removeItem("cart");
-
-    window.location.href =
-      "history.html";
-
+    window.location.href = "history.html";
+  } catch (err) {
+    console.error("Checkout failed:", err);
+    alert("Checkout failed. Check your connection and order status before retrying.");
   }
-  catch(err){
-
-    console.error(err);
-
-    alert("Checkout failed");
-
-  }
-
 }
 
 // ================= BUTTONS =================
-
-function payWithPi(){
+function payWithPi() {
   payWithBackend("Pi");
 }
 
-function payWithFiat(){
+function payWithFiat() {
   payWithBackend("Fiat");
 }
 
 // ================= LOAD BALANCES =================
+async function loadBalances() {
+  try {
+    const walletId = localStorage.getItem("walletId");
+    const network = localStorage.getItem("walletNetwork") || "testnet";
 
-async function loadBalances(){
-
-  try{
+    if (!walletId) return;
 
     const res = await fetch(
-      API + "/wallet/" +
-      localStorage.getItem("walletId")
+      API + "/wallet/" + encodeURIComponent(walletId) +
+      "?network=" + encodeURIComponent(network)
     );
 
     const data = await res.json();
 
-    if(data.success){
-
+    if (res.ok && data.success && data.wallet && data.wallet.balances) {
       document.getElementById("pi-balance").innerText =
-      Number(data.wallet.balances.PI || 0)
-      .toLocaleString(undefined,{
-        maximumFractionDigits:8
-      });
+        Number(data.wallet.balances.PI || 0).toLocaleString(undefined, {
+          maximumFractionDigits: 8
+        });
 
       document.getElementById("fiat-balance").innerText =
-      Number(data.wallet.balances.NG || 0)
-      .toLocaleString();
-
+        Number(data.wallet.balances.NG || 0).toLocaleString();
     }
-
-  }catch(err){
-
-    console.error(err);
-
+  } catch (err) {
+    console.error("Could not load wallet balances:", err);
   }
-
 }
 
 window.onload = loadBalances;  
