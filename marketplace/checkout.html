@@ -182,8 +182,80 @@ function loadCart(){
   container.innerHTML = html;
 }
 async function checkPaymentAccess(method){
-  // TEMP: always allow payment
-  return true;
+  window.checkoutAuthorizationToken = null;
+  window.checkoutAuthorizationWalletId = null;
+  window.checkoutAuthorizationNetwork = null;
+
+  const network = getWalletNetwork();
+  const walletId = localStorage.getItem("walletId_" + network);
+
+  if (!walletId) {
+    alert("Wallet not initialized.");
+    return false;
+  }
+
+  try {
+    const statusRes = await fetch(
+      "https://godomcoworld-backend.onrender.com/wallet/security/status/" +
+      encodeURIComponent(walletId) +
+      "?network=" + encodeURIComponent(network)
+    );
+    const statusData = await statusRes.json();
+
+    if (!statusRes.ok) {
+      alert(statusData.message || "Could not check Transaction PIN status.");
+      return false;
+    }
+
+    if (!statusData.pinSet) {
+      alert("Please set your Transaction PIN before making this payment.");
+      return false;
+    }
+
+    if (statusData.locked) {
+      alert("Transaction PIN is locked until " +
+        new Date(statusData.lockedUntil).toLocaleString());
+      return false;
+    }
+
+    const pin = prompt("Enter your Transaction PIN to pay for this order:");
+    if (pin === null) return false;
+
+    if (!/^\d{4,6}$/.test(pin)) {
+      alert("PIN must contain 4 to 6 digits.");
+      return false;
+    }
+
+    const verifyRes = await fetch(
+      "https://godomcoworld-backend.onrender.com/wallet/security/verify-pin",
+      {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          walletId: walletId,
+          network: network,
+          pin: pin
+        })
+      }
+    );
+
+    const verifyData = await verifyRes.json();
+
+    if (!verifyRes.ok || !verifyData.success ||
+        !verifyData.authorizationToken) {
+      alert(verifyData.message || "Transaction PIN verification failed.");
+      return false;
+    }
+
+    window.checkoutAuthorizationToken = verifyData.authorizationToken;
+    window.checkoutAuthorizationWalletId = walletId;
+    window.checkoutAuthorizationNetwork = network;
+    return true;
+  } catch (error) {
+    console.error("Transaction PIN authorization failed:", error);
+    alert("Could not verify your Transaction PIN. Please try again.");
+    return false;
+  }
 }
 // ================= PAYMENT =================
 async function payWithPi(){
@@ -219,10 +291,7 @@ const walletId =
     "walletId_" + currentNetwork
   );
 
-alert(
-  "walletId=" + walletId +
-  "\nusername=" + localStorage.getItem("username")
-);
+
 
     const payRes = await fetch("https://godomcoworld-backend.onrender.com/wallet/pay", {
       method: "POST",
@@ -232,7 +301,12 @@ alert(
   amount,
   currency,
   type: "product",
-  network: currentNetwork
+  network: currentNetwork,
+  authorizationToken:
+    window.checkoutAuthorizationWalletId === walletId &&
+    window.checkoutAuthorizationNetwork === currentNetwork
+      ? window.checkoutAuthorizationToken
+      : null
 })
     });
 
