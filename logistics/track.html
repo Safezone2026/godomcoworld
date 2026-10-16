@@ -160,17 +160,34 @@ function renderTimeline(status){
 }
 
 // ================= DOWNLOAD PAYMENT RECEIPT =================
-document.getElementById("receiptBtn").onclick = function(){
+document.getElementById("receiptBtn").onclick = async function(){
+  const btn = this;
+  console.log("[Receipt] Button clicked");
 
   if(!window.currentOrderId){
     alert("No order selected");
     return;
   }
 
-  downloadReceipt({
-    orderId: window.currentOrderId,
-    username: username
-  });
+  console.log("[Receipt] Order ID:", window.currentOrderId);
+  console.log("[Receipt] Username:", username);
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = "Preparing receipt...";
+
+  try {
+    await downloadReceipt({
+      orderId: window.currentOrderId,
+      username: username
+    });
+    console.log("[Receipt] Download function completed");
+  } catch (err) {
+    console.error("[Receipt] Handler error:", err);
+    alert("Receipt error: " + (err.message || err));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 };
 
 // ================= CONFIRM DELIVERY =================
