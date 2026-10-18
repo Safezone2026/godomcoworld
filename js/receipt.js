@@ -235,9 +235,22 @@ async function downloadReceipt(options = {}) {
       String(identifier)
         .replace(/[^a-zA-Z0-9_-]/g, "_");
 
-    doc.save(
-      `Godomcoworld-Receipt-${safeIdentifier}.pdf`
-    );
+    const filename =
+      `Godomcoworld-Receipt-${safeIdentifier}.pdf`;
+
+    const pdfBlob = doc.output("blob");
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    const downloadLink = document.createElement("a");
+
+    downloadLink.href = pdfUrl;
+    downloadLink.download = filename;
+    downloadLink.style.display = "none";
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+
+    setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
   } catch (err) {
 
