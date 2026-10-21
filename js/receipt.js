@@ -292,7 +292,44 @@ async function downloadReceipt(options = {}) {
     reportReceiptDiagnostic("download_click_dispatched");
     downloadLink.remove();
 
-    setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
+    // Testnet fallback: expose a visible link for Pi Browser.
+    if (String(network).trim().toLowerCase() === "testnet") {
+      let fallback = document.getElementById("receiptPdfFallback");
+
+      if (!fallback) {
+        fallback = document.createElement("div");
+        fallback.id = "receiptPdfFallback";
+        fallback.style.cssText =
+          "margin:12px 0;padding:12px;border:1px solid #888;border-radius:8px;";
+        const target =
+          document.getElementById("receiptBtn")?.parentElement ||
+          document.body;
+        target.appendChild(fallback);
+      }
+
+      fallback.replaceChildren();
+
+      const message = document.createElement("p");
+      message.textContent =
+        "If the receipt did not download, open the PDF below and use your browser's save or share option.";
+      fallback.appendChild(message);
+
+      const openLink = document.createElement("a");
+      openLink.href = pdfUrl;
+      openLink.target = "_blank";
+      openLink.rel = "noopener";
+      openLink.textContent = "Open Receipt PDF";
+      openLink.style.cssText =
+        "display:inline-block;padding:10px 14px;background:#1457a6;color:#fff;border-radius:6px;text-decoration:none;";
+      fallback.appendChild(openLink);
+
+    }
+
+    // Keep the object URL alive long enough for the user to open the fallback.
+    const revokeDelay = String(network).trim().toLowerCase() === "testnet"
+      ? 10 * 60 * 1000
+      : 60000;
+    setTimeout(() => URL.revokeObjectURL(pdfUrl), revokeDelay);
 
   } catch (err) {
 
