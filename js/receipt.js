@@ -316,9 +316,8 @@ async function downloadReceipt(options = {}) {
 
       const openLink = document.createElement("a");
       openLink.href = pdfUrl;
-      openLink.target = "_blank";
-      openLink.rel = "noopener";
-      openLink.textContent = "Open Receipt PDF";
+      openLink.download = filename;
+      openLink.textContent = "Download Receipt PDF";
       openLink.style.cssText =
         "display:inline-block;padding:10px 14px;background:#1457a6;color:#fff;border-radius:6px;text-decoration:none;";
       fallback.appendChild(openLink);
