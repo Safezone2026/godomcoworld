@@ -1938,6 +1938,21 @@ async function loadSwapHistory(){
               ? `<br><small>TX: ${escapeHtml(tx.tx_id)}</small>`
               : ""
           }
+          ${
+            (tx.tx_id || tx.transaction_id || tx.order_id)
+              ? `<br><button
+                   type="button"
+                   style="margin-top:10px;padding:9px 14px;border-radius:8px;cursor:pointer;"
+                   data-transaction-id="${escapeHtml(tx.tx_id || tx.transaction_id || "")}"
+                   data-order-id="${escapeHtml(tx.order_id || "")}"
+                   onclick="downloadReceipt({
+                     transactionId: this.dataset.transactionId || null,
+                     orderId: this.dataset.orderId || null,
+                     username: localStorage.getItem('username')
+                   })"
+                 >Download Receipt</button>`
+              : ""
+          }
         </div>
       `;
 
