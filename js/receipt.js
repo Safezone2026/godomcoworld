@@ -25,6 +25,35 @@ function getReceiptNetwork() {
 }
 
 
+
+// Report receipt-download diagnostics to Render on Testnet only.
+// Never include usernames, order IDs, or receipt contents.
+function reportReceiptDiagnostic(stage, err = null) {
+  try {
+    if (String(getReceiptNetwork()).trim().toLowerCase() !== "testnet") {
+      return;
+    }
+
+    const payload = {
+      stage,
+      errorName: err && err.name ? String(err.name).slice(0, 60) : "",
+      errorMessage: err && err.message ? String(err.message).slice(0, 250) : ""
+    };
+
+    fetch(RECEIPT_API + "/debug/receipt-download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true
+    }).catch(() => {
+      console.warn("Receipt diagnostic report could not reach the backend.");
+    });
+  } catch (reportError) {
+    console.warn("Receipt diagnostic reporting failed.");
+  }
+}
+
+
 async function loadUserReceipts(username, network) {
 
   if (!username) {
@@ -64,6 +93,8 @@ async function loadUserReceipts(username, network) {
 
 async function downloadReceipt(options = {}) {
 
+  reportReceiptDiagnostic("start");
+
   try {
 
     const {
@@ -88,6 +119,8 @@ async function downloadReceipt(options = {}) {
     // Load jsPDF only when needed.
     if (!window.jspdf) {
 
+      reportReceiptDiagnostic("pdf_library_loading");
+
       await new Promise((resolve, reject) => {
 
         const script =
@@ -109,8 +142,12 @@ async function downloadReceipt(options = {}) {
 
     }
 
+    reportReceiptDiagnostic("pdf_library_loaded");
+
+    reportReceiptDiagnostic("receipt_fetch_started");
     const receipts =
       await loadUserReceipts(username, network);
+    reportReceiptDiagnostic("receipt_fetch_succeeded");
 
     const receipt =
       receipts.find(r => {
@@ -144,6 +181,9 @@ async function downloadReceipt(options = {}) {
         "No receipt found for the requested transaction."
       );
     }
+
+    reportReceiptDiagnostic("receipt_found");
+    reportReceiptDiagnostic("pdf_generation_started");
 
     const { jsPDF } = window.jspdf;
 
@@ -239,6 +279,7 @@ async function downloadReceipt(options = {}) {
       `Godomcoworld-Receipt-${safeIdentifier}.pdf`;
 
     const pdfBlob = doc.output("blob");
+    reportReceiptDiagnostic("pdf_blob_created");
     const pdfUrl = URL.createObjectURL(pdfBlob);
     const downloadLink = document.createElement("a");
 
@@ -248,11 +289,14 @@ async function downloadReceipt(options = {}) {
 
     document.body.appendChild(downloadLink);
     downloadLink.click();
+    reportReceiptDiagnostic("download_click_dispatched");
     downloadLink.remove();
 
     setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
   } catch (err) {
+
+    reportReceiptDiagnostic("error", err);
 
     console.error(
       "RECEIPT PDF ERROR:",
