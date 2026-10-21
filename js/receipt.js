@@ -183,6 +183,32 @@ async function downloadReceipt(options = {}) {
     }
 
     reportReceiptDiagnostic("receipt_found");
+
+    const receiptNetwork = String(
+      localStorage.getItem("walletNetwork") || "mainnet"
+    ).trim().toLowerCase();
+
+    if (receiptNetwork === "testnet") {
+      const receiptUsername = receipt.username;
+      const receiptId = receipt.receipt_id;
+
+      if (!receiptUsername || !receiptId) {
+        throw new Error(
+          "This receipt is missing its username or receipt ID."
+        );
+      }
+
+      const pdfEndpoint =
+        "https://godomcoworld-backend.onrender.com/receipts/" +
+        encodeURIComponent(String(receiptUsername)) + "/" +
+        encodeURIComponent(String(receiptId)) +
+        "/pdf?network=testnet";
+
+      reportReceiptDiagnostic("https_pdf_open_started");
+      window.location.href = pdfEndpoint;
+      return;
+    }
+
     reportReceiptDiagnostic("pdf_generation_started");
 
     const { jsPDF } = window.jspdf;
