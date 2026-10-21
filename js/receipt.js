@@ -316,10 +316,14 @@ async function downloadReceipt(options = {}) {
 
       const openLink = document.createElement("a");
       openLink.href = pdfUrl;
-      openLink.download = filename;
-      openLink.textContent = "Download Receipt PDF";
+      openLink.removeAttribute("download");
+      openLink.textContent = "Open Receipt PDF";
       openLink.style.cssText =
         "display:inline-block;padding:10px 14px;background:#1457a6;color:#fff;border-radius:6px;text-decoration:none;";
+      openLink.addEventListener("click", function (event) {
+        event.preventDefault();
+        window.location.href = pdfUrl;
+      });
       fallback.appendChild(openLink);
 
     }
