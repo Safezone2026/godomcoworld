@@ -787,31 +787,31 @@ Pi.init({
     sandbox: true
 });
 
+// Allow login.html to enter the same Pi authentication flow.
+if (new URLSearchParams(window.location.search).get("startPiLogin") === "1") {
+    if (document.readyState === "complete") {
+        setTimeout(() => loginPi(), 0);
+    } else {
+        window.addEventListener("load", () => loginPi(), { once: true });
+    }
+}
+
 async function loginPi(){
 
     try{
 
-        alert("1. loginPi started");
-
         const scopes = [
             "username",
-            "payments"
+            "payments",
+            "wallet_address"
         ];
-
-        alert("2. About to authenticate");
 
         const auth = await Pi.authenticate(scopes);
 
-        alert("3. authenticate returned");
-
-        console.log(auth);
-
-        if(!auth){
-            alert("Authentication cancelled.");
+        if (!auth) {
+            alert("Pi sign-in was cancelled.");
             return;
         }
-
-        alert("4. accessToken received");
 
         const response = await fetch(API + "/api/pi-auth",{
             method:"POST",
@@ -823,15 +823,26 @@ async function loginPi(){
             })
         });
 
-        alert("5. Backend reached");
 
         const result = await response.json();
 
-        alert("6. Backend replied");
 
-        if(!result.success){
-            alert(result.message);
+        if(!response.ok || !result.success || !result.user){
+            localStorage.removeItem("piWalletAddress");
+            alert(result.message || "Pi backend authentication failed.");
             return;
+        }
+
+        // Capture the Pi wallet address only after backend authentication succeeds.
+        const piWalletAddress =
+            auth.user && auth.user.wallet_address
+                ? auth.user.wallet_address
+                : "";
+
+        if (piWalletAddress) {
+            localStorage.setItem("piWalletAddress", piWalletAddress);
+        } else {
+            localStorage.removeItem("piWalletAddress");
         }
 
         // Ordinary Pi users are identified by their Pi username.

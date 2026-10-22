@@ -24,38 +24,8 @@
 
 </main>
 
-<script src="https://sdk.minepi.com/pi-sdk.js"></script>
-
 <script>
-
-Pi.init({
-version:"2.0",
-sandbox:true,
-});
-
-document.getElementById("pi-login").addEventListener("click", async () => {
-
-try{
-
-const scopes = ['username','payments','wallet_address'];
-
-const auth = await Pi.authenticate(scopes, function(payment){});
-
-document.getElementById("user-info").innerHTML =
-"Connected as: " + auth.user.username;
-
-localStorage.setItem("pi_user", auth.user.username);
-
-window.location.href="dashboard.html";
-
-}catch(e){
-
-console.log(e);
-
-}
-
-});
-
+window.location.replace("home.html?startPiLogin=1");
 </script>
 
 <script src="js/dev-console.js"></script>
