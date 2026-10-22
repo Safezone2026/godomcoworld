@@ -1,36 +1,182 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>User Dashboard</title>
-
-<link rel="stylesheet" href="css/style.css">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Godomcoworld — User Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .account-card { overflow-wrap: anywhere; }
+    .account-row { margin: 12px 0; }
+    .account-label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .dashboard-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .dashboard-actions a,
+    .signout-button {
+      display: inline-block;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      font: inherit;
+    }
+    .signout-button {
+      background: #a51d2d;
+      color: white;
+    }
+    .status-note {
+      font-size: 0.9rem;
+      overflow-wrap: anywhere;
+    }
+  </style>
 </head>
-
 <body>
+  <header class="dashboard-header">
+    <h1>User Dashboard</h1>
+    <button type="button" class="signout-button" id="signOutButton">
+      Sign Out
+    </button>
+  </header>
 
-<header>
-<h1>User Dashboard</h1>
-</header>
+  <main class="container">
+    <section class="card account-card">
+      <h2>My Pi Account</h2>
 
-<div class="container">
+      <div class="account-row">
+        <span class="account-label">Pi Username</span>
+        <span id="piUsername">Not available</span>
+      </div>
 
-<div class="card">
-<h3>My Courses</h3>
-<p>Track your learning progress.</p>
-</div>
+      <div class="account-row">
+        <span class="account-label">Pi User ID</span>
+        <span id="piUid">Not available</span>
+      </div>
 
-<div class="card">
-<h3>My Purchases</h3>
-<p>View course purchases and payments.</p>
-</div>
+      <div class="account-row">
+        <span class="account-label">Wallet Address</span>
+        <span id="walletAddress">Not returned by authentication</span>
+      </div>
 
-</div>
+      <div class="account-row">
+        <span class="account-label">Network</span>
+        <span id="networkStatus">Not set</span>
+      </div>
 
-<script src="js/dev-console.js"></script>
+      <p class="status-note">
+        Account information is displayed when available in this browser.
+        This page does not independently verify KYC status.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>My Courses</h2>
+      <p>Continue exploring courses and learning resources.</p>
+      <div class="dashboard-actions">
+        <a href="learn.html">Learning Center</a>
+        <a href="vocational/index.html">Vocational Skills</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>My Purchases and Wallet</h2>
+      <p>Access your existing wallet, transactions and marketplace.</p>
+      <div class="dashboard-actions">
+        <a href="marketplace/wallet.html">My Wallet</a>
+        <a href="history/index.html">Transaction History</a>
+        <a href="marketplace/index.html">Marketplace</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      document.getElementById("piUsername").textContent =
+        localStorage.getItem("piUsername") ||
+        localStorage.getItem("username") ||
+        "Not available";
+
+      document.getElementById("piUid").textContent =
+        localStorage.getItem("piUid") || "Not available";
+
+      document.getElementById("walletAddress").textContent =
+        localStorage.getItem("piWalletAddress") ||
+        "Not returned by authentication";
+
+      const network = (
+        localStorage.getItem("walletNetwork") || ""
+      ).toLowerCase();
+
+      document.getElementById("networkStatus").textContent =
+        network === "testnet" ? "Testnet" :
+        network === "mainnet" ? "Mainnet" :
+        "Not set";
+
+      document.getElementById("signOutButton").addEventListener(
+        "click",
+        async () => {
+          if (!window.confirm("Sign out of Godomcoworld on this device?")) {
+            return;
+          }
+
+          const button = document.getElementById("signOutButton");
+          button.disabled = true;
+          button.textContent = "Signing out...";
+
+          try {
+            const response = await fetch(
+              "https://godomcoworld-backend.onrender.com/api/logout",
+              {
+                method: "POST",
+                credentials: "include"
+              }
+            );
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || result.success !== true) {
+              throw new Error("The server did not confirm logout.");
+            }
+
+            [
+              "username",
+              "piUsername",
+              "piUid",
+              "piWalletAddress",
+              "walletNetwork",
+              "walletId_testnet"
+            ].forEach(key => localStorage.removeItem(key));
+
+            window.location.replace("home.html");
+          } catch (error) {
+            console.error("Godomcoworld logout failed:", error);
+            window.alert(
+              "Sign out could not be confirmed by the server. " +
+              "Please check your connection and try again."
+            );
+            button.disabled = false;
+            button.textContent = "Sign Out";
+          }
+        }
+      );
+    })();
+  </script>
+
+  <script src="js/dev-console.js"></script>
 </body>
 </html>
