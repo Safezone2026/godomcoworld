@@ -819,7 +819,8 @@ async function loginPi(){
                 "Content-Type":"application/json"
             },
             body:JSON.stringify({
-                accessToken: auth.accessToken
+                accessToken: auth.accessToken,
+                network: "testnet"
             })
         });
 
