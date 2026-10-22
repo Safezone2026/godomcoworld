@@ -833,11 +833,9 @@ async function loginPi(){
             return;
         }
 
-        // Capture the Pi wallet address only after backend authentication succeeds.
+        // Use the wallet address returned by backend-verified Pi authentication.
         const piWalletAddress =
-            auth.user && auth.user.wallet_address
-                ? auth.user.wallet_address
-                : "";
+            result.user.wallet_address || "";
 
         if (piWalletAddress) {
             localStorage.setItem("piWalletAddress", piWalletAddress);
