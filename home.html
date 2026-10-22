@@ -821,6 +821,7 @@ async function loginPi(){
             },
             body:JSON.stringify({
                 accessToken: auth.accessToken,
+                wallet_address: auth.user?.wallet_address || null,
                 network: "testnet"
             })
         });
