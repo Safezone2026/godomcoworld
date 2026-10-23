@@ -1,0 +1,6 @@
+# Separate backend repository
+/godomcoworld-backend/
+
+# Preserved Pi-only reference files
+/marketplace/checkout.html.before-pi-only
+/marketplace/wallet.html.before-pi-only
