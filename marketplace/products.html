@@ -101,11 +101,8 @@
   <h2>Add New Product</h2>
   <input type="text" name="name" placeholder="Product Name" required />
   <input type="text" name="description" placeholder="Description" required />
-  <input type="number" name="price" placeholder="Price" required />
-  <select name="currency" required>
-    <option value="₦">₦ Naira</option>
-    <option value="$">$ Dollar</option>
-  </select>
+  <input type="number" name="price" placeholder="Price in π" min="0.00000001" step="0.00000001" required />
+
   <input type="text" name="sellerUsername" placeholder="Seller Username" required />
   <input type="file" name="image" accept="image/*" required />
   <input type="number" id="weight" placeholder="Weight (kg)">
@@ -261,9 +258,7 @@ function displayProducts() {
 
   filtered.forEach(product => {
 
-    const naira = Number(product.price);
-    const usd = naira / nairaToUSD;
-    const pi = naira / PI_RATE;
+    const pi = Number(product.price) || 0;
 
     const div = document.createElement('div');
     div.className = 'product-card';
@@ -277,11 +272,6 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
       </p>
 
       <strong style="font-size:18px;">π${pi.toFixed(8)}</strong>
-
-      <div style="margin-top:5px; font-size:13px; color:#ccc;">
-        <div>₦${naira.toLocaleString()} (Ref)</div>
-        <div>$${usd.toFixed(2)} (Ref)</div>
-      </div>
 
       <p>Category: ${product.category || 'N/A'}</p>
     `;
@@ -397,7 +387,7 @@ function renderCart() {
 
   storedCart.forEach((item, index) => {
     const div = document.createElement('div');
-    div.textContent = `${item.name} - ₦${Number(item.price).toLocaleString()}`;
+    div.textContent = `${item.name} - π${Number(item.price).toFixed(8)}`;
 
     const removeBtn = document.createElement('button');
     removeBtn.textContent = 'Remove';
@@ -455,6 +445,15 @@ if (form) {
     e.preventDefault();
 
     const formData = new FormData(form);
+
+    // Product price is entered directly in Pi.
+    const piPrice = Number(formData.get("price"));
+    if (!Number.isFinite(piPrice) || piPrice <= 0) {
+      alert("Enter a valid product price in Pi.");
+      return;
+    }
+    formData.set("price", String(piPrice));
+    formData.set("currency", "PI");
 
     // ========================================================
     // REGISTERED SELLER IDENTITY

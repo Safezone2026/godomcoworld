@@ -65,27 +65,6 @@ Reset Wallet
 </header>
 <main>
 
-<!-- FIAT BALANCE -->
-<div class="balance-card">
-<div class="currency-toggle" onclick="toggleWalletCurrency()">
-  <div id="toggleCircle"></div>
-</div>
-
-<div class="wallet-card">
-
-  <span id="currencyLabel">USD</span>
-
-  <h3>💵 Fiat Balance</h3>
-
-  <h1 id="walletBalance">₦0</h1>
-
-</div>
-
-
-<button onclick="depositFiat()">Deposit</button>
-<button onclick="withdrawFiat()">Withdraw</button>
-
-
 <!-- PI BALANCE -->
 <div class="balance-card">
 <h2 id="piBalance">0 π</h2>
@@ -96,44 +75,6 @@ Reset Wallet
 
 
 </div>
-<h2>💸 Withdraw Funds</h2>
-
-<input type="number" id="withdrawAmount" placeholder="Enter amount">
-
-<select id="withdrawCurrency">
-  <option value="NG">₦ Naira</option>
-  <option value="USD">$ USD</option>
-  <option value="PI">🪙 Pi</option>
-</select>
-
-<select id="withdrawMethod">
-  <option value="bank">🏦 Bank Transfer</option>
-  <option value="crypto">🔗 Crypto / Pi Wallet</option>
-</select>
-
-<input type="text" id="withdrawDetails" placeholder="Account No / Wallet Address">
-<select id="bankName">
-  <option value="">🏦 Select Bank</option>
-  <option>Access Bank</option>
-  <option>GTBank</option>
-  <option>First Bank</option>
-  <option>UBA</option>
-  <option>Zenith Bank</option>
-  <option>Opay</option>
-  <option>Palmpay</option>
-  <option>Kuda</option>
-</select>
-
-<input type="text" id="accountNumber" placeholder="Account Number">
-
-<input type="text" id="accountName" placeholder="Account Name">
-
-<button onclick="requestWithdrawal()">Submit Withdrawal</button>
-
-<p id="withdrawMsg"></p>
-</div>
-
-
 <h2>🪙 Pi Wallet</h2>
 
 <div>
@@ -211,23 +152,6 @@ Reset Wallet
 
   <p id="securityMessage"></p>
 </div>
-
-<h2>💱 Swap Currency</h2>
-
-<input type="number" id="swapAmount" placeholder="Enter amount" />
-
-<select id="swapType">
-  <option value="fiatToPi">Fiat → Pi</option>
-  <option value="piToFiat">Pi → Fiat</option>
-</select>
-
-<select id="currencySelect">
-  <!-- Country options populated dynamically -->
-</select>
-
-<button onclick="performSwap()">Swap</button>
-
-<p id="swapResult"></p>
 
 <h2>🧾 Transaction History</h2>
 <div id="swapHistory"></div>
@@ -817,64 +741,31 @@ async function depositPi() {
   }
 }
 // updateWalletDisplay
-let walletCurrency = "USD";
+async function updateWalletDisplay() {
+  const walletId = localStorage.getItem("walletId_" + currentNetwork);
+  const balanceElement = document.getElementById("piBalance");
 
-    async function updateWalletDisplay(){
-console.log("updateWalletDisplay()", {
-  walletId: localStorage.getItem("walletId_" + currentNetwork),
-  currentNetwork
-});
-  const walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  );
-
-  const res = await fetch(
-  `${API}/wallet/${walletId}?network=${currentNetwork}`
-);
-  const wallet = await res.json();
-
-  // Refresh PI balance from the latest backend wallet data
-  const pi = wallet.balances?.PI || 0;
-  document.getElementById("piBalance").innerText =
-    Number(pi).toFixed(8) + " π";
-
-  const usd = wallet.balances?.USD || 0;
-  const ngn = wallet.balances?.NG || 0;
-
-  const rate = 1500;
-
-  let display = 0;
-
-  if(walletCurrency === "USD"){
-
-    // Convert NG → USD if no USD balance
-    display = usd > 0 ? usd : (ngn / rate);
-
-    document.getElementById("walletBalance").innerText =
-      "$" + display.toFixed(2);
-
-  } else {
-
-    // Convert USD → NG if no NG balance
-    display = ngn > 0 ? ngn : (usd * rate);
-
-    document.getElementById("walletBalance").innerText =
-      "₦" + display.toLocaleString();
-
+  if (!walletId) {
+    if (balanceElement) balanceElement.innerText = "0 π";
+    return;
   }
-}
-// TOGGLE currency
-function toggleWalletCurrency(){
 
-  walletCurrency = walletCurrency === "USD" ? "NGN" : "USD";
+  try {
+    const res = await fetch(
+      `${API}/wallet/${encodeURIComponent(walletId)}?network=${encodeURIComponent(currentNetwork)}`
+    );
 
-  const circle = document.getElementById("toggleCircle");
-  circle.style.left = walletCurrency === "NGN" ? "26px" : "2px";
+    if (!res.ok) throw new Error("Unable to load wallet balance");
 
-  document.getElementById("currencyLabel").innerText = walletCurrency;
+    const wallet = await res.json();
+    const pi = Number(wallet.balances?.PI || 0);
 
-  updateWalletDisplay();
+    if (balanceElement) {
+      balanceElement.innerText = pi.toFixed(8) + " π";
+    }
+  } catch (error) {
+    console.error("Could not refresh Pi balance:", error);
+  }
 }
 
 // ================= TRANSACTION SECURITY =================

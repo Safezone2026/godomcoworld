@@ -110,19 +110,17 @@ button{
 <h3>💰 Order Summary</h3>
 
 <p>Subtotal:</p>
-<h2 id="subtotal">₦0</h2>
+<h2 id="subtotal">0 π</h2>
 
 <p>🚚 Delivery Fee:</p>
-<h2 id="deliveryFee">₦0</h2>
+<h2 id="deliveryFee">0 π</h2>
 
 <h3>💳 Total</h3>
-<h2 id="total">₦0</h2>
+<h2 id="total">0 π</h2>
 
-<p>💵 Dollar: <span id="usdTotal">$0</span></p>
 <p>🪙 Pi: <span id="piTotal">0 π</span></p>
 
 <div style="margin-top:20px;">
-  <button onclick="payWithFiat()">💳 Pay with Fiat</button>
   <button onclick="payWithPi()">🪙 Pay with Pi</button>
 </div>
 
@@ -174,7 +172,7 @@ function loadCart(){
       <div>
         <h4>${item.name}</h4>
         <p>${item.description}</p>
-        <p>₦${price.toLocaleString()}</p>
+        <p>${(price / 471238500).toFixed(8)} π</p>
       </div>
     `;
   });
@@ -371,23 +369,19 @@ async function payWithPi(){
   completeCheckout("Pi"); // ✅ method passed
 }
 
-async function payWithFiat(){
-  const allowed = await checkPaymentAccess("Fiat");
-  if(!allowed) return;
-
-  completeCheckout("Fiat"); // ✅ method passed
-}
 async function completeCheckout(method){
   console.log("Checkout started with:", method);
 
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
 
   try {
-    let amount = method === "Fiat"
-      ? window.totalNaira
-      : window.totalPi;
+    const amount = Number(window.totalPi);
+    const currency = "PI";
 
-    let currency = method === "Fiat" ? "NG" : "PI";
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("Please calculate the delivery fee before paying.");
+      return;
+    }
 
     const currentNetwork =
   getWalletNetwork();
@@ -462,6 +456,11 @@ await fetch('https://godomcoworld-backend.onrender.com/api/checkout', {
     method,
     cart,
     orderId,
+
+    // Link the verified wallet payment to this order
+    paymentTransactionId: payData.transactionId,
+    paymentWalletId: walletId,
+    paymentAmount: amount,
 
     // Buyer details — must match backend orders columns
     buyerName,
@@ -547,7 +546,7 @@ async function calculateTotal(){
   data.breakdown.forEach(item => {
     html += `
       <div>
-        ${item.product} → ${item.weight}kg / ${item.distanceKm}km = ₦${item.fee.toLocaleString()}
+        ${item.product} → ${item.weight}kg / ${item.distanceKm}km = ${(Number(item.fee) / 471238500).toFixed(8)} π
       </div>
     `;
   });
@@ -565,33 +564,28 @@ if (breakdownDiv) {
 
   // UPDATE UI
   document.getElementById("subtotal").innerText =
-    "₦" + subtotal.toLocaleString();
+    (subtotal / 471238500).toFixed(8) + " π";
 
   document.getElementById("deliveryFee").innerText =
-    "₦" + delivery.toLocaleString();
+    (delivery / 471238500).toFixed(8) + " π";
 
   document.getElementById("total").innerText =
-    "₦" + total.toLocaleString();
+    window.totalPi.toFixed(8) + " π";
 
   updateCurrency(total);
 }
 
 // ================= CURRENCY =================
 function updateCurrency(total){
-
-  const usd = total / 1500;
-  const pi = total / 471238500;
-
-  document.getElementById("usdTotal").innerText =
-    "$" + usd.toFixed(2);
-
-  document.getElementById("piTotal").innerText =
-    pi.toFixed(8) + " π";
+  const pi = Number(total) / 471238500;
+  const piElement = document.getElementById("piTotal");
+  if (piElement) piElement.innerText = pi.toFixed(8) + " π";
+  const totalElement = document.getElementById("total");
+  if (totalElement) totalElement.innerText = pi.toFixed(8) + " π";
 }
 
 // ================= INIT =================
 window.payWithPi = payWithPi;
-window.payWithFiat = payWithFiat;
 window.addEventListener("storage", () => {
   updateCartCount();
 });
