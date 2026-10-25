@@ -1,5 +1,5 @@
 
-  const API_URL = 'https://godomcoworld-backend.onrender.com';
+  const API_URL = 'https://godomcoworld-backend-testnet.onrender.com';
 
 if (typeof getWalletNetwork !== "function") {
   window.getWalletNetwork = function () {
