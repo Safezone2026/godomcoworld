@@ -273,7 +273,7 @@ View All Orders
 <script>
 const sellerId = localStorage.getItem("sellerId");
 const currentSeller = localStorage.getItem("username") || "";
-const API = "https://godomcoworld-backend.onrender.com";
+const API = "https://godomcoworld-backend-testnet.onrender.com";
 const network = getWalletNetwork();
 
 if(!sellerId){
@@ -645,7 +645,7 @@ async function loadSalesHistory(){
 
   try {
 
-    const API = "https://godomcoworld-backend.onrender.com";
+    const API = "https://godomcoworld-backend-testnet.onrender.com";
 
 const res = await fetch(
   `${API}/seller-dashboard/${sellerId}?network=${encodeURIComponent(network)}`
@@ -797,7 +797,7 @@ async function submitWithdrawal(){
   try {
 
     const API =
-      "https://godomcoworld-backend.onrender.com";
+      "https://godomcoworld-backend-testnet.onrender.com";
 
     const res = await fetch(
       `${API}/seller-withdraw`,
@@ -850,7 +850,7 @@ async function loadWithdrawalHistory(){
   try {
 
     const API =
-      "https://godomcoworld-backend.onrender.com";
+      "https://godomcoworld-backend-testnet.onrender.com";
 
     const res = await fetch(
       `${API}/seller-withdrawals/${encodeURIComponent(currentSeller)}`

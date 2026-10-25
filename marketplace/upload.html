@@ -213,7 +213,7 @@ form.addEventListener('submit', async (e) => {
   }
 
   try {
-    const response = await fetch("https://godomcoworld-backend.onrender.com/products", {
+    const response = await fetch("https://godomcoworld-backend-testnet.onrender.com/products", {
       method: 'POST',
       body: formData
     });
@@ -246,7 +246,7 @@ form.addEventListener('submit', async (e) => {
 // ================= LOAD PRODUCTS =================
 async function loadProducts() {
   try {
-    const res = await fetch(`https://godomcoworld-backend.onrender.com/products?network=${encodeURIComponent(CURRENT_NETWORK)}`);
+    const res = await fetch(`https://godomcoworld-backend-testnet.onrender.com/products?network=${encodeURIComponent(CURRENT_NETWORK)}`);
     const products = await res.json();
 
     const container = document.getElementById('productsContainer');

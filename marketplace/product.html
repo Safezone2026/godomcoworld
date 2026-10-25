@@ -41,7 +41,7 @@ const productId = params.get('id');
 // Fetch all products
 async function loadProduct() {
   try {
-    const res = await fetch(`https://godomcoworld-backend.onrender.com/products?network=${encodeURIComponent(CURRENT_NETWORK)}`);
+    const res = await fetch(`https://godomcoworld-backend-testnet.onrender.com/products?network=${encodeURIComponent(CURRENT_NETWORK)}`);
     const data = await res.json();
 
     const product = (Array.isArray(data) ? data : (data.products || [])).find(p => String(p.id) === productId);
@@ -59,7 +59,7 @@ async function loadProduct() {
         <img
   src="${product.imagePath?.startsWith("http")
     ? product.imagePath
-    : "https://godomcoworld-backend.onrender.com" + product.imagePath}"
+    : "https://godomcoworld-backend-testnet.onrender.com" + product.imagePath}"
   style="width:100%; border-radius:10px;"
   alt="${product.name}"
   onerror="this.style.display='none';"

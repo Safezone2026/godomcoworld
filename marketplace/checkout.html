@@ -298,7 +298,7 @@ async function checkPaymentAccess(method){
 
   try {
     const statusRes = await fetch(
-      "https://godomcoworld-backend.onrender.com/wallet/security/status/" +
+      "https://godomcoworld-backend-testnet.onrender.com/wallet/security/status/" +
       encodeURIComponent(walletId) +
       "?network=" + encodeURIComponent(network)
     );
@@ -331,7 +331,7 @@ async function checkPaymentAccess(method){
     }
 
     const verifyRes = await fetch(
-      "https://godomcoworld-backend.onrender.com/wallet/security/verify-pin",
+      "https://godomcoworld-backend-testnet.onrender.com/wallet/security/verify-pin",
       {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -393,7 +393,7 @@ const walletId =
 
 
 
-    const payRes = await fetch("https://godomcoworld-backend.onrender.com/wallet/pay", {
+    const payRes = await fetch("https://godomcoworld-backend-testnet.onrender.com/wallet/pay", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
   body: JSON.stringify({
@@ -417,7 +417,7 @@ const walletId =
       return;
     }
 
-    const shipmentRes = await fetch('https://godomcoworld-backend.onrender.com/logistics/create');
+    const shipmentRes = await fetch('https://godomcoworld-backend-testnet.onrender.com/logistics/create');
     const shipmentData = await shipmentRes.json();
 
     const orderId = shipmentData.orderId;
@@ -449,7 +449,7 @@ const walletId =
     const lat = Number(localStorage.getItem("deliveryLat") || 0);
     const lng = Number(localStorage.getItem("deliveryLng") || 0);
 
-await fetch('https://godomcoworld-backend.onrender.com/api/checkout', {
+await fetch('https://godomcoworld-backend-testnet.onrender.com/api/checkout', {
   method: 'POST',
   headers: {'Content-Type':'application/json'},
   body: JSON.stringify({
@@ -525,7 +525,7 @@ async function calculateTotal(){
 
   document.getElementById("deliveryFee").innerText = "Calculating...";
 
-  const res = await fetch('https://godomcoworld-backend.onrender.com/calculate-delivery', {
+  const res = await fetch('https://godomcoworld-backend-testnet.onrender.com/calculate-delivery', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({

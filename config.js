@@ -5,7 +5,7 @@ const IS_LOCAL =
     location.hostname === "localhost";
 
 const API = IS_LOCAL
-    ? "https://godomcoworld-backend.onrender.com"
-    : "https://godomcoworld-backend.onrender.com";
+    ? "https://godomcoworld-backend-testnet.onrender.com"
+    : "https://godomcoworld-backend-testnet.onrender.com";
 
 console.log("API =", API);

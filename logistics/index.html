@@ -147,7 +147,7 @@ async function loadDashboard(){
   try {
 
     const res = await fetch(
-`https://godomcoworld-backend.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
+`https://godomcoworld-backend-testnet.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
 );
     const data = await res.json();
 
@@ -369,7 +369,7 @@ function renderButtons(d){
 // ================= UPDATE STATUS =================
 async function updateStatus(orderId, status){
 
-  const res = await fetch('https://godomcoworld-backend.onrender.com/update-delivery-status', {
+  const res = await fetch('https://godomcoworld-backend-testnet.onrender.com/update-delivery-status', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
@@ -422,7 +422,7 @@ if(method === "bank"){
 }
 
   const res = await fetch(
-    "https://godomcoworld-backend.onrender.com/rider-withdraw",
+    "https://godomcoworld-backend-testnet.onrender.com/rider-withdraw",
     {
       method:"POST",
       headers:{
@@ -455,7 +455,7 @@ async function loadWithdrawals(){
   try {
 
     const res = await fetch(
-`https://godomcoworld-backend.onrender.com/rider-withdrawals/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
+`https://godomcoworld-backend-testnet.onrender.com/rider-withdrawals/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
     );
 
     const data = await res.json();

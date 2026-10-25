@@ -80,7 +80,7 @@ getWalletNetwork();
   try {
 
    let res = await fetch(
-`https://godomcoworld-backend.onrender.com/logistics/track/${orderIdInput}?network=${encodeURIComponent(network)}`
+`https://godomcoworld-backend-testnet.onrender.com/logistics/track/${orderIdInput}?network=${encodeURIComponent(network)}`
 );
     let data = await res.json();
 
@@ -198,7 +198,7 @@ document.getElementById("confirmBtn").onclick = async function(){
     return;
   }
 
-  const res = await fetch('https://godomcoworld-backend.onrender.com/confirm-delivery', {
+  const res = await fetch('https://godomcoworld-backend-testnet.onrender.com/confirm-delivery', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
@@ -226,7 +226,7 @@ document.getElementById("disputeBtn").onclick = async function(){
   const reason = prompt("Enter reason (e.g damaged item)");
   const description = prompt("Describe the issue");
 
-  const res = await fetch('https://godomcoworld-backend.onrender.com/open-dispute', {
+  const res = await fetch('https://godomcoworld-backend-testnet.onrender.com/open-dispute', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({

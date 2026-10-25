@@ -4,7 +4,7 @@
 // ============================================================
 
 const RECEIPT_API =
-  "https://godomcoworld-backend.onrender.com";
+  "https://godomcoworld-backend-testnet.onrender.com";
 
 function getReceiptNetwork() {
 
@@ -199,7 +199,7 @@ async function downloadReceipt(options = {}) {
       }
 
       const pdfEndpoint =
-        "https://godomcoworld-backend.onrender.com/receipts/" +
+        "https://godomcoworld-backend-testnet.onrender.com/receipts/" +
         encodeURIComponent(String(receiptUsername)) + "/" +
         encodeURIComponent(String(receiptId)) +
         "/pdf?network=testnet";

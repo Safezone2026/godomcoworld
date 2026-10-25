@@ -16,7 +16,7 @@ const rider = localStorage.getItem("logisticsName");
 const network =
 getWalletNetwork();
 fetch(
-  `https://godomcoworld-backend.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
+  `https://godomcoworld-backend-testnet.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
 )
 .then(r => r.json())
 .then(data => {
@@ -91,7 +91,7 @@ fetch(
 
 function updateStatus(orderId, status){
 
-  fetch('https://godomcoworld-backend.onrender.com/api/update-delivery', {
+  fetch('https://godomcoworld-backend-testnet.onrender.com/api/update-delivery', {
   method:'POST',
   headers:{'Content-Type':'application/json'},
   body: JSON.stringify({
