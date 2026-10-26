@@ -195,8 +195,11 @@
 <script src="js/network.js"></script>
 <script>
 const API = "https://godomcoworld-backend-testnet.onrender.com";
-const networkasync function login() {
-  const pass = document.getElementById("adminPass").value;
+const networkSelector = document.getElementById("networkSelect");
+
+async function login() {
+  const pass = document.getElementById("adminPass").value.trim();
+
   if (!pass) {
     alert("Enter the admin password.");
     return;
@@ -209,6 +212,7 @@ const networkasync function login() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: pass })
     });
+
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
@@ -217,24 +221,18 @@ const networkasync function login() {
 
     document.getElementById("loginBox").style.display = "none";
     document.getElementById("dashboard").style.display = "block";
-    networkSelector.value = getNetwork();
-    loadAll();
-    loadSupportTickets();
+
+    if (networkSelector) {
+      networkSelector.value = getNetwork();
+    }
+
+    await loadAll();
+    await loadSupportTickets();
   } catch (error) {
     alert(error.message || "Could not sign in to the Testnet admin dashboard.");
   }
 }
-yle.display = 'block';
-   console.log(
-  "Dashboard display:",
-  getComputedStyle(document.getElementById("dashboard")).display
-);
-    networkSelector.value = getNetwork();
-loadAll();
-  } else {
-    alert("Wrong password");
-  }
-}
+
 let productsLoaded = false;
 let ordersLoaded = false;
 let sellersLoaded = false;
