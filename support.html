@@ -61,28 +61,44 @@ button{
 
 <script>
 
-function submitTicket(){
+async function submitTicket(){
 
-let name = document.getElementById("name").value;
-let email = document.getElementById("email").value;
-let issue = document.getElementById("issue").value;
+const name = document.getElementById("name").value.trim();
+const email = document.getElementById("email").value.trim();
+const issue = document.getElementById("issue").value.trim();
+const msg = document.getElementById("msg");
 
-if(name === "" || email === "" || issue === ""){
-alert("Please fill all fields");
-return;
+if(!name || !email || !issue){
+  msg.innerText = "Please fill all fields.";
+  return;
 }
 
-let ticket = {
-name,
-email,
-issue,
-time: new Date().toLocaleString()
-};
+msg.innerText = "Submitting ticket...";
 
-localStorage.setItem("support_ticket", JSON.stringify(ticket));
+try {
+  const response = await fetch(
+    "https://godomcoworld-backend-testnet.onrender.com/support/tickets",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, issue })
+    }
+  );
 
-document.getElementById("msg").innerText =
-"✅ Ticket submitted successfully!";
+  const result = await response.json().catch(() => ({}));
+
+  if(!response.ok){
+    throw new Error(result.error || result.message || "Ticket submission failed.");
+  }
+
+  msg.innerText = "Ticket submitted successfully. Our team will review it.";
+  document.getElementById("name").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("issue").value = "";
+} catch(error) {
+  console.error("Support ticket submission failed:", error);
+  msg.innerText = "Could not submit your ticket. Please try again later.";
+}
 
 }
 
