@@ -197,6 +197,20 @@
 const API = "https://godomcoworld-backend-testnet.onrender.com";
 const networkSelector = document.getElementById("networkSelect");
 
+function getNetwork() {
+  return localStorage.walletNetwork || "mainnet";
+}
+
+function changeNetwork() {
+  if (!networkSelector) return;
+  const selected = networkSelector.value;
+  if (selected !== "mainnet" && selected !== "testnet") return;
+
+  localStorage.walletNetwork = selected;
+  if (typeof loadAll === "function") loadAll();
+}
+
+
 async function login() {
   const pass = document.getElementById("adminPass").value.trim();
 
