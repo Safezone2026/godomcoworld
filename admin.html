@@ -186,6 +186,11 @@
 
 <h2>📊 Analytics</h2>
 <div id="analyticsBox"></div>
+<p>
+  <a href="analytics.html" class="analytics-link-button">
+    📊 Open Full Analytics
+  </a>
+</p>
 
 <h2>🆘 Disputes</h2>
 <div id="disputesList"></div>
@@ -332,6 +337,58 @@ async function saveSupportTicket(id) {
   }
 }
 
+
+function adminRenderCards(containerId, rows, fields) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.replaceChildren();
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "card";
+    empty.textContent = "No records available.";
+    container.appendChild(empty);
+    return;
+  }
+
+  rows.forEach(row => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    fields.forEach(([label, key]) => {
+      const line = document.createElement("div");
+      const value = row && row[key] != null && row[key] !== ""
+        ? String(row[key]) : "-";
+      line.textContent = label + ": " + value;
+      card.appendChild(line);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+async function adminFetch(path, options = {}) {
+  const response = await fetch(API + path, {
+    credentials: "include",
+    ...options
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.success === false) {
+    throw new Error(data.message || "Request failed (" + response.status + ")");
+  }
+  return data;
+}
+
+function adminShowError(containerId, message) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.replaceChildren();
+  const card = document.createElement("div");
+  card.className = "card";
+  card.textContent = "Could not load data: " + message;
+  container.appendChild(card);
+}
+
 function loadAll() {
   // Load only lightweight data first
   loadRevenueSummary();
@@ -378,6 +435,11 @@ if (!logisticsLoaded) {
     loadLogistics();
     logisticsLoaded = true;
 }
+
+    loadDeliveries();
+    loadUsers();
+    loadWallets();
+    loadAnalytics();
   }, 500);
 }
 
@@ -790,30 +852,16 @@ async function loadProducts() {
 
 // ================= ORDERS =================
 async function loadOrders() {
-  const network = getNetwork();
-
-const res = await fetch(
-  API + "/orders-full?network=" +
-  encodeURIComponent(network)
-);
-  const data = await res.json();
-
-  const container = document.getElementById('ordersList');
-  container.innerHTML = '';
-
-  (data.orders || []).forEach(o => {
-    const div = document.createElement('div');
-    div.className = 'card';
-
-    div.innerHTML =
-      "Order ID: " + o.id + "<br>" +
-      "User: " + o.user + "<br>" +
-      "Total: ₦" + Number(o.total).toLocaleString() + "<br>" +
-      "Status: " + o.deliveryStatus + "<br>" +
-      "Date: " + o.date;
-
-    container.appendChild(div);
-  });
+  try {
+    const data = await adminFetch("/admin/orders?network=testnet");
+    adminRenderCards("ordersList", data.orders, [
+      ["Order ID", "order_id"], ["User", "user"],
+      ["Total", "total"], ["Status", "status"],
+      ["Delivery status", "delivery_status"], ["Date", "created_at"]
+    ]);
+  } catch (error) {
+    adminShowError("ordersList", error.message);
+  }
 }
 
 // ================= SELLERS =================
@@ -847,107 +895,152 @@ console.log(
   });
 }
 // ================= LOGISTICS =================
-async function loadLogistics(){
-
-  const res = await fetch(
-    API + "/logistics"
-  );
-
-  const data = await res.json();
-
-  const container =
-  document.getElementById("logisticsList");
-
-  container.innerHTML = "";
-
-  (data || []).forEach(l=>{
-
-    const div =
-    document.createElement("div");
-
-    div.className = "card";
-
-    div.innerHTML =
-      "Name: " + l.name + "<br>" +
-      "Phone: " + (l.phone || "-") + "<br>" +
-      "Country: " + (l.country || "-");
-
-    container.appendChild(div);
-
-  });
-
+async function loadLogistics() {
+  try {
+    const data = await adminFetch("/admin/logistics");
+    adminRenderCards("logisticsList", data.logistics, [
+      ["Name", "name"], ["Username", "username"],
+      ["Phone", "phone"], ["Country", "country"],
+      ["Status", "status"]
+    ]);
+  } catch (error) {
+    adminShowError("logisticsList", error.message);
+  }
 }
 
 // ================= ACTIVITY =================
-async function loadActivity(){
+async function loadDeliveries() {
+  try {
+    const data = await adminFetch("/admin/deliveries");
+    adminRenderCards("deliveryList", data.deliveries, [
+      ["Delivery ID", "id"], ["Order ID", "order_id"],
+      ["Rider", "rider_name"], ["Status", "status"],
+      ["Delivery status", "delivery_status"], ["Date", "created_at"]
+    ]);
+  } catch (error) {
+    adminShowError("deliveryList", error.message);
+  }
+}
 
-  const res =
-  await fetch(API + "/activity");
+async function loadUsers() {
+  try {
+    const data = await adminFetch("/admin/users");
+    adminRenderCards("usersList", data.users, [
+      ["Pi username", "pi_username"], ["Network", "network"],
+      ["KYC verified", "kyc_verified"],
+      ["Wallet address", "wallet_address"], ["Last login", "last_login"]
+    ]);
+  } catch (error) {
+    adminShowError("usersList", error.message);
+  }
+}
 
-  const data =
-  await res.json();
+async function loadWallets() {
+  try {
+    const data = await adminFetch("/admin/wallets");
+    adminRenderCards("walletList", data.wallets, [
+      ["Wallet ID", "wallet_id"], ["Username", "username"],
+      ["Network", "network"], ["Balance", "balance"],
+      ["Currency", "currency"]
+    ]);
+  } catch (error) {
+    adminShowError("walletList", error.message);
+  }
+}
 
-  const container =
-  document.getElementById("activityList");
+async function loadAnalytics() {
+  try {
+    const data = await adminFetch("/admin/analytics");
+    const counts = data.counts || {};
+    const rows = Object.entries(counts).map(([name, count]) => ({
+      metric: name.replace(/_/g, " "),
+      count: count == null ? "Unavailable" : count
+    }));
+    adminRenderCards("analyticsBox", rows, [
+      ["Record type", "metric"], ["Total records", "count"]
+    ]);
+  } catch (error) {
+    adminShowError("analyticsBox", error.message);
+  }
+}
 
-  container.innerHTML = "";
-
-  data.forEach(a=>{
-
-    const div =
-    document.createElement("div");
-
-    div.className = "card";
-
-    div.innerHTML =
-      "<strong>" + a.action + "</strong><br>" +
-      (a.wallet_id || "") + "<br>" +
-      new Date(a.created_at).toLocaleString();
-
-    container.appendChild(div);
-
-  });
-
+async function loadActivity() {
+  try {
+    const data = await adminFetch("/admin/activity");
+    adminRenderCards("activityList", data.activities, [
+      ["Action", "action"], ["Wallet", "wallet_id"],
+      ["User", "username"], ["Date", "created_at"]
+    ]);
+  } catch (error) {
+    adminShowError("activityList", error.message);
+  }
 }
 
 // ================= DISPUTES =================
-async function loadDisputes(){
+async function loadDisputes() {
+  try {
+    const data = await adminFetch("/admin/disputes?network=testnet");
+    const container = document.getElementById("disputesList");
+    if (!container) return;
+    container.replaceChildren();
 
-  const network =
-  getNetwork();
+    const rows = Array.isArray(data.disputes) ? data.disputes : [];
+    if (!rows.length) {
+      adminRenderCards("disputesList", [], []);
+      return;
+    }
 
-  const res =
-  await fetch(
-    API +
-    "/disputes?network=" +
-    encodeURIComponent(network)
-  );
+    rows.forEach(dispute => {
+      const card = document.createElement("div");
+      card.className = "card";
 
-  const data =
-  await res.json();
+      [
+        ["Dispute ID", dispute.id],
+        ["Order", dispute.order_id],
+        ["Buyer", dispute.buyer],
+        ["Seller", dispute.seller],
+        ["Status", dispute.status],
+        ["Resolution", dispute.resolution]
+      ].forEach(([label, value]) => {
+        const line = document.createElement("div");
+        line.textContent = label + ": " +
+          (value == null || value === "" ? "-" : String(value));
+        card.appendChild(line);
+      });
 
-  const container =
-  document.getElementById("disputesList");
+      if (String(dispute.status || "").toLowerCase() !== "resolved") {
+        [
+          ["Refund buyer", "refund_buyer"],
+          ["Pay seller", "pay_seller"]
+        ].forEach(([label, action]) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = label;
+          button.addEventListener("click", async () => {
+            if (!confirm("Confirm dispute action: " + label + "?")) return;
+            button.disabled = true;
+            try {
+              const result = await adminFetch("/resolve-dispute", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ disputeId: dispute.id, action })
+              });
+              alert(result.message || "Dispute action processed.");
+              await loadDisputes();
+            } catch (error) {
+              alert("Dispute action failed: " + error.message);
+              button.disabled = false;
+            }
+          });
+          card.appendChild(button);
+        });
+      }
 
-  container.innerHTML = "";
-
-  (data.disputes || []).forEach(d=>{
-
-    const div =
-    document.createElement("div");
-
-    div.className = "card";
-
-    div.innerHTML =
-      "Order: " + d.order_id + "<br>" +
-      "Buyer: " + d.buyer + "<br>" +
-      "Seller: " + d.seller + "<br>" +
-      "Status: " + d.status;
-
-    container.appendChild(div);
-
-  });
-
+      container.appendChild(card);
+    });
+  } catch (error) {
+    adminShowError("disputesList", error.message);
+  }
 }        
 </script>
 

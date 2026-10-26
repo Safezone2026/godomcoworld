@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Godomcoworld | Testnet Analytics</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #081321;
+  --panel: #12243a;
+  --border: #29415d;
+  --text: #edf5ff;
+  --muted: #a8bbd2;
+  --accent: #55c8ff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 20px;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, sans-serif;
+}
+main { max-width: 1100px; margin: auto; }
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 2.2rem); }
+h2 { margin-top: 28px; }
+p, .muted { color: var(--muted); }
+a, button {
+  display: inline-block;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+a:hover, button:hover { border-color: var(--accent); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+.card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--panel);
+  overflow-wrap: anywhere;
+}
+.metric { color: var(--muted); text-transform: capitalize; }
+.value { margin-top: 8px; font-size: 1.8rem; font-weight: 700; }
+.bar-track {
+  height: 9px;
+  margin-top: 12px;
+  border-radius: 8px;
+  background: #263b53;
+  overflow: hidden;
+}
+.bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 8px;
+}
+#status { min-height: 24px; }
+.analytics-link-button { background: var(--panel); }
+footer { margin-top: 32px; color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>📊 Godomcoworld Analytics</h1>
+    <p>Testnet database overview</p>
+  </div>
+  <a href="admin.html">← Back to Admin Dashboard</a>
+</header>
+
+<div>
+  <button id="refreshButton" type="button">Refresh analytics</button>
+  <span id="status" role="status" aria-live="polite">Loading analytics…</span>
+</div>
+
+<section>
+  <h2>Database overview</h2>
+  <div id="summaryGrid" class="grid"></div>
+</section>
+
+<section>
+  <h2>Records by category</h2>
+  <p class="muted">
+    Counts are based on available database tables. Categories without a
+    network column are global counts and are labelled accordingly.
+  </p>
+  <div id="chartGrid" class="grid"></div>
+</section>
+
+<footer>
+  Godomcoworld Testnet · Figures reflect the latest successful API response.
+</footer>
+</main>
+
+<script>
+"use strict";
+
+const API = "/api";
+const labels = {
+  users: "Users",
+  wallets: "Wallets",
+  orders: "Orders",
+  deliveries: "Deliveries",
+  disputes: "Disputes",
+  products: "Products",
+  sellers: "Sellers",
+  transactions: "Transactions"
+};
+
+function addText(parent, tag, className, value) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  node.textContent = String(value);
+  parent.appendChild(node);
+  return node;
+}
+
+function renderMetrics(counts) {
+  const summary = document.getElementById("summaryGrid");
+  const chart = document.getElementById("chartGrid");
+  summary.replaceChildren();
+  chart.replaceChildren();
+
+  const entries = Object.entries(labels).map(([key, label]) => ({
+    key, label, count: counts[key]
+  }));
+
+  const available = entries.filter(
+    item => Number.isFinite(item.count) && item.count >= 0
+  );
+
+  const total = available.reduce((sum, item) => sum + item.count, 0);
+
+  const totalCard = document.createElement("article");
+  totalCard.className = "card";
+  addText(totalCard, "div", "metric", "Total available records");
+  addText(totalCard, "div", "value", total.toLocaleString());
+  summary.appendChild(totalCard);
+
+  const categoriesCard = document.createElement("article");
+  categoriesCard.className = "card";
+  addText(categoriesCard, "div", "metric", "Available categories");
+  addText(categoriesCard, "div", "value",
+    available.length + " / " + entries.length);
+  summary.appendChild(categoriesCard);
+
+  const unavailableCard = document.createElement("article");
+  unavailableCard.className = "card";
+  addText(unavailableCard, "div", "metric", "Unavailable categories");
+  addText(unavailableCard, "div", "value",
+    entries.length - available.length);
+  summary.appendChild(unavailableCard);
+
+  const maximum = Math.max(1, ...available.map(item => item.count));
+
+  entries.forEach(item => {
+    const card = document.createElement("article");
+    card.className = "card";
+    addText(card, "div", "metric", item.label);
+
+    if (!Number.isFinite(item.count) || item.count < 0) {
+      addText(card, "div", "value", "Unavailable");
+      addText(card, "p", "muted",
+        "The backend could not provide this count.");
+    } else {
+      addText(card, "div", "value", item.count.toLocaleString());
+
+      const track = document.createElement("div");
+      track.className = "bar-track";
+      track.setAttribute("aria-label", item.label + " relative count");
+
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      bar.style.width = (item.count / maximum * 100) + "%";
+      track.appendChild(bar);
+      card.appendChild(track);
+    }
+
+    chart.appendChild(card);
+  });
+}
+
+async function loadAnalytics() {
+  const status = document.getElementById("status");
+  const button = document.getElementById("refreshButton");
+  button.disabled = true;
+  status.textContent = "Loading analytics…";
+
+  try {
+    const response = await fetch(API + "/admin/analytics", {
+      credentials: "include",
+      headers: { "Accept": "application/json" }
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401 || response.status === 403) {
+      status.textContent =
+        "Admin session required. Please sign in through the admin dashboard.";
+      return;
+    }
+
+    if (!response.ok || data.success !== true || !data.counts) {
+      throw new Error(data.message || "Analytics request failed.");
+    }
+
+    renderMetrics(data.counts);
+    status.textContent =
+      "Updated " + new Date().toLocaleString() +
+      " · Network: " + (data.network || "Testnet");
+  } catch (error) {
+    status.textContent = "Could not load analytics: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.getElementById("refreshButton")
+  .addEventListener("click", loadAnalytics);
+
+loadAnalytics();
+</script>
+</body>
+</html>
