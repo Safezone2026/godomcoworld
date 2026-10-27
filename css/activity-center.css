@@ -255,3 +255,26 @@ header h1{
         width: 100%;
     }
 }
+
+/* Activity Center: restore readable text on white transaction cards */
+#timeline .activity-card {
+    background: #fff;
+    color: #222;
+}
+
+#timeline .activity-card h3 {
+    color: #138a36;
+}
+
+#timeline .activity-card p,
+#timeline .activity-card span,
+#timeline .activity-card div,
+#timeline .activity-card strong,
+#timeline .activity-card small,
+#timeline .activity-card label {
+    color: #222;
+}
+
+#timeline .activity-card button {
+    color: #fff;
+}
