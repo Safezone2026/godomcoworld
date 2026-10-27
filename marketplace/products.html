@@ -342,6 +342,7 @@ cartBtn.onclick = () => {
     id: product.id,
     name: product.name,
     price: Number(product.price),
+    currency: product.currency || "NGN",
     description: product.description,
     imagePath: product.imagePath,
     weight: Number(product.weight) || 1,

@@ -102,6 +102,7 @@ async function loadProduct() {
 
 // Simple cart (local)
 function addToCart(product){
+  product.currency = product.currency || product.originalCurrency || "NGN";
   let cart = JSON.parse(localStorage.getItem('cart') || "[]");
   cart.push(product);
   localStorage.setItem('cart', JSON.stringify(cart));
