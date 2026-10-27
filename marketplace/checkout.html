@@ -152,32 +152,92 @@ localStorage.setItem("username", currentUser);
 
 let subtotal = 0;
 
+
+// Testnet checkout amounts are calculated by the backend, not by frontend
+// exchange-rate arithmetic. Mainnet keeps its existing calculation path.
+async function getTestnetCheckoutQuote(cart, address, country) {
+  const response = await fetch(
+    "https://godomcoworld-backend-testnet.onrender.com/api/checkout/calculate",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cart,
+        address: address || "",
+        country: country || "",
+        network: "testnet"
+      })
+    }
+  );
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (_) {
+    throw new Error("Invalid response from the Testnet checkout service.");
+  }
+
+  if (!response.ok || !data || data.success !== true) {
+    throw new Error(data && data.message
+      ? data.message
+      : "Unable to calculate the Testnet checkout total.");
+  }
+
+  for (const key of ["subtotal", "deliveryFee", "total"]) {
+    if (!Number.isFinite(Number(data[key])) || Number(data[key]) < 0) {
+      throw new Error("Invalid amount returned by the checkout service.");
+    }
+  }
+
+  if (!Array.isArray(data.items)) {
+    throw new Error("The checkout service did not return priced cart items.");
+  }
+
+  return data;
+}
+
 // ================= LOAD CART =================
-function loadCart(){
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
-
+async function loadCart() {
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
   const container = document.getElementById("cartItems");
-
-  // 🔥 FIX: stop if element not found
   if (!container) return;
 
-  let html = "";
-  subtotal = 0;
+  if (!Array.isArray(cart) || cart.length === 0) {
+    container.textContent = "Your cart is empty.";
+    window.testnetCheckoutQuote = null;
+    window.totalPi = 0;
+    return;
+  }
 
-  cart.forEach(item => {
-    let price = Number(item.price);
-    subtotal += price;
+  try {
+    const address = document.getElementById("address")?.value?.trim() || "";
+    const country = document.getElementById("country")?.value?.trim() || "";
+    container.textContent = "Calculating Testnet prices…";
 
-    html += `
-      <div>
-        <h4>${item.name}</h4>
-        <p>${item.description}</p>
-        <p>${(price / 471238500).toFixed(8)} π</p>
-      </div>
-    `;
-  });
+    const quote = await getTestnetCheckoutQuote(cart, address, country);
+    window.testnetCheckoutQuote = quote;
+    window.totalPi = Number(quote.total);
+    container.replaceChildren();
 
-  container.innerHTML = html;
+    for (const item of quote.items) {
+      const row = document.createElement("div");
+      const title = document.createElement("h4");
+      const price = document.createElement("p");
+      title.textContent = item.name || item.product || "Product";
+      price.textContent =
+        Number(item.lineTotalPi ?? item.pricePi).toFixed(8) + " π";
+      row.append(title, price);
+      container.appendChild(row);
+    }
+
+    const subtotal = document.getElementById("subtotal");
+    if (subtotal) subtotal.textContent = Number(quote.subtotal).toFixed(8) + " π";
+  } catch (error) {
+    window.testnetCheckoutQuote = null;
+    window.totalPi = 0;
+    container.textContent = error.message || "Testnet price calculation failed.";
+    console.error(error);
+  }
 }
 
 function requestMaskedTransactionPin(message) {
@@ -375,6 +435,18 @@ async function completeCheckout(method){
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
 
   try {
+
+    const checkoutNetwork = getWalletNetwork();
+    if (String(checkoutNetwork).toLowerCase() === "testnet") {
+      const checkoutAddress = document.getElementById("address")?.value?.trim() || "";
+      const checkoutCountry = document.getElementById("country")?.value?.trim() || "";
+      const checkoutQuote = await getTestnetCheckoutQuote(
+        cart, checkoutAddress, checkoutCountry
+      );
+      window.testnetCheckoutQuote = checkoutQuote;
+      window.totalPi = Number(checkoutQuote.total);
+    }
+
     const amount = Number(window.totalPi);
     const currency = "PI";
 
@@ -516,81 +588,53 @@ function handleAddressInput(){
 }
 
 // ================= CALCULATE DELIVERY =================
-async function calculateTotal(){
+async function calculateTotal() {
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  if (!Array.isArray(cart) || cart.length === 0) {
+    window.testnetCheckoutQuote = null;
+    window.totalPi = 0;
+    alert("Your cart is empty.");
+    return;
+  }
 
-  // 🔥 ALWAYS RECALCULATE subtotal FIRST
-  loadCart();
+  try {
+    const address = document.getElementById("address")?.value?.trim() || "";
+    const country = document.getElementById("country")?.value?.trim() || "";
+    const quote = await getTestnetCheckoutQuote(cart, address, country);
 
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    window.testnetCheckoutQuote = quote;
+    window.totalPi = Number(quote.total);
 
-  document.getElementById("deliveryFee").innerText = "Calculating...";
+    const subtotal = document.getElementById("subtotal") ||
+      document.getElementById("cartSubtotal");
+    if (subtotal) subtotal.textContent = Number(quote.subtotal).toFixed(8) + " π";
 
-  const res = await fetch('https://godomcoworld-backend-testnet.onrender.com/calculate-delivery', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      cart,
-      address: document.getElementById("address").value,
-      country: document.getElementById("country").value
-    })
-  });
+    const delivery = document.getElementById("deliveryFee") ||
+      document.getElementById("deliveryCost");
+    if (delivery) delivery.textContent = Number(quote.deliveryFee).toFixed(8) + " π";
 
-  const data = await res.json();
+    const total = document.getElementById("total") ||
+      document.getElementById("totalAmount") ||
+      document.getElementById("checkoutTotal");
+    if (total) total.textContent = Number(quote.total).toFixed(8) + " π";
 
-  let delivery = 0;
-
-  if(data.success){
-  delivery = data.deliveryFee;
-
-  let html = "";
-  data.breakdown.forEach(item => {
-    html += `
-      <div>
-        ${item.product} → ${item.weight}kg / ${item.distanceKm}km = ${(Number(item.fee) / 471238500).toFixed(8)} π
-      </div>
-    `;
-  });
-
-  const breakdownDiv = document.getElementById("deliveryBreakdown");
-if (breakdownDiv) {
-  breakdownDiv.innerHTML = html;
-}
-
-  const total = subtotal + delivery;
-
-  // 🔥 STORE GLOBAL VALUES
-  window.totalNaira = total;
-  window.totalPi = total / 471238500;
-
-  // UPDATE UI
-  document.getElementById("subtotal").innerText =
-    (subtotal / 471238500).toFixed(8) + " π";
-
-  document.getElementById("deliveryFee").innerText =
-    (delivery / 471238500).toFixed(8) + " π";
-
-  document.getElementById("total").innerText =
-    window.totalPi.toFixed(8) + " π";
-
-  updateCurrency(total);
+    return quote;
+  } catch (error) {
+    window.testnetCheckoutQuote = null;
+    window.totalPi = 0;
+    console.error(error);
+    alert(error.message || "Unable to calculate Testnet total.");
+  }
 }
 
 // ================= CURRENCY =================
-function updateCurrency(total){
-  const pi = Number(total) / 471238500;
-  const piElement = document.getElementById("piTotal");
-  if (piElement) piElement.innerText = pi.toFixed(8) + " π";
-  const totalElement = document.getElementById("total");
-  if (totalElement) totalElement.innerText = pi.toFixed(8) + " π";
-}
-
 // ================= INIT =================
 window.payWithPi = payWithPi;
 window.addEventListener("storage", () => {
   updateCartCount();
 });
 loadCart();
-}
+
 </script>
 <script src="../js/dev-console.js"></script>
 <script src="../js/receipt.js"></script>
