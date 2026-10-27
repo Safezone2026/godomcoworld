@@ -341,8 +341,11 @@ cartBtn.onclick = () => {
   const cleanProduct = {
     id: product.id,
     name: product.name,
-    price: Number(product.price),
-    currency: product.currency || "NGN",
+    price: Number(pi),
+    pricePi: Number(pi),
+    currency: "PI",
+    originalPrice: Number(product.price) || 0,
+    originalCurrency: String(product.currency || "NGN").trim().toUpperCase(),
     description: product.description,
     imagePath: product.imagePath,
     weight: Number(product.weight) || 1,
