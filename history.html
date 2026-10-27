@@ -70,6 +70,26 @@ Loading...
 id="searchActivity"
 type="text"
 placeholder="🔍 Search activity...">
+<div class="activity-filters">
+    <label>
+        Status
+        <select id="activityStatus">
+            <option value="all">All statuses</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="delivered">Delivered</option>
+            <option value="failed">Failed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </label>
+    <label>
+        Date
+        <input id="activityDate" type="date">
+    </label>
+    <button id="clearActivityFilters" type="button">Clear filters</button>
+    <button id="refreshActivity" type="button">↻ Refresh</button>
+</div>
 
 <div class="tabs">
 
@@ -165,374 +185,283 @@ Loading activity...
 
 <script src="js/network.js"></script>
 <script>
+"use strict";
+// activity-center-repair-v1
 
-const timeline =
-document.getElementById("timeline");
+const timeline = document.getElementById("timeline");
+const welcomeText = document.getElementById("welcomeText");
+const searchInput = document.getElementById("searchActivity");
 
 const username =
-localStorage.getItem("username");
+    localStorage.getItem("username") ||
+    localStorage.getItem("piUsername") || "";
 
 const network =
-localStorage.getItem("network") || "testnet";
-console.log("Username =", username);
-console.log("Network =", network);
-const welcomeText =
-document.getElementById("welcomeText");
+    localStorage.getItem("walletNetwork") ||
+    localStorage.getItem("network") ||
+    "testnet";
 
-if(username){
+let allActivities = [];
+let activeFilter = "all";
 
-welcomeText.textContent =
-`Hello, ${username} 👋`;
+welcomeText.textContent = username
+    ? `Hello, ${username} 👋`
+    : "Welcome 👋";
 
-}else{
-
-welcomeText.textContent =
-"Welcome 👋";
-
+function showMessage(message) {
+    timeline.replaceChildren();
+    const box = document.createElement("div");
+    box.className = "empty";
+    box.textContent = message;
+    timeline.appendChild(box);
 }
 
-let allActivities=[];
-
-async function loadHistory(){
-
-try{
-const API =
-location.hostname === "127.0.0.1"
-? "https://godomcoworld-backend-testnet.onrender.com"
-: "https://godomcoworld-backend-testnet.onrender.com";
-
-const url =
-`${API}/history/${username}?network=${network}`;
-
-console.log("Fetching:", url);
-
-alert("About to fetch:\n" + url);
-
-const res = await fetch(url);
-console.log("HTTP Status:", res.status);
-console.log("HTTP OK:", res.ok);
-
-if (!res.ok) {
-    throw new Error("HTTP " + res.status);
+function makeText(label, value) {
+    const paragraph = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = label + ": ";
+    paragraph.append(strong, document.createTextNode(String(value ?? "—")));
+    return paragraph;
 }
-alert("Fetch completed");
 
-const data = await res.json();
-console.log(data);
-const orders =
-data.orders || [];
+function formatDate(value) {
+    if (!value) return "Date unavailable";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? "Date unavailable"
+        : date.toLocaleString();
+}
 
-const transactions =
-data.transactions || [];
+function createActivityCard(activity) {
+    const card = document.createElement("article");
+    card.className = "activity-card";
 
-document.getElementById("orderCount").textContent =
-orders.length;
+    const heading = document.createElement("h3");
+    heading.textContent = activity.title;
+    card.appendChild(heading);
 
-document.getElementById("walletCount").textContent =
-transactions.length;
+    activity.details.forEach(([label, value]) => {
+        card.appendChild(makeText(label, value));
+    });
 
-document.getElementById("swapCount").textContent =
-transactions.filter(t=>t.type==="swap").length;
+    const date = document.createElement("p");
+    date.textContent = "Date: " + formatDate(activity.date);
+    card.appendChild(date);
 
-document.getElementById("deliveryCount").textContent =
-orders.filter(o=>o.status==="delivered").length;
+    if (activity.receiptId || activity.transactionId || activity.orderId) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "receipt-btn";
+        button.textContent = "📄 Download Receipt";
 
-allActivities=[];
+        button.addEventListener("click", async () => {
+            if (typeof window.downloadReceipt !== "function") {
+                alert("Receipt service is unavailable. Please refresh and try again.");
+                return;
+            }
 
-orders.forEach(o=>{
+            button.disabled = true;
+            button.textContent = "Preparing receipt…";
 
-allActivities.push({
+            try {
+                await window.downloadReceipt({
+                    username,
+                    receiptId: activity.receiptId,
+                    transactionId: activity.transactionId,
+                    orderId: activity.orderId
+                });
+            } catch (error) {
+                console.error("Receipt error:", error);
+                alert("Could not prepare this receipt. Please try again.");
+            } finally {
+                button.disabled = false;
+                button.textContent = "📄 Download Receipt";
+            }
+        });
 
-category:"orders",
+        card.appendChild(button);
+    }
 
-date:o.created_at ||
+    return card;
+}
 
-o.date ||
+function renderActivities() {
+    timeline.replaceChildren();
 
-"",
+    const keyword = searchInput.value.trim().toLowerCase();
+    const statusValue = document.getElementById("activityStatus").value;
+    const dateValue = document.getElementById("activityDate").value;
 
-html:`
+    const activities = allActivities.filter(activity => {
+        const categoryMatches =
+            activeFilter === "all" || activity.category === activeFilter;
 
-<div class="activity-card">
+        const statusMatches =
+            statusValue === "all" || activity.status === statusValue;
 
-<h3>📦 Order</h3>
+        const dateMatches =
+            !dateValue ||
+            (activity.date && String(activity.date).slice(0, 10) === dateValue);
 
-<p><b>Order ID:</b> ${o.order_id}</p>
+        const searchable = [
+            activity.title,
+            activity.category,
+            activity.status,
+            ...activity.details.flat()
+        ].join(" ").toLowerCase();
 
-<p><b>Status:</b> ${o.status}</p>
+        return categoryMatches &&
+            statusMatches &&
+            dateMatches &&
+            searchable.includes(keyword);
+    });
 
-<p><b>Total:</b> ₦${Number(o.total||0).toLocaleString()}</p>
+    if (!activities.length) {
+        showMessage("📭 No matching activity found.");
+        return;
+    }
 
-<button class="receipt-btn">
+    activities.forEach(activity => {
+        timeline.appendChild(createActivityCard(activity));
+    });
+}
 
-📄 Receipt
+async function loadHistory() {
+    if (!username) {
+        showMessage("Please sign in with Pi to view your activity.");
+        return;
+    }
 
-</button>
+    if (network !== "testnet") {
+        showMessage("This Activity Center is for Testnet. Switch to your Testnet session and try again.");
+        return;
+    }
 
-</div>
+    showMessage("Loading activity…");
 
-`
+    try {
+        const api = "https://godomcoworld-backend-testnet.onrender.com";
+        const url =
+            `${api}/history/${encodeURIComponent(username)}?network=testnet`;
 
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`The server returned HTTP ${response.status}.`);
+        }
+
+        const data = await response.json();
+        const orders = Array.isArray(data.orders) ? data.orders : [];
+        const transactions =
+            Array.isArray(data.transactions) ? data.transactions : [];
+
+        document.getElementById("orderCount").textContent = orders.length;
+        document.getElementById("walletCount").textContent = transactions.length;
+        document.getElementById("swapCount").textContent =
+            transactions.filter(t =>
+                String(t.type || "").toLowerCase() === "swap"
+            ).length;
+        document.getElementById("deliveryCount").textContent =
+            orders.filter(o =>
+                String(o.status || "").toLowerCase() === "delivered"
+            ).length;
+
+        allActivities = [];
+
+        orders.forEach(order => {
+            const orderId = order.order_id || order.id || "";
+            const status = String(order.status || "unknown").toLowerCase();
+
+            allActivities.push({
+                category: status === "delivered" ? "delivery" : "orders",
+                title: "📦 Order",
+                date: order.created_at || order.date || "",
+                status,
+                orderId,
+                receiptId: order.receipt_id || "",
+                transactionId: "",
+                details: [
+                    ["Order ID", orderId || "Unavailable"],
+                    ["Status", order.status || "Unknown"],
+                    ["Total", "₦" + Number(order.total || 0).toLocaleString()]
+                ]
+            });
+        });
+
+        transactions.forEach(transaction => {
+            const type = String(transaction.type || "wallet").toLowerCase();
+            const transactionId =
+                transaction.transaction_id || transaction.id || "";
+
+            allActivities.push({
+                category: type === "swap" ? "swap" : "wallet",
+                title: type === "swap"
+                    ? "🔄 Swap Transaction"
+                    : "💸 Wallet Transaction",
+                date: transaction.created_at || transaction.date || "",
+                status: String(transaction.status || "completed").toLowerCase(),
+                orderId: "",
+                receiptId: transaction.receipt_id || "",
+                transactionId,
+                details: [
+                    ["Transaction ID", transactionId || "Unavailable"],
+                    ["Type", transaction.type || "Wallet"],
+                    ["Amount",
+                        Number(transaction.amount || 0).toLocaleString() +
+                        " " + (transaction.currency || "")],
+                    ["Status", transaction.status || "Completed"]
+                ]
+            });
+        });
+
+        allActivities.sort((a, b) =>
+            new Date(b.date || 0) - new Date(a.date || 0)
+        );
+
+        renderActivities();
+    } catch (error) {
+        console.error("Activity Center load failed:", error);
+        showMessage("Unable to load activity. Check your connection and select Refresh to try again.");
+    }
+}
+
+searchInput.addEventListener("input", renderActivities);
+
+document.querySelectorAll(".tabs button").forEach(button => {
+    button.addEventListener("click", () => {
+        document.querySelectorAll(".tabs button").forEach(tab => {
+            tab.classList.remove("active");
+        });
+
+        button.classList.add("active");
+        activeFilter = button.dataset.filter;
+        renderActivities();
+    });
 });
 
+document.getElementById("activityStatus")
+    .addEventListener("change", renderActivities);
+
+document.getElementById("activityDate")
+    .addEventListener("change", renderActivities);
+
+document.getElementById("clearActivityFilters").addEventListener("click", () => {
+    searchInput.value = "";
+    document.getElementById("activityStatus").value = "all";
+    document.getElementById("activityDate").value = "";
+    activeFilter = "all";
+
+    document.querySelectorAll(".tabs button").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.filter === "all");
+    });
+
+    renderActivities();
 });
 
-transactions.forEach(t=>{
+document.getElementById("refreshActivity")
+    .addEventListener("click", loadHistory);
 
-const icon =
-
-t.type==="swap"
-
-? "🔄"
-
-: "💸";
-
-const category =
-
-t.type==="swap"
-
-? "swap"
-
-: "wallet";
-
-allActivities.push({
-
-category,
-
-date:t.created_at ||
-
-"",
-
-html:`
-
-<div class="activity-card">
-
-<h3>${icon} Wallet Transaction</h3>
-
-<p><b>Type:</b> ${t.type}</p>
-
-<p><b>Amount:</b>
-
-${Number(t.amount||0).toLocaleString()}
-
-${t.currency||""}
-
-</p>
-
-<p><b>Status:</b>
-
-${t.status||"Completed"}
-
-</p>
-
-<button class="receipt-btn">
-
-📄 Receipt
-
-</button>
-
-</div>
-
-`
-
-});
-
-});
-
-allActivities.sort(
-
-(a,b)=>
-
-new Date(b.date)-
-
-new Date(a.date)
-
-);
-
-renderActivities("all");
-
-}catch(err){
-
-    console.error("History Error:", err);
-
-    alert(
-        "History Error\n\n" +
-        err.message +
-        "\n\n" +
-        (err.stack || "")
-    );
-
-    timeline.innerHTML = `
-    <div class="empty">
-    ❌ ${err.message}
-    </div>
-    `;
-
-}
-
-}
-function renderActivities(filter){
-
-timeline.innerHTML="";
-
-let activities=[...allActivities];
-
-if(filter!=="all"){
-
-activities=
-activities.filter(a=>a.category===filter);
-
-}
-
-const keyword=
-document.getElementById("searchActivity")
-.value
-.toLowerCase();
-
-if(keyword){
-
-activities=
-activities.filter(a=>
-a.html.toLowerCase().includes(keyword)
-);
-
-}
-
-if(activities.length===0){
-
-timeline.innerHTML=`
-
-<div class="empty">
-
-📭
-
-<h3>No activity found</h3>
-
-<p>
-
-There are no matching records.
-
-</p>
-
-</div>
-
-`;
-
-return;
-
-}
-
-activities.forEach(a=>{
-
-timeline.innerHTML+=a.html;
-
-});
-
-}
-
-// ----------------------------
-// Search
-// ----------------------------
-
-document
-.getElementById("searchActivity")
-.addEventListener(
-
-"input",
-
-()=>renderActivities(
-
-document
-.querySelector(".tabs .active")
-.dataset.filter
-
-)
-
-);
-
-// ----------------------------
-// Tabs
-// ----------------------------
-
-document
-
-.querySelectorAll(".tabs button")
-
-.forEach(btn=>{
-
-btn.onclick=()=>{
-
-document
-
-.querySelectorAll(".tabs button")
-
-.forEach(b=>b.classList.remove("active"));
-
-btn.classList.add("active");
-
-renderActivities(btn.dataset.filter);
-
-};
-
-});
-
-// ----------------------------
-// Receipt Placeholder
-// ----------------------------
-
-document.addEventListener(
-
-"click",
-
-async e=>{
-
-if(
-!e.target.classList.contains("receipt-btn")
-){
-  return;
-}
-
-const card =
-e.target.closest(".activity-card");
-
-if(!card){
-  return;
-}
-
-const orderText =
-Array.from(card.querySelectorAll("p"))
-.find(p =>
-  p.textContent.includes("Order ID")
-);
-
-if(!orderText){
-  alert("Order ID not found.");
-  return;
-}
-
-const orderId =
-orderText.textContent
-.replace("Order ID:", "")
-.trim();
-
-const username =
-localStorage.getItem("username") ||
-localStorage.getItem("piUser") ||
-localStorage.getItem("logisticsName");
-
-await downloadOrderReceipt(
-  orderId,
-  username
-);
-
-}
-
-);
-
-// ----------------------------
-
-window.onload=loadHistory;
-
+loadHistory();
 </script>
 <script src="js/wallet-init.js"></script>
 <script src="js/dev-console.js"></script>

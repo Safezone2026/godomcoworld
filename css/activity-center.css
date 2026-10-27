@@ -201,3 +201,57 @@ header h1{
 }
 
 }
+
+/* Activity Center repair v1: filters and accessible controls */
+.activity-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px;
+    margin: 12px 0 18px;
+}
+
+.activity-filters input,
+.activity-filters select,
+.activity-filters button {
+    max-width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.activity-filters input,
+.activity-filters select {
+    box-sizing: border-box;
+    border: 1px solid #475569;
+    background: #172033;
+    color: #fff;
+}
+
+.activity-filters button {
+    border: 1px solid #16a34a;
+    background: #15803d;
+    color: #fff;
+    cursor: pointer;
+}
+
+.activity-filters button:focus-visible,
+.activity-filters input:focus-visible,
+.activity-filters select:focus-visible {
+    outline: 2px solid #86efac;
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .activity-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .activity-filters input,
+    .activity-filters select,
+    .activity-filters button {
+        width: 100%;
+    }
+}
