@@ -51,8 +51,25 @@ async function loadProduct() {
       return;
     }
 
-    // Product prices are stored directly in Pi.
-    const pi = Number(product.price) || 0;
+    const storedPrice = Number(product.price) || 0;
+    const currency = String(product.currency || "").trim().toUpperCase();
+    let pi = storedPrice;
+
+    if (currency !== "PI" &&
+        (currency === "₦" || currency === "NGN" || currency === "NAIRA")) {
+      const rateResponse = await fetch(
+        "https://godomcoworld-backend-testnet.onrender.com/exchange-rates"
+      );
+      const rateData = await rateResponse.json();
+      const nairaToUSD = Number(rateData?.rates?.NG?.rate);
+
+      if (!rateData.success || !Number.isFinite(nairaToUSD) || nairaToUSD <= 0) {
+        throw new Error("Could not load the exchange rate for legacy product pricing.");
+      }
+
+      const piRate = nairaToUSD * 314159;
+      pi = storedPrice / piRate;
+    }
 
     productDetails.innerHTML = `
       <div style="max-width:400px;">
@@ -70,10 +87,6 @@ async function loadProduct() {
           π${pi.toFixed(8)}
         </h3>
 
-        <div style="font-size:14px; color:#777; margin-top:-5px;">
-          <div>₦${naira.toLocaleString()} (Ref)</div>
-          <div>$${usd.toFixed(2)} (Ref)</div>
-        </div>
         <p><strong>Category:</strong> ${product.category}</p>
 
         <button onclick='addToCart(${JSON.stringify(product)})'>

@@ -258,7 +258,17 @@ function displayProducts() {
 
   filtered.forEach(product => {
 
-    const pi = Number(product.price) || 0;
+    const storedPrice = Number(product.price) || 0;
+    const currency = String(product.currency || "").trim().toUpperCase();
+    let pi = storedPrice;
+
+    if (currency === "₦" || currency === "NGN" || currency === "NAIRA") {
+      if (!Number.isFinite(PI_RATE) || PI_RATE <= 0) {
+        console.error("Exchange rate unavailable; skipping product price:", product.id);
+        return;
+      }
+      pi = storedPrice / PI_RATE;
+    }
 
     const div = document.createElement('div');
     div.className = 'product-card';
