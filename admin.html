@@ -285,7 +285,8 @@ async function loadSupportTickets() {
     }
     if (!res.ok) throw new Error("Could not load tickets.");
 
-    const tickets = await res.json();
+    const payload = await res.json();
+    const tickets = Array.isArray(payload) ? payload : payload.tickets;
     if (!Array.isArray(tickets) || tickets.length === 0) {
       box.textContent = "No support tickets yet.";
       return;
@@ -300,6 +301,20 @@ async function loadSupportTickets() {
         <strong>Issue:</strong>
         <div style="white-space:pre-wrap">${escapeTicketText(t.issue)}</div>
         <small>Created: ${escapeTicketText(t.created_at || "")}</small><br>
+        <strong>Screenshots:</strong>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0">
+          ${(Array.isArray(t.attachments) ? t.attachments : []).map(a => {
+            if (!a || !a.signed_url) {
+              return `<span class="hint">${escapeTicketText(a && a.name || "Attachment unavailable")}</span>`;
+            }
+            const url = escapeTicketText(a.signed_url);
+            const label = escapeTicketText(a.name || "Screenshot");
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="display:block;max-width:150px">
+              <img src="${url}" alt="${label}" style="display:block;width:140px;height:100px;object-fit:contain;background:#111;border:1px solid #555;border-radius:6px">
+              <span>${label}</span>
+            </a>`;
+          }).join("") || "<span>No screenshots attached.</span>"}
+        </div>
         <label>Status:
           <select id="ticket-status-${id}">
             ${statuses.map(st => `<option value="${st}" ${t.status === st ? "selected" : ""}>${st}</option>`).join("")}
