@@ -255,7 +255,6 @@ async function loadCart() {
   }
 
   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  const container = document.getElementById("cartItems");
   if (!container) return;
 
   if (!Array.isArray(cart) || cart.length === 0) {
