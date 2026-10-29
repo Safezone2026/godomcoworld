@@ -267,11 +267,12 @@ async function loadCart() {
   try {
     const address = document.getElementById("address")?.value?.trim() || "";
     const country = document.getElementById("country")?.value?.trim() || "";
+    const hasDeliveryDetails = address.length >= 5 && country.length > 0;
     container.textContent = "Calculating Testnet prices…";
 
     const quote = await getTestnetCheckoutQuote(cart, address, country);
-    window.testnetCheckoutQuote = quote;
-    window.totalPi = Number(quote.total);
+    window.testnetCheckoutQuote = hasDeliveryDetails ? quote : null;
+    window.totalPi = hasDeliveryDetails ? Number(quote.total) : 0;
     container.replaceChildren();
 
     for (const item of quote.items) {
@@ -289,13 +290,19 @@ async function loadCart() {
     if (subtotal) subtotal.textContent = Number(quote.subtotal).toFixed(8) + " π";
 
     const delivery = document.getElementById("deliveryFee");
-    if (delivery) delivery.textContent = Number(quote.deliveryFee).toFixed(8) + " π";
+    if (delivery) delivery.textContent = hasDeliveryDetails
+      ? Number(quote.deliveryFee).toFixed(8) + " π"
+      : "Enter delivery details";
 
     const total = document.getElementById("total");
-    if (total) total.textContent = Number(quote.total).toFixed(8) + " π";
+    if (total) total.textContent = hasDeliveryDetails
+      ? Number(quote.total).toFixed(8) + " π"
+      : "Pending delivery calculation";
 
     const piTotal = document.getElementById("piTotal");
-    if (piTotal) piTotal.textContent = Number(quote.total).toFixed(8) + " π";
+    if (piTotal) piTotal.textContent = hasDeliveryDetails
+      ? Number(quote.total).toFixed(8) + " π"
+      : "Pending delivery calculation";
   } catch (error) {
     window.testnetCheckoutQuote = null;
     window.totalPi = 0;
@@ -665,6 +672,14 @@ async function calculateTotal() {
   try {
     const address = document.getElementById("address")?.value?.trim() || "";
     const country = document.getElementById("country")?.value?.trim() || "";
+
+    if (address.length < 5 || !country) {
+      window.testnetCheckoutQuote = null;
+      window.totalPi = 0;
+      alert("Please enter your delivery address and select your country before calculating delivery.");
+      return;
+    }
+
     const quote = await getTestnetCheckoutQuote(cart, address, country);
 
     window.testnetCheckoutQuote = quote;
@@ -682,6 +697,9 @@ async function calculateTotal() {
       document.getElementById("totalAmount") ||
       document.getElementById("checkoutTotal");
     if (total) total.textContent = Number(quote.total).toFixed(8) + " π";
+
+    const piTotal = document.getElementById("piTotal");
+    if (piTotal) piTotal.textContent = Number(quote.total).toFixed(8) + " π";
 
     return quote;
   } catch (error) {
