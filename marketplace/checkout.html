@@ -287,6 +287,15 @@ async function loadCart() {
 
     const subtotal = document.getElementById("subtotal");
     if (subtotal) subtotal.textContent = Number(quote.subtotal).toFixed(8) + " π";
+
+    const delivery = document.getElementById("deliveryFee");
+    if (delivery) delivery.textContent = Number(quote.deliveryFee).toFixed(8) + " π";
+
+    const total = document.getElementById("total");
+    if (total) total.textContent = Number(quote.total).toFixed(8) + " π";
+
+    const piTotal = document.getElementById("piTotal");
+    if (piTotal) piTotal.textContent = Number(quote.total).toFixed(8) + " π";
   } catch (error) {
     window.testnetCheckoutQuote = null;
     window.totalPi = 0;
