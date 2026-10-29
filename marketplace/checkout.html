@@ -196,8 +196,64 @@ async function getTestnetCheckoutQuote(cart, address, country) {
   return data;
 }
 
+// Migrate legacy NGN Cart entries before requesting the Testnet quote.
+async function migrateLegacyCheckoutCart() {
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  if (!Array.isArray(cart) || !cart.length) return;
+
+  if (!cart.some(item =>
+    item && ["NGN", "₦", "NAIRA"].includes(
+      String(item.currency || "").trim().toUpperCase()
+    )
+  )) return;
+
+  const response = await fetch(
+    "https://godomcoworld-backend-testnet.onrender.com/exchange-rates"
+  );
+  const data = await response.json();
+  const nairaToUSD = Number(data?.rates?.NG?.rate);
+  const piRate = nairaToUSD * 314159;
+
+  if (!response.ok || !data.success ||
+      !Number.isFinite(piRate) || piRate <= 0) {
+    throw new Error("Unable to convert legacy Cart prices to Pi.");
+  }
+
+  let changed = false;
+  for (const item of cart) {
+    if (!item || typeof item !== "object") continue;
+    const currency = String(item.currency || "").trim().toUpperCase();
+    if (!["NGN", "₦", "NAIRA"].includes(currency)) continue;
+
+    const originalPrice = Number(item.price);
+    if (!Number.isFinite(originalPrice) || originalPrice < 0) {
+      throw new Error("Invalid legacy Cart price.");
+    }
+
+    item.originalPrice = originalPrice;
+    item.originalCurrency = currency;
+    item.price = originalPrice / piRate;
+    item.pricePi = item.price;
+    item.currency = "PI";
+    changed = true;
+  }
+
+  if (changed) localStorage.setItem("cart", JSON.stringify(cart));
+}
+
 // ================= LOAD CART =================
 async function loadCart() {
+  const container = document.getElementById("cartItems");
+  try {
+    await migrateLegacyCheckoutCart();
+  } catch (error) {
+    if (container) {
+      container.textContent = error.message || "Unable to migrate Cart prices.";
+    }
+    console.error(error);
+    return;
+  }
+
   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
   const container = document.getElementById("cartItems");
   if (!container) return;

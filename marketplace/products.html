@@ -394,7 +394,50 @@ function filterCategory(category) { currentCategory = category; displayProducts(
 document.getElementById('searchInput').addEventListener('input', displayProducts);
 
 // -------------------- CART --------------------
+function migrateLegacyCartPrices() {
+  const rate = Number(PI_RATE);
+  if (!Number.isFinite(rate) || rate <= 0) return;
+
+  let items;
+  try {
+    items = JSON.parse(localStorage.getItem("cart") || "[]");
+  } catch (error) {
+    console.error("Could not read Cart for price migration:", error);
+    return;
+  }
+
+  if (!Array.isArray(items)) return;
+
+  let changed = false;
+
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue;
+
+    const currency = String(item.currency || "").trim().toUpperCase();
+    const isNaira = ["₦", "NGN", "NAIRA"].includes(currency);
+
+    if (!isNaira) continue;
+
+    const originalPrice = Number(item.price);
+    if (!Number.isFinite(originalPrice) || originalPrice < 0) continue;
+
+    item.originalPrice = originalPrice;
+    item.originalCurrency = currency;
+    item.price = originalPrice / rate;
+    item.pricePi = item.price;
+    item.currency = "PI";
+    changed = true;
+  }
+
+  if (changed) {
+    localStorage.setItem("cart", JSON.stringify(items));
+    if (typeof cart !== "undefined") cart = items;
+    console.log("Migrated legacy NGN Cart prices to Pi.");
+  }
+}
+
 function renderCart() {
+  migrateLegacyCartPrices();
   let storedCart = JSON.parse(localStorage.getItem("cart")) || [];
 
   cartList.innerHTML = '';
@@ -551,7 +594,21 @@ window.addEventListener("storage", () => {
 
 // ✅ INITIALIZE AFTER ALL FUNCTIONS ARE DEFINED
 updateCartCount();
-renderCart();
+
+loadExchangeRates()
+  .then(() => {
+    migrateLegacyCartPrices();
+    renderCart();
+  })
+  .catch((error) => {
+    console.error("Cart price migration postponed: exchange rates unavailable.", error);
+    const cartItems = document.getElementById("cartList");
+    if (cartItems) {
+      cartItems.textContent =
+        "Unable to load exchange rates. Your saved Cart is unchanged; reload to retry.";
+    }
+  });
+
 loadProducts();
 </script>
 <script src="../js/dev-console.js"></script>
