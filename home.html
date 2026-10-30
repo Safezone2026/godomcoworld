@@ -816,6 +816,7 @@ async function loginPi(){
 
         const response = await fetch(API + "/api/pi-auth",{
             method:"POST",
+            credentials:"include",
             headers:{
                 "Content-Type":"application/json"
             },
@@ -853,6 +854,7 @@ async function loginPi(){
         // Find or create this user's Testnet wallet.
         const walletResponse = await fetch(API + "/wallet/create", {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json"
             },

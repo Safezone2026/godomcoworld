@@ -279,6 +279,7 @@ async function loadSupportTickets() {
     const res = await fetch(API + "/admin/support-tickets", {
       credentials: "include"
     });
+
     if (res.status === 401 || res.status === 403) {
       box.textContent = "Admin session expired. Please sign in again.";
       return;
@@ -287,6 +288,7 @@ async function loadSupportTickets() {
 
     const payload = await res.json();
     const tickets = Array.isArray(payload) ? payload : payload.tickets;
+
     if (!Array.isArray(tickets) || tickets.length === 0) {
       box.textContent = "No support tickets yet.";
       return;
@@ -295,12 +297,19 @@ async function loadSupportTickets() {
     box.innerHTML = tickets.map(t => {
       const id = escapeTicketText(t.id);
       const statuses = ["open", "in_progress", "resolved", "closed"];
+      const messages = Array.isArray(t.messages) ? t.messages : [];
+      const unread = messages.filter(m =>
+        m.sender_type === "customer" && !m.read_at
+      ).length;
+
       return `<div class="card">
         <strong>${escapeTicketText(t.name)}</strong> —
         ${escapeTicketText(t.email)}<br>
+        ${unread ? `<strong style="color:#ffb74d">New customer messages: ${unread}</strong><br>` : ""}
         <strong>Issue:</strong>
         <div style="white-space:pre-wrap">${escapeTicketText(t.issue)}</div>
         <small>Created: ${escapeTicketText(t.created_at || "")}</small><br>
+
         <strong>Screenshots:</strong>
         <div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0">
           ${(Array.isArray(t.attachments) ? t.attachments : []).map(a => {
@@ -315,12 +324,30 @@ async function loadSupportTickets() {
             </a>`;
           }).join("") || "<span>No screenshots attached.</span>"}
         </div>
+
+        <strong>Conversation:</strong>
+        <div style="background:#111;padding:10px;border-radius:8px;margin:8px 0">
+          ${messages.length ? messages.map(m => `
+            <div style="border-bottom:1px solid #444;padding:8px 0">
+              <strong>${m.sender_type === "admin" ? "Support team" : "Customer"}</strong>
+              <small> — ${escapeTicketText(m.created_at || "")}</small>
+              <div style="white-space:pre-wrap;margin-top:5px">${escapeTicketText(m.message)}</div>
+            </div>
+          `).join("") : "<span>No replies yet.</span>"}
+        </div>
+
+        <label>Public reply (visible to customer):<br>
+          <textarea id="ticket-reply-${id}" rows="3" maxlength="10000" style="width:100%" placeholder="Write a reply to the customer..."></textarea>
+        </label><br>
+        <button type="button" onclick="sendSupportReply('${id}')">Send public reply</button>
+
+        <hr style="border-color:#444;margin:14px 0">
         <label>Status:
           <select id="ticket-status-${id}">
             ${statuses.map(st => `<option value="${st}" ${t.status === st ? "selected" : ""}>${st}</option>`).join("")}
           </select>
         </label><br>
-        <label>Admin notes:<br>
+        <label>Private admin notes (not visible to customer):<br>
           <textarea id="ticket-notes-${id}" rows="3" style="width:100%">${escapeTicketText(t.admin_notes || "")}</textarea>
         </label><br>
         <button type="button" onclick="saveSupportTicket('${id}')">Save ticket</button>
@@ -329,6 +356,38 @@ async function loadSupportTickets() {
   } catch (error) {
     console.error("Support tickets:", error);
     box.textContent = "Could not load support tickets.";
+  }
+}
+
+async function sendSupportReply(id) {
+  const field = document.getElementById("ticket-reply-" + id);
+  const message = field ? field.value.trim() : "";
+
+  if (!message) {
+    alert("Please enter a reply first.");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      API + "/admin/support-tickets/" + encodeURIComponent(id) + "/replies",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || data.message || "Could not send reply.");
+    }
+
+    alert("Public reply sent successfully.");
+    await loadSupportTickets();
+  } catch (error) {
+    alert(error.message || "Could not send reply.");
   }
 }
 
@@ -343,10 +402,14 @@ async function saveSupportTicket(id) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status, admin_notes })
     });
+
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || data.message || "Could not update ticket.");
+    if (!res.ok) {
+      throw new Error(data.error || data.message || "Could not update ticket.");
+    }
+
     alert("Support ticket updated.");
-    loadSupportTickets();
+    await loadSupportTickets();
   } catch (error) {
     alert(error.message || "Could not update support ticket.");
   }

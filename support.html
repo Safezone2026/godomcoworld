@@ -42,6 +42,15 @@ button:disabled{opacity:.6;cursor:wait}
 <button type="submit" id="submitButton">Submit Ticket</button>
 <p id="msg" role="status" aria-live="polite"></p>
 </form>
+
+<section id="mySupportSection" style="margin-top:35px">
+  <hr style="border-color:#333">
+  <h2>My Support Tickets</h2>
+  <p class="hint">View your previous support requests and continue conversations with our team.</p>
+  <button type="button" id="refreshTicketsButton">Refresh Tickets</button>
+  <p id="historyMsg" class="hint" role="status" aria-live="polite">Loading your support history...</p>
+  <div id="mySupportTickets"></div>
+</section>
 </div>
 
 <script>
@@ -139,7 +148,7 @@ form.addEventListener("submit", async (event) => {
   try {
     const response = await fetch(
       "https://godomcoworld-backend-testnet.onrender.com/support/tickets",
-      { method: "POST", body }
+      { method: "POST", credentials: "include", body }
     );
     const result = await response.json().catch(() => ({}));
 
@@ -158,6 +167,141 @@ form.addEventListener("submit", async (event) => {
     submitButton.disabled = false;
   }
 });
+
+
+// Customer support history and two-way messaging
+const historyMsg = document.getElementById("historyMsg");
+const ticketsBox = document.getElementById("mySupportTickets");
+const refreshTicketsButton = document.getElementById("refreshTicketsButton");
+const SUPPORT_API = "https://godomcoworld-backend-testnet.onrender.com";
+
+function supportEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
+
+async function loadMySupportTickets() {
+  historyMsg.textContent = "Loading your support history...";
+  ticketsBox.replaceChildren();
+
+  try {
+    const response = await fetch(SUPPORT_API + "/support/my-tickets", {
+      credentials: "include"
+    });
+
+    if (response.status === 401) {
+      historyMsg.textContent =
+        "Sign in with Pi using this browser to view tickets linked to your account. Anonymous tickets cannot be linked automatically.";
+      return;
+    }
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.message || result.error || "Could not load support history.");
+    }
+
+    const tickets = Array.isArray(result) ? result : result.tickets;
+    if (!Array.isArray(tickets) || tickets.length === 0) {
+      historyMsg.textContent = "You have no support tickets linked to this Pi account yet.";
+      return;
+    }
+
+    historyMsg.textContent = tickets.length + " support ticket(s) found.";
+
+    ticketsBox.innerHTML = tickets.map(ticket => {
+      const id = supportEscape(ticket.id);
+      const messages = Array.isArray(ticket.messages) ? ticket.messages : [];
+      const unread = Number(ticket.unread_replies || 0);
+
+      const attachments = (Array.isArray(ticket.attachments) ? ticket.attachments : [])
+        .map(file => {
+          if (!file || !file.signed_url) {
+            return `<span class="hint">${supportEscape(file && file.name || "Attachment unavailable")}</span>`;
+          }
+          const url = supportEscape(file.signed_url);
+          const name = supportEscape(file.name || "Screenshot");
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>`;
+        }).join("<br>") || "No screenshots attached.";
+
+      const conversation = messages.map(message => `
+        <div style="border-bottom:1px solid #333;padding:10px 0">
+          <strong>${message.sender_type === "admin" ? "Support team" : "You"}</strong>
+          <small class="hint"> — ${supportEscape(message.created_at || "")}</small>
+          <div style="white-space:pre-wrap;margin-top:6px">${supportEscape(message.message)}</div>
+        </div>
+      `).join("") || '<p class="hint">No replies yet. You can send a message below.</p>';
+
+      return `<article class="card" style="background:#171717;border:1px solid #333;border-radius:10px;padding:15px;margin:15px 0">
+        <strong>Ticket: ${id}</strong><br>
+        <span>Status: ${supportEscape(ticket.status || "open")}</span>
+        ${unread ? `<p style="color:#ffca28;font-weight:bold">${unread} unread support reply/replies</p>` : ""}
+        <p><strong>Issue:</strong></p>
+        <div style="white-space:pre-wrap">${supportEscape(ticket.issue)}</div>
+        <p class="hint">Submitted: ${supportEscape(ticket.created_at || "")}</p>
+        <p><strong>Screenshots:</strong><br>${attachments}</p>
+        <details ontoggle="if(this.open) markSupportTicketRead('${id}')">
+          <summary style="cursor:pointer;color:#00bcd4">View conversation (${messages.length} message(s))</summary>
+          <div style="margin-top:10px">${conversation}</div>
+        </details>
+        <label for="customer-reply-${id}">Your reply:</label>
+        <textarea id="customer-reply-${id}" maxlength="10000" placeholder="Write a message to our support team..."></textarea>
+        <button type="button" onclick="sendCustomerSupportReply('${id}')">Send Reply</button>
+      </article>`;
+    }).join("");
+  } catch (error) {
+    console.error("Support history:", error);
+    historyMsg.textContent = error.message || "Could not load support history.";
+  }
+}
+
+async function markSupportTicketRead(id) {
+  try {
+    await fetch(SUPPORT_API + "/support/tickets/" + encodeURIComponent(id) + "/read", {
+      method: "POST",
+      credentials: "include"
+    });
+  } catch (error) {
+    console.error("Could not mark support messages as read:", error);
+  }
+}
+
+async function sendCustomerSupportReply(id) {
+  const field = document.getElementById("customer-reply-" + id);
+  const message = field ? field.value.trim() : "";
+
+  if (!message) {
+    alert("Please enter a message first.");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      SUPPORT_API + "/support/tickets/" + encodeURIComponent(id) + "/messages",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      }
+    );
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.message || result.error || "Could not send your reply.");
+    }
+
+    alert("Your reply has been sent.");
+    await loadMySupportTickets();
+  } catch (error) {
+    alert(error.message || "Could not send your reply.");
+  }
+}
+
+refreshTicketsButton.addEventListener("click", loadMySupportTickets);
+loadMySupportTickets();
+
 </script>
 <script src="js/dev-console.js"></script>
 </body>
