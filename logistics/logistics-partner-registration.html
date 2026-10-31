@@ -152,19 +152,29 @@
 <script>
 </script>
 
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script>
-let username = localStorage.getItem("username");
+const TESTNET_BACKEND = "https://godomcoworld-backend-testnet.onrender.com";
 
-if(!username){
-  username = prompt("Enter your username (e.g rider1)");
-  localStorage.setItem("username", username);
+let username = (localStorage.getItem("username") || "").trim();
+
+if (!username) {
+  username = (prompt("Enter your Godomcoworld Rider username (e.g. rider1)") || "").trim();
+  if (username) localStorage.setItem("username", username);
 }
-const existingUser = localStorage.getItem("logisticsName");
 
-if(existingUser){
+const existingUser = localStorage.getItem("logisticsName");
+if (existingUser) {
   window.location.href = "logistics-home.html";
 }
-function getLocation(){
+
+if (typeof Pi === "undefined") {
+  console.error("Pi SDK could not be loaded.");
+} else {
+  Pi.init({ version: "2.0", sandbox: true });
+}
+
+function getLocation() {
   navigator.geolocation.getCurrentPosition(pos => {
     localStorage.setItem("rider_lat", pos.coords.latitude);
     localStorage.setItem("rider_lng", pos.coords.longitude);
@@ -175,118 +185,127 @@ function getLocation(){
 const registerBtn = document.getElementById("registerBtn");
 const agreeCheckbox = document.getElementById("agree");
 
-// 🔥 ALL REQUIRED FIELDS
 const fields = [
-  "companyName",
-  "transportType",
-  "capacity",
-  "baseFee",
-  "coverageKm",
-  "pricePerKm",
-  "pricePerKg",
-  "baseAddress",
-  "baseCountry",
-  "wallet"
+  "companyName", "transportType", "capacity", "baseFee",
+  "coverageKm", "pricePerKm", "pricePerKg",
+  "baseAddress", "baseCountry", "wallet"
 ];
 
-// run on load
 validateForm();
 
-// listen to all inputs
 fields.forEach(id => {
   const el = document.getElementById(id);
-  if(el){
+  if (el) {
     el.addEventListener("input", validateForm);
     el.addEventListener("change", validateForm);
   }
 });
 
-// checkbox listener
 agreeCheckbox.addEventListener("change", validateForm);
 
-// 🔥 VALIDATION FUNCTION
-function validateForm(){
-
+function validateForm() {
   let allFilled = true;
 
   fields.forEach(id => {
     const el = document.getElementById(id);
-
-    if(!el || el.value.trim() === ""){
-      allFilled = false;
-    }
+    if (!el || el.value.trim() === "") allFilled = false;
   });
 
-  if(allFilled && agreeCheckbox.checked){
+  if (allFilled && agreeCheckbox.checked && username) {
     registerBtn.classList.add("active");
   } else {
     registerBtn.classList.remove("active");
   }
 }
 
-function registerLogistics(){
+async function registerLogistics() {
+  const wallet = document.getElementById("wallet").value.trim();
 
-  const wallet = document.getElementById("wallet").value;
-  const agree = document.getElementById("agree").checked;
+  if (!username) {
+    alert("Enter your Godomcoworld Rider username first.");
+    return;
+  }
 
-  if(wallet === ""){
+  if (!wallet) {
     alert("Enter wallet address");
     return;
   }
 
-  if(!agree){
+  if (!agreeCheckbox.checked) {
     alert("You must agree to terms");
     return;
   }
 
-  const payload = {
-  username: username,
-  companyName: document.getElementById("companyName").value,
-  transportType: document.getElementById("transportType").value,
-  capacity: Number(document.getElementById("capacity").value),
-  baseFee: Number(document.getElementById("baseFee").value),
-  perKm: Number(document.getElementById("perKm").value),
-  coverageKm: Number(document.getElementById("coverageKm").value),
+  if (typeof Pi === "undefined") {
+    alert("Pi SDK is unavailable. Reload the page and try again.");
+    return;
+  }
 
-  address: document.getElementById("baseAddress").value,
-  country: document.getElementById("baseCountry").value,
+  registerBtn.disabled = true;
 
-  wallet, // ✅ FIXED (comma added)
+  try {
+    const auth = await Pi.authenticate(
+      ["username", "payments"],
+      function (payment) {
+        console.warn("Incomplete Pi payment:", payment);
+      }
+    );
 
-  availability: document.getElementById("availability").value,
-  speed: Number(document.getElementById("speed").value) || 40,
+    if (!auth || !auth.accessToken || !auth.user || !auth.user.username) {
+      throw new Error("Pi authentication did not return a valid account.");
+    }
 
-  // 🔥 VERY IMPORTANT (convert to number)
-  lat: Number(localStorage.getItem("rider_lat")),
-  lng: Number(localStorage.getItem("rider_lng"))
-};
+    const payload = {
+      username: username,
+      companyName: document.getElementById("companyName").value.trim(),
+      transportType: document.getElementById("transportType").value,
+      capacity: Number(document.getElementById("capacity").value),
+      baseFee: Number(document.getElementById("baseFee").value),
+      perKm: Number(document.getElementById("perKm").value),
+      coverageKm: Number(document.getElementById("coverageKm").value),
+      pricePerKm: Number(document.getElementById("pricePerKm").value),
+      pricePerKg: Number(document.getElementById("pricePerKg").value),
+      address: document.getElementById("baseAddress").value.trim(),
+      country: document.getElementById("baseCountry").value.trim(),
+      wallet: wallet,
+      availability: document.getElementById("availability").value,
+      speed: Number(document.getElementById("speed").value) || 40,
+      lat: Number(localStorage.getItem("rider_lat")),
+      lng: Number(localStorage.getItem("rider_lng")),
+      accessToken: auth.accessToken,
+      network: "testnet"
+    };
 
-console.log("🚚 SENDING DATA:", payload);
+    const response = await fetch(
+      TESTNET_BACKEND + "/register-logistics",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    );
 
-  fetch('/register-logistics', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  })
-  .then(res => res.json())
-  .then(data => {
-  alert(data.message || "Registration successful");
+    const data = await response.json();
 
-  // ✅ Save identity
-  localStorage.setItem("logistics_wallet", wallet);
-  localStorage.setItem("logisticsName", username);
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Registration failed.");
+    }
 
-  // ✅ Redirect to logistics home
-  window.location.href = "logistics-home.html";
-})
-  .catch(err => {
-    console.error(err);
-    alert("Registration failed");
-  });
+    localStorage.setItem("logistics_wallet", wallet);
+    localStorage.setItem("logisticsName", data.riderUsername);
+    localStorage.setItem("piUsername", data.piUsername);
+    localStorage.setItem("walletNetwork", "testnet");
 
+    alert(data.message || "Testnet logistics registration successful.");
+    window.location.href = "logistics-home.html";
+
+  } catch (err) {
+    console.error("LOGISTICS REGISTRATION:", err);
+    alert(err.message || "Registration failed. Please try again.");
+  } finally {
+    registerBtn.disabled = false;
+  }
 }
-</script>
-
-<script src="../js/dev-console.js"></script>
+</script><script src="../js/dev-console.js"></script>
 </body>
 </html>

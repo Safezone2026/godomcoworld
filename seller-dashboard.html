@@ -69,16 +69,16 @@ button{
   <h3 id="user"></h3>
 
   <h3>💰 Total Sales</h3>
-  <h2 id="totalSales">₦0</h2>
+  <h2 id="totalSales">Pi figures unavailable</h2>
 
   <h3>📉 Platform Fee (5%)</h3>
-  <h2 id="fees">₦0</h2>
+  <h2 id="fees">Pi figures unavailable</h2>
 
   <h3>💵 Your Earnings</h3>
-  <h1 id="earnings">₦0</h1>
+  <h1 id="earnings">Pi figures unavailable</h1>
 
   <h3>⏳ Pending Balance</h3>
-  <h2 id="pendingBalance">₦0</h2>
+  <h2 id="pendingBalance">Pi figures unavailable</h2>
 </div>
 <div class="card">
 <h3>⚡ Quick Actions</h3>
@@ -130,23 +130,15 @@ View All Orders
 <!-- NEW CARD (separate) -->
 <div class="card">
     <h3>💵 Available Balance</h3>
-  <h2 id="availableBalance">₦0</h2>
+  <h2 id="availableBalance">π 0.000000</h2>
 
   <h3>💸 Withdraw Funds</h3>
 
-  <select id="withdrawCurrency">
-    <option value="NG">₦ NGN</option>
-    <option value="USD">$ USD</option>
-    <option value="PI">π PI</option>
-  </select>
+  <input type="hidden" id="withdrawCurrency" value="PI">
 
-  <select id="withdrawMethod">
-  <option value="">Select Method</option>
-  <option value="bank">Bank Transfer</option>
-  <option value="pi">Pi Network</option>
-</select>
+  <input type="hidden" id="withdrawMethod" value="pi">
 
-<div id="bankFields" style="display:none;">
+<div id="bankFields" style="display:none;" hidden>
   <select id="bankName">
     <option>Access Bank</option>
     <option>GTBank</option>
@@ -185,14 +177,7 @@ View All Orders
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
 
-    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
-      <strong>🇳🇬 NGN</strong>
-      <div id="ngBalance">₦0.00</div>
-    </div>
 
-    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
-      <strong>🇺🇸 USD</strong>
-      <div id="usdBalance">$0.00</div>
     </div>
 
     <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
@@ -402,73 +387,25 @@ document.getElementById("profileDate").innerText =
     ? new Date(seller.createdAt).toLocaleDateString()
     : "Not Available";
 // 💰 Earnings
-document.getElementById("earnings").innerText =
-  "₦" + Number(seller.earnings || 0).toLocaleString();
+document.getElementById("earnings").innerText = "Pi figures unavailable";
 
 // 📊 Total Sales
-document.getElementById("totalSales").innerText =
-  "₦" + Number(seller.totalSales || 0).toLocaleString();
+document.getElementById("totalSales").innerText = "Pi figures unavailable";
 
 // 📉 Fees
-document.getElementById("fees").innerText =
-  "₦" + Number(seller.totalFees || 0).toLocaleString();
+document.getElementById("fees").innerText = "Pi figures unavailable";
 
 // ⏳ Pending Balance
-document.getElementById("pendingBalance").innerText =
-  "₦" + Number(seller.pendingBalance || 0).toLocaleString();
+document.getElementById("pendingBalance").innerText = "Pi figures unavailable";
 
 
 // 💵 Available Balance
 document.getElementById("availableBalance").innerText =
-  "₦" + Number(seller.availableBalance || 0).toLocaleString();
-  // ================= MULTI-CURRENCY BALANCES =================
-  // ================= MULTI-CURRENCY BALANCES =================
-  // Backend fields: ng_balance, usd_balance, pi_balance
-  const ngBalance = Number(
-    seller.ngBalance ??
-    seller.ng_balance ??
-    0
-  );
+  "π " + Number(seller.piBalance ?? seller.pi_balance ?? 0).toLocaleString(undefined, {
+    minimumFractionDigits: 6,
+    maximumFractionDigits: 6
+  });
 
-  const usdBalance = Number(
-    seller.usdBalance ??
-    seller.usd_balance ??
-    0
-  );
-
-  const piBalance = Number(
-    seller.piBalance ??
-    seller.pi_balance ??
-    0
-  );
-
-  const ngEl = document.getElementById("ngBalance");
-  const usdEl = document.getElementById("usdBalance");
-  const piEl = document.getElementById("piBalance");
-
-  if (ngEl) {
-    ngEl.textContent =
-      "₦" + ngBalance.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-  }
-
-  if (usdEl) {
-    usdEl.textContent =
-      "$" + usdBalance.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-  }
-
-  if (piEl) {
-    piEl.textContent =
-      "π" + piBalance.toLocaleString(undefined, {
-        minimumFractionDigits: 6,
-        maximumFractionDigits: 6
-      });
-  }
 
   const networkEl = document.getElementById("sellerNetwork");
   if (networkEl) {
@@ -668,9 +605,7 @@ console.log("Seller dashboard data:", data);
     transactions.forEach(t => {
       container.innerHTML += `
         <div class="history">
-          Sale: ₦${Number(t.sale).toLocaleString()} <br>
-          Fee: ₦${Number(t.fee).toLocaleString()} <br>
-          Earned: ₦${Number(t.earned).toLocaleString()} <br>
+          Fiat transaction amounts are not displayed.<br>
           <small>${t.date}</small>
         </div>
 
@@ -679,14 +614,7 @@ console.log("Seller dashboard data:", data);
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
 
-    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
-      <strong>🇳🇬 NGN</strong>
-      <div id="ngBalance">₦0.00</div>
-    </div>
 
-    <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
-      <strong>🇺🇸 USD</strong>
-      <div id="usdBalance">$0.00</div>
     </div>
 
     <div style="padding:12px;border:1px solid #ddd;border-radius:10px;">
@@ -750,11 +678,9 @@ async function loadRecentOrders(){
 // ================= SUBMIT WITHDRAW =================
 async function submitWithdrawal(){
 
-  const method =
-    document.getElementById("withdrawMethod").value;
+  const method = "pi";
 
-  const currency =
-    document.getElementById("withdrawCurrency").value;
+  const currency = "PI";
 
   const amount =
     Number(document.getElementById("amount").value);
@@ -772,6 +698,7 @@ async function submitWithdrawal(){
   let cryptoAddress = null;
 
   if(method === "bank"){
+    return alert("Only Pi Network withdrawals are supported.");
 
     bankName =
       document.getElementById("bankName").value;
@@ -864,7 +791,7 @@ async function loadWithdrawalHistory(){
       return;
     }
 
-    const history = data.withdrawals || [];
+    const history = (data.withdrawals || []).filter(w => String(w.currency || "").toUpperCase() === "PI");
 
     document.getElementById("withdrawalHistory").innerHTML =
       history.length

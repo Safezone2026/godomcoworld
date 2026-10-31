@@ -52,16 +52,8 @@ button {
 <div class="card">
   <h3 id="riderName">Welcome</h3>
 
-  <h3>💰 Total Earnings</h3>
-  <h2 id="earnings">₦0</h2>
-
-  <h3>⏳ Pending Balance</h3>
-  <h2 id="pendingBalance">₦0</h2>
-
-  <h3>💵 Available Balances</h3>
-  <p id="ngBalance">₦0.00</p>
-  <p id="usdBalance">$0.00</p>
-  <p id="piBalance">π 0.00</p>
+  <h3>💰 Available Pi Balance</h3>
+  <h2 id="piBalance">π 0.000000</h2>
 
   <h3>📦 Deliveries Completed</h3>
   <h2 id="completed">0</h2>
@@ -74,21 +66,11 @@ button {
     id="withdrawAmount"
     placeholder="Enter amount">
 
-  <select id="withdrawCurrency">
-    <option value="NG">₦ NGN</option>
-    <option value="USD">$ USD</option>
-    <option value="PI">π PI</option>
-  </select>
+  <input type="hidden" id="withdrawCurrency" value="PI">
 
-  <select id="withdrawMethod">
-    <option value="bank">Bank</option>
-    <option value="crypto">Crypto</option>
-  </select>
+  <input type="hidden" id="withdrawMethod" value="pi">
 
-  <input
-    type="text"
-    id="withdrawDetails"
-    placeholder="Account No / Wallet Address">
+  <input type="text" id="withdrawDetails" placeholder="Pi wallet address">
 
   <button onclick="withdrawFunds()">
     Withdraw
@@ -124,61 +106,41 @@ button {
   <button>🚚 Become a Logistics Partner</button>
 </a>
 
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script src="../js/network.js"></script>
 <script>
 
 // ================= USER =================
+const TESTNET_BACKEND = "https://godomcoworld-backend-testnet.onrender.com";
+const network = "testnet";
+localStorage.setItem("walletNetwork", "testnet");
+
 let rider = (localStorage.getItem("logisticsName") || "").trim();
+let riderAccessToken = "";
 
-if(!rider){
-  rider = prompt("Enter logistics name (e.g Godomco Rider)");
-  rider = (rider || "").trim();
-  localStorage.setItem("logisticsName", rider);
-}
-const network =
-getWalletNetwork();
-console.log("Current rider =", rider);
-document.getElementById("riderName").innerText = "Rider: " + rider;
+Pi.init({ version: "2.0", sandbox: true });
 
+console.log("Current Rider =", rider, "Network =", network);
 
 // ================= LOAD DASHBOARD =================
 async function loadDashboard(){
 
   try {
 
+    if (!riderAccessToken) return;
     const res = await fetch(
-`https://godomcoworld-backend-testnet.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
-);
+      `${TESTNET_BACKEND}/logistics-dashboard/${encodeURIComponent(rider)}?network=${network}`,
+      { headers: { Authorization: `Bearer ${riderAccessToken}` } }
+    );
     const data = await res.json();
 
     console.log("LOGISTICS DATA:", data);
 
-    // 💰 TOTAL
-    document.getElementById("earnings").innerText =
-      "₦" + Number(data.totalEarnings || 0).toLocaleString();
-
-    // ⏳ PENDING
-    document.getElementById("pendingBalance").innerText =
-      "₦" + Number(data.pendingBalance || 0).toLocaleString();
-
-    // 💵 MULTI-CURRENCY AVAILABLE BALANCES
+    // Pi balance only; do not relabel generic fiat earnings.
     const balances = data.balances || {};
-
-    document.getElementById("ngBalance").innerText =
-      "₦" + Number(balances.NG || 0).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-
-    document.getElementById("usdBalance").innerText =
-      "$" + Number(balances.USD || 0).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-
     document.getElementById("piBalance").innerText =
       "π " + Number(balances.PI || 0).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
+        minimumFractionDigits: 6,
         maximumFractionDigits: 6
       });
 
@@ -228,8 +190,6 @@ function renderDeliveries(deliveries){
         ${d.distance || 0} km
         <br>
 
-        <b>Fee:</b>
-        ₦${Number(d.fee || 0).toLocaleString()}
         <br><br>
 
         <div style="
@@ -388,65 +348,47 @@ async function updateStatus(orderId, status){
 
 // ================= RIDER WITHDRAW =================
 async function withdrawFunds(){
+  const amount = Number(document.getElementById("withdrawAmount").value);
+  const method = "pi";
+  const withdrawalCurrency = "PI";
 
-  const amount =
-    Number(document.getElementById("withdrawAmount").value);
-
-  const method =
-    document.getElementById("withdrawMethod").value;
-
-  const withdrawalCurrency =
-    document.getElementById("withdrawCurrency").value;
-
-  const details =
-    document.getElementById("withdrawDetails").value;
-
-  if(!amount || amount <= 0){
+  if (!riderAccessToken) {
+    return alert("Please complete Pi sign-in first.");
+  }
+  if (!amount || amount <= 0) {
     return alert("Enter withdrawal amount");
   }
 
   const body = {
-  riderName: rider,
-  amount,
-  currency: withdrawalCurrency,
-  method,
-  network
-};
+    riderName: rider,
+    amount,
+    currency: withdrawalCurrency,
+    method,
+    network
+  };
 
-if(method === "bank"){
-  body.bankName = "Bank";
-  body.accountNumber = details;
-}else{
-  body.cryptoAddress = details;
-  body.withdrawNetwork = "TRC20";
-}
-
-  const res = await fetch(
-    "https://godomcoworld-backend-testnet.onrender.com/rider-withdraw",
-    {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
+  try {
+    const res = await fetch(`${TESTNET_BACKEND}/rider-withdraw`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${riderAccessToken}`
       },
-      body:JSON.stringify(body)
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    document.getElementById("withdrawMsg").innerText = data.message || "Request completed.";
+
+    if (data.success) {
+      document.getElementById("withdrawAmount").value = "";
+      document.getElementById("withdrawDetails").value = "";
+      await Promise.all([loadDashboard(), loadWithdrawals()]);
     }
-  );
-
-  const data = await res.json();
-
-  document.getElementById("withdrawMsg").innerText =
-    data.message;
-
-  if(data.success){
-
-    document.getElementById("withdrawAmount").value="";
-    document.getElementById("withdrawDetails").value="";
-
-    loadDashboard();
-    loadWithdrawals();
-
+  } catch (err) {
+    console.error("RIDER WITHDRAWAL:", err);
+    document.getElementById("withdrawMsg").innerText = "Withdrawal request failed.";
   }
-
 }
 
 // ================= LOAD WITHDRAWALS =================
@@ -454,8 +396,10 @@ async function loadWithdrawals(){
 
   try {
 
+    if (!riderAccessToken) return;
     const res = await fetch(
-`https://godomcoworld-backend-testnet.onrender.com/rider-withdrawals/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
+      `${TESTNET_BACKEND}/rider-withdrawals/${encodeURIComponent(rider)}?network=${network}`,
+      { headers: { Authorization: `Bearer ${riderAccessToken}` } }
     );
 
     const data = await res.json();
@@ -466,7 +410,7 @@ async function loadWithdrawals(){
       return;
     }
 
-    const history = data.withdrawals || [];
+    const history = (data.withdrawals || []).filter(w => String(w.currency || "").toUpperCase() === "PI");
 
     document.getElementById("withdrawHistory").innerHTML =
       history.length
@@ -534,17 +478,48 @@ ${w.paid_at ? new Date(w.paid_at).toLocaleString() : "Not paid yet"}
 
 }
 
-// ================= AUTO LOAD =================
-window.onload = function(){
-  loadDashboard();
-loadWithdrawals();
-};
+// ================= PI AUTHENTICATION AND AUTO LOAD =================
+async function authenticateRider() {
+  if (!rider) {
+    alert("Rider username is missing. Please register again.");
+    window.location.href = "logistics-partner-registration.html";
+    return false;
+  }
 
-// 🔄 refresh every 5s
-setInterval(() => {
-    loadDashboard();
-    loadWithdrawals();
-}, 5000);
+  try {
+    const auth = await Pi.authenticate(
+      ["username", "payments"],
+      function(payment) {
+        console.warn("Unexpected incomplete Pi payment:", payment);
+      }
+    );
+
+    if (!auth || !auth.accessToken) {
+      throw new Error("Pi authentication did not return an access token.");
+    }
+
+    riderAccessToken = auth.accessToken;
+    document.getElementById("riderName").innerText = "Rider: " + rider;
+
+    await Promise.all([loadDashboard(), loadWithdrawals()]);
+    return true;
+  } catch (err) {
+    console.error("RIDER PI AUTHENTICATION:", err);
+    alert("Pi sign-in failed. Please reload and try again.");
+    return false;
+  }
+}
+
+window.addEventListener("load", async function() {
+  if (await authenticateRider()) {
+    setInterval(() => {
+      if (riderAccessToken) {
+        loadDashboard();
+        loadWithdrawals();
+      }
+    }, 5000);
+  }
+});
 
 </script>
 
