@@ -256,14 +256,54 @@ View All Orders
 </script>
 
 <script>
-const sellerId = localStorage.getItem("sellerId");
-const currentSeller = localStorage.getItem("username") || "";
+let sellerId = localStorage.getItem("sellerId") || "";
+let currentSeller = "";
 const API = "https://godomcoworld-backend-testnet.onrender.com";
-const network = getWalletNetwork();
+const network = "testnet";
 
-if(!sellerId){
-  alert("Seller session expired. Please register/login again.");
-  window.location.href = "marketplace/seller-register.html";
+async function authenticateSellerDashboard() {
+  if (typeof initSellerPiSDK === "function" && !initSellerPiSDK()) {
+    throw new Error("Pi SDK could not be initialized.");
+  }
+
+  const auth = await Pi.authenticate(
+    ["username", "payments"],
+    payment => console.warn("Incomplete Pi payment:", payment)
+  );
+
+  if (!auth || !auth.accessToken) {
+    throw new Error("Pi authentication did not return an access token.");
+  }
+
+  const username = (prompt("Enter your registered Seller username:") || "").trim();
+  if (!username) throw new Error("Seller username is required.");
+
+  const response = await fetch(`${API}/seller/pi-identity/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username,
+      accessToken: auth.accessToken,
+      network: "testnet"
+    })
+  });
+
+  const result = await response.json();
+  if (!response.ok || !result.success || !result.sellerId) {
+    if (result.registered === false) {
+      alert("No registered Seller account was found. Please register first.");
+      window.location.href = "marketplace/seller-register.html";
+      return false;
+    }
+    throw new Error(result.message || "Seller identity verification failed.");
+  }
+
+  sellerId = String(result.sellerId);
+  currentSeller = result.username;
+  localStorage.setItem("sellerId", sellerId);
+  localStorage.setItem("username", currentSeller);
+  localStorage.setItem("walletNetwork", "testnet");
+  return true;
 }
 
 console.log("Current seller:", currentSeller);
@@ -676,98 +716,168 @@ async function loadRecentOrders(){
 }
 
 // ================= SUBMIT WITHDRAW =================
+
+// SELLER_TRANSACTION_PIN_HELPERS
+async function sellerPinPrompt(title) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;background:#000b;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px";
+    const box = document.createElement("div");
+    box.style.cssText = "background:#fff;color:#111;padding:22px;border-radius:12px;width:100%;max-width:360px";
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    const input = document.createElement("input");
+    input.type = "password";
+    input.inputMode = "numeric";
+    input.maxLength = 6;
+    input.autocomplete = "new-password";
+    input.placeholder = "4–6 digit PIN";
+    input.style.cssText = "width:100%;padding:12px;margin:12px 0;box-sizing:border-box;font-size:20px;letter-spacing:5px";
+    const actions = document.createElement("div");
+    actions.style.cssText = "display:flex;gap:10px";
+    const cancel = document.createElement("button");
+    cancel.textContent = "Cancel";
+    const submit = document.createElement("button");
+    submit.textContent = "Continue";
+    submit.style.cssText = "background:#0759c7;color:white;padding:10px 18px;border:0;border-radius:6px";
+    function finish(value) {
+      overlay.remove();
+      resolve(value);
+    }
+    cancel.onclick = () => finish(null);
+    submit.onclick = () => {
+      const value = input.value.trim();
+      if (!/^[0-9]{4,6}$/.test(value)) {
+        alert("PIN must contain 4 to 6 digits.");
+        return;
+      }
+      finish(value);
+    };
+    actions.append(cancel, submit);
+    box.append(heading, input, actions);
+    overlay.append(box);
+    document.body.append(overlay);
+    input.focus();
+  });
+}
+
+async function getSellerPinAccessToken() {
+  if (window.sellerAccessToken) return window.sellerAccessToken;
+  if (!window.Pi) throw new Error("Pi sign-in is not available. Please sign in again.");
+
+  const auth = await Pi.authenticate(["username", "payments"], () => {});
+  const token = String(auth?.accessToken || "").trim();
+  if (!token) throw new Error("Unable to obtain a verified Pi access token.");
+
+  window.sellerAccessToken = token;
+  return token;
+}
+
+async function obtainSellerWithdrawalPinToken(api, username, accessToken) {
+  let pin = await sellerPinPrompt("Enter your Transaction PIN");
+  if (pin === null) throw new Error("PIN entry cancelled.");
+
+  let response = await fetch(`${api}/seller/security/verify-pin`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, accessToken, pin})
+  });
+
+  let result = await response.json();
+
+  if (response.status === 404) {
+    const first = await sellerPinPrompt("Create a new Transaction PIN");
+    if (first === null) throw new Error("PIN setup cancelled.");
+    const second = await sellerPinPrompt("Confirm your new Transaction PIN");
+    if (second === null) throw new Error("PIN setup cancelled.");
+    if (first !== second) throw new Error("The PIN entries do not match.");
+
+    response = await fetch(`${api}/seller/security/setup-pin`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({username, accessToken, pin: first})
+    });
+    result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Could not create Transaction PIN.");
+    }
+
+    pin = first;
+    response = await fetch(`${api}/seller/security/verify-pin`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({username, accessToken, pin})
+    });
+    result = await response.json();
+  }
+
+  if (!response.ok || !result.success || !result.authorizationToken) {
+    throw new Error(result.message || "Transaction PIN verification failed.");
+  }
+
+  return result.authorizationToken;
+}
+// END SELLER_TRANSACTION_PIN_HELPERS
+
+
 async function submitWithdrawal(){
-
   const method = "pi";
-
   const currency = "PI";
+  const amount = Number(document.getElementById("amount").value);
 
-  const amount =
-    Number(document.getElementById("amount").value);
+  if (!amount || amount <= 0) return alert("Enter a valid withdrawal amount");
 
-  if(!method){
-    return alert("Select withdrawal method");
+  let bankName = null, accountNumber = null, cryptoAddress = null;
+  if (method === "pi") {
+    cryptoAddress = document.getElementById("piAddress").value.trim();
+    if (!cryptoAddress) return alert("Enter Pi wallet address");
   }
 
-  if(!amount || amount <= 0){
-    return alert("Enter a valid withdrawal amount");
-  }
-
-  let bankName = null;
-  let accountNumber = null;
-  let cryptoAddress = null;
-
-  if(method === "bank"){
-    return alert("Only Pi Network withdrawals are supported.");
-
-    bankName =
-      document.getElementById("bankName").value;
-
-    accountNumber =
-      document.getElementById("accountNumber").value.trim();
-
-    if(!accountNumber){
-      return alert("Enter account number");
-    }
-
-  }else if(method === "pi"){
-
-    cryptoAddress =
-      document.getElementById("piAddress").value.trim();
-
-    if(!cryptoAddress){
-      return alert("Enter Pi wallet address");
-    }
-
-  }
+  const api = "https://godomcoworld-backend-testnet.onrender.com";
 
   try {
+    const accessToken = await getSellerPinAccessToken();
+    const sellerUsername = String(
+      currentSeller?.username || currentSeller?.name || ""
+    ).trim();
 
-    const API =
-      "https://godomcoworld-backend-testnet.onrender.com";
+    if (!sellerUsername) {
+      throw new Error("Seller username is unavailable. Please sign in again.");
+    }
 
-    const res = await fetch(
-      `${API}/seller-withdraw`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          sellerId,
-          amount,
-          currency,
-          method,
-          bankName,
-          accountNumber,
-          cryptoAddress,
-          network
-        })
-      }
+    const authorizationToken = await obtainSellerWithdrawalPinToken(
+      api, sellerUsername, accessToken
     );
 
+    const res = await fetch(`${api}/seller-withdraw`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        sellerId,
+        accessToken,
+        authorizationToken,
+        amount,
+        currency,
+        method,
+        bankName,
+        accountNumber,
+        cryptoAddress,
+        network: "testnet"
+      })
+    });
+
     const data = await res.json();
+    alert(data.message || "Withdrawal request completed.");
 
-    alert(data.message);
-
-    if(data.success){
-
+    if (data.success) {
       document.getElementById("amount").value = "";
-
       document.getElementById("accountNumber").value = "";
       document.getElementById("accountName").value = "";
       document.getElementById("piAddress").value = "";
-
       loadEarnings();
-
     }
-
-  } catch(err){
-
-    console.error("SELLER WITHDRAW:", err);
-
-    alert("Withdrawal failed");
-
+  } catch (err) {
+    alert(err.message || "Withdrawal failed.");
   }
 }
 
@@ -871,20 +981,24 @@ async function loadWithdrawalHistory(){
 }
 
 // ================= INIT =================
-window.onload = function() {
+window.onload = async function() {
+  try {
+    if (!(await authenticateSellerDashboard())) return;
 
-  loadSellerPiIdentity();
+    loadSellerPiIdentity();
+    loadEarnings();
+    loadSalesHistory();
+    loadWithdrawalHistory();
+    loadRecentProducts();
+    loadRecentOrders();
 
-  loadEarnings();
-  loadSalesHistory();
-  loadWithdrawalHistory();
-
-  loadRecentProducts();
-  loadRecentOrders();
-
-  setInterval(loadEarnings, 5000);
-  setInterval(loadWithdrawalHistory, 5000);
-
+    setInterval(loadEarnings, 5000);
+    setInterval(loadWithdrawalHistory, 5000);
+  } catch (err) {
+    console.error("SELLER DASHBOARD ACCESS:", err);
+    alert(err.message || "Unable to verify Seller access.");
+    window.location.href = "marketplace/index.html";
+  }
 };
 
 </script>
