@@ -58,6 +58,21 @@ button {
   <h3>📦 Deliveries Completed</h3>
   <h2 id="completed">0</h2>
 </div>
+
+<div class="card" id="riderIdentityCard">
+  <h3>🔐 Rider Identity & Wallet</h3>
+  <p><strong>Rider username:</strong> <span id="identityRiderUsername">Not loaded</span></p>
+  <p><strong>Rider wallet ID:</strong> <span id="identityWalletId">Not loaded</span></p>
+  <p><strong>Pi username:</strong> <span id="identityPiUsername">Not verified</span></p>
+  <p><strong>Pi UID:</strong> <span id="identityPiUid">Not verified</span></p>
+  <p><strong>Network:</strong> Testnet</p>
+  <p><strong>Link status:</strong> <span id="identityLinkStatus">Awaiting Rider lookup</span></p>
+  <button id="linkRiderPiButton" onclick="linkRiderPiIdentity()" disabled>
+    Link / Verify Pi Account
+  </button>
+  <p id="identityMessage"></p>
+</div>
+
 <div class="card">
   <h3>💸 Withdraw Earnings</h3>
 
@@ -72,7 +87,7 @@ button {
 
   <input type="text" id="withdrawDetails" placeholder="Pi wallet address">
 
-  <button onclick="withdrawFunds()">
+  <button id="withdrawButton" onclick="withdrawFunds()" disabled>
     Withdraw
   </button>
 
@@ -117,6 +132,9 @@ localStorage.setItem("walletNetwork", "testnet");
 
 let rider = "";
 let riderAccessToken = "";
+let riderWalletId = "";
+let riderPiLinked = false;
+let riderRefreshTimer = null;
 
 Pi.init({ version: "2.0", sandbox: true });
 
@@ -570,8 +588,108 @@ ${w.paid_at ? new Date(w.paid_at).toLocaleString() : "Not paid yet"}
 
 }
 
-// ================= PI AUTHENTICATION AND AUTO LOAD =================
-async function authenticateRider() {
+// ================= RIDER ACCOUNT LOOKUP AND PI IDENTITY =================
+
+function renderRiderIdentity(details = {}) {
+  document.getElementById("identityRiderUsername").innerText =
+    rider || "Not loaded";
+
+  document.getElementById("identityWalletId").innerText =
+    details.riderWalletId || riderWalletId || "Not available";
+
+  document.getElementById("identityPiUsername").innerText =
+    details.piUsername || "Not verified";
+
+  document.getElementById("identityPiUid").innerText =
+    details.piUid || "Not verified";
+
+  document.getElementById("identityLinkStatus").innerText =
+    details.verified
+      ? "Linked and Pi identity verified"
+      : riderPiLinked
+        ? "Linked — Pi verification required"
+        : "Not Linked";
+
+  document.getElementById("linkRiderPiButton").disabled =
+    !rider || Boolean(riderAccessToken) || Boolean(details.busy);
+
+  document.getElementById("withdrawButton").disabled =
+    !riderAccessToken;
+}
+
+async function lookupRiderAccount() {
+  const enteredName = (prompt("Enter your registered Rider username:") || "").trim();
+
+  if (!enteredName) {
+    document.getElementById("identityMessage").innerText =
+      "Enter your Rider username to continue.";
+    return false;
+  }
+
+  const message = document.getElementById("identityMessage");
+  message.innerText = "Checking the Testnet Rider account...";
+
+  try {
+    const response = await fetch(
+      `${TESTNET_BACKEND}/rider/account/lookup`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          riderName: enteredName,
+          network: "testnet"
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success || !result.registered) {
+      if (result.registered === false || response.status === 404) {
+        alert("No registered Testnet Rider account was found. Please register first.");
+        window.location.href = "logistics-partner-registration.html";
+        return false;
+      }
+      throw new Error(result.message || "Rider account lookup failed.");
+    }
+
+    rider = result.riderUsername;
+    riderWalletId = result.riderWalletId;
+    riderPiLinked = Boolean(result.piLinked);
+    riderAccessToken = "";
+
+    localStorage.setItem("logisticsName", rider);
+    localStorage.setItem("walletNetwork", "testnet");
+
+    document.getElementById("riderName").innerText = "Rider: " + rider;
+
+    renderRiderIdentity();
+    message.innerText =
+      "Rider account found. Verify or link your Pi account to unlock protected operations.";
+
+    document.getElementById("linkRiderPiButton").disabled = false;
+
+    return true;
+  } catch (err) {
+    console.error("RIDER ACCOUNT LOOKUP:", err);
+    message.innerText = err.message || "Unable to look up Rider account.";
+    alert(message.innerText);
+    return false;
+  }
+}
+
+async function linkRiderPiIdentity() {
+  if (!rider) {
+    alert("Look up your registered Rider username first.");
+    return false;
+  }
+
+  const button = document.getElementById("linkRiderPiButton");
+  const message = document.getElementById("identityMessage");
+
+  button.disabled = true;
+  message.innerText = "Authenticating your Pi account...";
+
   try {
     const auth = await Pi.authenticate(
       ["username", "payments"],
@@ -582,10 +700,38 @@ async function authenticateRider() {
       throw new Error("Pi authentication did not return an access token.");
     }
 
-    rider = (prompt("Enter your registered Rider username:") || "").trim();
-    if (!rider) return false;
+    // Only an unlinked Rider wallet may be linked here.
+    if (!riderPiLinked) {
+      message.innerText = "Verifying and linking your Pi identity...";
 
-    const response = await fetch(
+      const linkResponse = await fetch(
+        `${TESTNET_BACKEND}/rider/pi-identity/link`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            riderName: rider,
+            accessToken: auth.accessToken,
+            network: "testnet"
+          })
+        }
+      );
+
+      const linkResult = await linkResponse.json();
+
+      if (!linkResponse.ok || !linkResult.success) {
+        throw new Error(
+          linkResult.message || "Unable to link this Pi identity."
+        );
+      }
+
+      riderPiLinked = true;
+    }
+
+    // Independently verify the authenticated identity before granting access.
+    message.innerText = "Checking your verified Rider identity...";
+
+    const verifyResponse = await fetch(
       `${TESTNET_BACKEND}/rider/pi-identity/verify`,
       {
         method: "POST",
@@ -598,40 +744,69 @@ async function authenticateRider() {
       }
     );
 
-    const result = await response.json();
-    if (!response.ok || !result.success) {
-      if (result.registered === false) {
-        alert("This Pi account has no registered Rider account. Please register first.");
-        window.location.href = "logistics-partner-registration.html";
-        return false;
-      }
-      throw new Error(result.message || "Rider identity verification failed.");
+    const verified = await verifyResponse.json();
+
+    if (!verifyResponse.ok || !verified.success) {
+      throw new Error(
+        verified.message || "Rider Pi identity verification failed."
+      );
     }
 
-    rider = result.riderUsername;
+    if (
+      !verified.piUid ||
+      !verified.piUsername ||
+      !verified.riderWalletId
+    ) {
+      throw new Error(
+        "The backend did not return the complete verified Rider identity."
+      );
+    }
+
+    rider = verified.riderUsername;
+    riderWalletId = verified.riderWalletId;
     riderAccessToken = auth.accessToken;
+
     localStorage.setItem("logisticsName", rider);
     localStorage.setItem("walletNetwork", "testnet");
+
     document.getElementById("riderName").innerText = "Rider: " + rider;
 
+    renderRiderIdentity({
+      riderWalletId: verified.riderWalletId,
+      piUsername: verified.piUsername,
+      piUid: verified.piUid,
+      verified: true
+    });
+
+    message.innerText = "Pi identity successfully verified. Protected Rider operations are now available.";
+
     await Promise.all([loadDashboard(), loadWithdrawals()]);
+
+    if (!riderRefreshTimer) {
+      riderRefreshTimer = setInterval(() => {
+        if (riderAccessToken) {
+          loadDashboard();
+          loadWithdrawals();
+        }
+      }, 5000);
+    }
+
     return true;
+
   } catch (err) {
-    console.error("RIDER PI AUTHENTICATION:", err);
-    alert(err.message || "Pi sign-in failed. Please try again.");
+    console.error("RIDER PI IDENTITY LINK:", err);
+    riderAccessToken = "";
+    document.getElementById("withdrawButton").disabled = true;
+    button.disabled = false;
+    message.innerText = err.message || "Pi identity verification failed.";
+    alert(message.innerText);
     return false;
   }
 }
 
 window.addEventListener("load", async function() {
-  if (await authenticateRider()) {
-    setInterval(() => {
-      if (riderAccessToken) {
-        loadDashboard();
-        loadWithdrawals();
-      }
-    }, 5000);
-  }
+  renderRiderIdentity();
+  await lookupRiderAccount();
 });
 
 </script>
