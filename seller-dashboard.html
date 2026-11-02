@@ -426,17 +426,32 @@ document.getElementById("profileDate").innerText =
   seller.createdAt
     ? new Date(seller.createdAt).toLocaleDateString()
     : "Not Available";
-// 💰 Earnings
-document.getElementById("earnings").innerText = "Pi figures unavailable";
+// 💰 Seller financial figures from the Testnet dashboard API
+const formatSellerPiFigure = value => {
+  if (value === null || value === undefined || value === "") {
+    return "Unavailable";
+  }
 
-// 📊 Total Sales
-document.getElementById("totalSales").innerText = "Pi figures unavailable";
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "Unavailable";
 
-// 📉 Fees
-document.getElementById("fees").innerText = "Pi figures unavailable";
+  return "π " + number.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 8
+  });
+};
 
-// ⏳ Pending Balance
-document.getElementById("pendingBalance").innerText = "Pi figures unavailable";
+document.getElementById("earnings").innerText =
+  formatSellerPiFigure(seller.earnings);
+
+document.getElementById("totalSales").innerText =
+  formatSellerPiFigure(seller.totalSales ?? data.totalSales);
+
+document.getElementById("fees").innerText =
+  formatSellerPiFigure(seller.totalFees ?? data.totalFees);
+
+document.getElementById("pendingBalance").innerText =
+  formatSellerPiFigure(seller.pendingBalance ?? data.pendingBalance);
 
 
 // 💵 Available Balance
@@ -867,7 +882,18 @@ async function submitWithdrawal(){
     });
 
     const data = await res.json();
-    alert(data.message || "Withdrawal request completed.");
+
+    if (data.success) {
+      const fmt = value => Number(value || 0).toFixed(8);
+      alert(
+        "Withdrawal request submitted successfully.\n\n" +
+        "Payout: π" + fmt(data.payoutAmount) + "\n" +
+        "Withdrawal fee (1%): π" + fmt(data.fee) + "\n" +
+        "Total wallet deduction: π" + fmt(data.totalDeduction)
+      );
+    } else {
+      alert(data.message || "Withdrawal request failed.");
+    }
 
     if (data.success) {
       document.getElementById("amount").value = "";
@@ -923,10 +949,19 @@ async function loadWithdrawalHistory(){
               maximumFractionDigits: 2
             });
 
+          const feeValue = Number(w.fee || 0);
+          const payoutValue = Math.max(0, Number(w.amount || 0) - feeValue);
+
           const fee =
-            Number(w.fee || 0).toLocaleString(undefined,{
+            feeValue.toLocaleString(undefined,{
               minimumFractionDigits: 2,
-              maximumFractionDigits: 2
+              maximumFractionDigits: 8
+            });
+
+          const payout =
+            payoutValue.toLocaleString(undefined,{
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 8
             });
 
           const destination =
@@ -938,9 +973,11 @@ async function loadWithdrawalHistory(){
 
           return `
             <p>
-              💸 <b>${symbol}${amount} ${currency}</b><br>
+              💸 <b>Wallet deduction: ${symbol}${amount} ${currency}</b><br>
 
-              Fee: ${fee} ${currency}<br>
+              Payout: ${symbol}${payout} ${currency}<br>
+
+              Withdrawal fee (1%): ${fee} ${currency}<br>
 
               Method: ${w.method || "-"}<br>
 

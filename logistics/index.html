@@ -488,7 +488,18 @@ async function withdrawFunds(){
     });
 
     const data = await res.json();
-    document.getElementById("withdrawMsg").innerText = data.message || "Request completed.";
+
+    if (data.success) {
+      const fmt = value => Number(value || 0).toFixed(8);
+      document.getElementById("withdrawMsg").innerText =
+        "Withdrawal request submitted successfully.\n" +
+        "Payout: π" + fmt(data.payoutAmount ?? data.netAmount) + "\n" +
+        "Withdrawal fee (1%): π" + fmt(data.fee) + "\n" +
+        "Total wallet deduction: π" + fmt(data.totalDeduction);
+    } else {
+      document.getElementById("withdrawMsg").innerText =
+        data.message || "Withdrawal request failed.";
+    }
 
     if (data.success) {
       document.getElementById("withdrawAmount").value = "";
@@ -540,10 +551,17 @@ async function loadWithdrawals(){
             maximumFractionDigits: 2
           });
 
-          const fee = Number(w.fee || 0).toLocaleString(undefined,{
+          const feeValue = Number(w.fee || 0);
+          const payoutValue = Math.max(0, Number(w.amount || 0) - feeValue);
+
+          const formatAmount = value => Number(value).toLocaleString(undefined,{
             minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            maximumFractionDigits: 8
           });
+
+          const amountDisplay = formatAmount(w.amount || 0);
+          const feeDisplay = formatAmount(feeValue);
+          const payoutDisplay = formatAmount(payoutValue);
 
           const destination =
             w.method === "bank"
@@ -552,9 +570,11 @@ async function loadWithdrawals(){
 
           return `
 <p>
-💸 <b>${symbol}${amount} ${currency}</b><br>
+💸 <b>Wallet deduction: ${symbol}${amountDisplay} ${currency}</b><br>
 
-Fee: ${fee} ${currency}<br>
+Payout: ${symbol}${payoutDisplay} ${currency}<br>
+
+Withdrawal fee (1%): ${symbol}${feeDisplay} ${currency}<br>
 
 Method: ${w.method || "-"}<br>
 
