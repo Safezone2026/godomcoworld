@@ -193,26 +193,57 @@ document.getElementById("receiptBtn").onclick = async function(){
 // ================= CONFIRM DELIVERY =================
 document.getElementById("confirmBtn").onclick = async function(){
 
-  if(!window.currentOrderId){
+  const btn = this;
+
+  if (!window.currentOrderId) {
     alert("No order selected");
     return;
   }
 
-  const res = await fetch('https://godomcoworld-backend-testnet.onrender.com/confirm-delivery', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-  orderId: window.currentOrderId,
-  network
-})
-  });
+  const network = getWalletNetwork();
 
-  const data = await res.json();
+  if (String(network).toLowerCase() !== "testnet") {
+    alert("This confirmation action is available only for the Testnet app.");
+    return;
+  }
 
-  alert(data.message);
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Confirming delivery...";
 
-  // 🔄 refresh tracking
-  trackOrder();
+  try {
+    const res = await fetch(
+      "https://godomcoworld-backend-testnet.onrender.com/confirm-delivery",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: window.currentOrderId,
+          network: network
+        })
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || data.success !== true) {
+      throw new Error(
+        data.message || `Confirmation request failed (HTTP ${res.status}).`
+      );
+    }
+
+    alert(data.message || "Delivery confirmed successfully.");
+
+    await trackOrder();
+
+  } catch (err) {
+    console.error("[Confirm Delivery] Error:", err);
+    alert("Could not confirm delivery: " + (err.message || err));
+
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 };
 
 // ================= DISPUTE =================
