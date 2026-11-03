@@ -68,6 +68,7 @@ function toggleStatus(){
 function logout(){
   localStorage.removeItem("logisticsName");
   localStorage.removeItem("logistics_wallet");
+  sessionStorage.removeItem("riderPiAccessToken");
 
   window.location.href = "logistics-partner-registration.html";
 }

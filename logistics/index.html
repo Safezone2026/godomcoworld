@@ -785,6 +785,7 @@ async function linkRiderPiIdentity() {
     rider = verified.riderUsername;
     riderWalletId = verified.riderWalletId;
     riderAccessToken = auth.accessToken;
+    sessionStorage.setItem("riderPiAccessToken", riderAccessToken);
 
     localStorage.setItem("logisticsName", rider);
     localStorage.setItem("walletNetwork", "testnet");
@@ -816,6 +817,7 @@ async function linkRiderPiIdentity() {
   } catch (err) {
     console.error("RIDER PI IDENTITY LINK:", err);
     riderAccessToken = "";
+    sessionStorage.removeItem("riderPiAccessToken");
     document.getElementById("withdrawButton").disabled = true;
     button.disabled = false;
     message.innerText = err.message || "Pi identity verification failed.";

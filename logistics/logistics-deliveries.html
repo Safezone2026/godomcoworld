@@ -13,10 +13,16 @@
 <script src="../js/network.js"></script>
 <script>
 const rider = localStorage.getItem("logisticsName");
-const network =
-getWalletNetwork();
+const network = getWalletNetwork();
+const riderAccessToken = sessionStorage.getItem("riderPiAccessToken");
+
+if (!rider || !riderAccessToken) {
+  document.getElementById("deliveryList").innerHTML =
+    "<p>❌ Please return to Rider sign-in and verify your Pi identity first.</p>";
+} else {
 fetch(
-  `https://godomcoworld-backend-testnet.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`
+  `https://godomcoworld-backend-testnet.onrender.com/logistics-dashboard/${encodeURIComponent(rider)}?network=${encodeURIComponent(network)}`,
+  { headers: { Authorization: `Bearer ${riderAccessToken}` } }
 )
 .then(r => r.json())
 .then(data => {
@@ -88,6 +94,7 @@ fetch(
   document.getElementById("deliveryList").innerHTML =
     "<p>❌ Failed to load deliveries</p>";
 });
+}
 
 function updateStatus(orderId, status){
 
