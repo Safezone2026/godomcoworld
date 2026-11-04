@@ -30,6 +30,7 @@ button{
   width:100%;
 }
 </style>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 
 <body>
@@ -120,8 +121,27 @@ button{
 
 <p>🪙 Pi: <span id="piTotal">0 π</span></p>
 
-<div style="margin-top:20px;">
-  <button onclick="payWithPi()">🪙 Pay with Pi</button>
+<!-- PAYMENT METHOD SELECTION -->
+<div id="paymentMethods" style="margin-top:20px;">
+  <h3>💳 Choose Payment Method</h3>
+
+  <label style="display:block; padding:15px; margin:10px 0; border:1px solid #888; border-radius:10px; cursor:pointer;">
+    <input type="radio" name="marketplacePaymentMethod" value="godomcoworld_wallet">
+    <strong>Pay with Godomcoworld Wallet</strong>
+    <br>
+    <small>Pay using your available internal PI wallet balance.</small>
+  </label>
+
+  <label style="display:block; padding:15px; margin:10px 0; border:1px solid #888; border-radius:10px; cursor:pointer;">
+    <input type="radio" name="marketplacePaymentMethod" value="pi_network_u2a">
+    <strong>Pay directly with Pi Network (U2A)</strong>
+    <br>
+    <small>Pay directly through the Pi Network app.</small>
+  </label>
+  <button type="button" onclick="continueWithPaymentMethod()"
+    style="width:100%; padding:13px; margin-top:12px; border:0; border-radius:8px; cursor:pointer;">
+    Continue
+  </button>
 </div>
 
 <hr>
@@ -500,146 +520,316 @@ async function payWithPi(){
   completeCheckout("Pi"); // ✅ method passed
 }
 
-async function completeCheckout(method){
-  console.log("Checkout started with:", method);
+async function completeCheckout(method) {
+  if (window.marketplacePaymentInProgress) return;
 
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  window.marketplacePaymentInProgress = true;
+
+  let orderId = null;
 
   try {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
-    const checkoutNetwork = getWalletNetwork();
-    if (String(checkoutNetwork).toLowerCase() === "testnet") {
-      const checkoutAddress = document.getElementById("address")?.value?.trim() || "";
-      const checkoutCountry = document.getElementById("country")?.value?.trim() || "";
-      const checkoutQuote = await getTestnetCheckoutQuote(
-        cart, checkoutAddress, checkoutCountry
-      );
-      window.testnetCheckoutQuote = checkoutQuote;
-      window.totalPi = Number(checkoutQuote.total);
+    if (!Array.isArray(cart) || cart.length === 0) {
+      throw new Error("Your cart is empty.");
     }
 
-    const amount = Number(window.totalPi);
-    const currency = "PI";
+    const currentNetwork = getWalletNetwork();
+
+    if (String(currentNetwork).toLowerCase() !== "testnet") {
+      throw new Error("Marketplace wallet checkout is Testnet only.");
+    }
+
+    const address = document.getElementById("address")?.value?.trim() || "";
+    const country = document.getElementById("country")?.value?.trim() || "";
+
+    const quote = await getTestnetCheckoutQuote(cart, address, country);
+    const amount = Number(quote.total);
+
+    window.testnetCheckoutQuote = quote;
+    window.totalPi = amount;
 
     if (!Number.isFinite(amount) || amount <= 0) {
-      alert("Please calculate the delivery fee before paying.");
-      return;
+      throw new Error("Please calculate a valid delivery fee before paying.");
     }
 
-    const currentNetwork =
-  getWalletNetwork();
+    const walletId = localStorage.getItem("walletId_" + currentNetwork);
+    const username = localStorage.getItem("username") || "";
 
-const walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  );
+    if (!walletId || !username) {
+      throw new Error("Your Testnet wallet or username is unavailable. Please sign in again.");
+    }
 
+    // Create the pending order before attempting the wallet debit.
+    orderId = await createPendingU2AMarketplaceOrder(
+      cart,
+      username,
+      amount,
+      "godomcoworld_wallet"
+    );
 
+    const authorizationToken =
+      window.checkoutAuthorizationWalletId === walletId &&
+      window.checkoutAuthorizationNetwork === currentNetwork
+        ? window.checkoutAuthorizationToken
+        : null;
 
-    const payRes = await fetch("https://godomcoworld-backend-testnet.onrender.com/wallet/pay", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-  body: JSON.stringify({
-  walletId,
-  amount,
-  currency,
-  type: "product",
-  network: currentNetwork,
-  authorizationToken:
-    window.checkoutAuthorizationWalletId === walletId &&
-    window.checkoutAuthorizationNetwork === currentNetwork
-      ? window.checkoutAuthorizationToken
-      : null
-})
-    });
+    if (!authorizationToken) {
+      throw new Error("Transaction PIN authorization is missing. Please verify your PIN again.");
+    }
+
+    const payRes = await fetch(
+      TESTNET_API + "/wallet/pay",
+      {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          walletId,
+          amount,
+          currency: "PI",
+          type: "product",
+          orderId,
+          network: currentNetwork,
+          authorizationToken
+        })
+      }
+    );
 
     const payData = await payRes.json();
 
-    if(!payData.success){
-      alert(payData.message);
-      return;
+    if (!payRes.ok || !payData.success || !payData.transactionId) {
+      throw new Error(
+        payData.message ||
+        "Wallet payment failed. Your order remains pending."
+      );
     }
-
-    const shipmentRes = await fetch('https://godomcoworld-backend-testnet.onrender.com/logistics/create');
-    const shipmentData = await shipmentRes.json();
-
-    const orderId = shipmentData.orderId;
-
-    const buyerName =
-      document.getElementById("buyerName")?.value?.trim() || "";
-
-    const phone =
-      document.getElementById("phone")?.value?.trim() || "";
-
-    const email =
-      document.getElementById("email")?.value?.trim() || "";
-
-    const address =
-      document.getElementById("address")?.value?.trim() || "";
-
-    const houseAddress =
-      document.getElementById("houseAddress")?.value?.trim() || "";
-
-    const city =
-      document.getElementById("city")?.value?.trim() || "";
-
-    const state =
-      document.getElementById("state")?.value?.trim() || "";
-
-    const country =
-      document.getElementById("country")?.value?.trim() || "";
-
-    const lat = Number(localStorage.getItem("deliveryLat") || 0);
-    const lng = Number(localStorage.getItem("deliveryLng") || 0);
-
-await fetch('https://godomcoworld-backend-testnet.onrender.com/api/checkout', {
-  method: 'POST',
-  headers: {'Content-Type':'application/json'},
-  body: JSON.stringify({
-    method,
-    cart,
-    orderId,
-
-    // Link the verified wallet payment to this order
-    paymentTransactionId: payData.transactionId,
-    paymentWalletId: walletId,
-    paymentAmount: amount,
-
-    // Buyer details — must match backend orders columns
-    buyerName,
-    phone,
-    email,
-    address,
-    houseAddress,
-    city,
-    state,
-    country,
-
-    user: localStorage.getItem("username") || "guest",
-
-    // Preserve Mainnet/Testnet isolation
-    network: currentNetwork,
-
-    lat,
-    lng
-})
-});
-
-    alert("✅ Payment successful\nOrder ID: " + orderId);
 
     localStorage.removeItem("cart");
     localStorage.setItem("lastOrderId", orderId);
 
-    setTimeout(() => {
-      window.location.href = "/logistics/track.html";
-    }, 1500);
+    alert(
+      "Wallet payment successful.\nTransaction: " +
+      payData.transactionId +
+      "\nOrder ID: " + orderId
+    );
 
-  } catch(err){
-    console.error(err);
-    alert("Payment failed");
+    window.location.href = "/logistics/track.html";
+
+  } catch (error) {
+    console.error("Godomcoworld wallet checkout failed:", error);
+
+    alert(
+      (error.message || "Wallet payment failed.") +
+      (orderId ? "\nPending order: " + orderId : "")
+    );
+
+  } finally {
+    window.marketplacePaymentInProgress = false;
   }
 }
 
+// ================= DIRECT PI NETWORK U2A PAYMENT =================
+const TESTNET_API =
+  "https://godomcoworld-backend-testnet.onrender.com";
+
+async function createPendingU2AMarketplaceOrder(cart, username, amount, method = "pi_network_u2a") {
+  const address = document.getElementById("address")?.value?.trim() || "";
+  const country = document.getElementById("country")?.value?.trim() || "";
+
+  if (address.length < 5 || !country) {
+    throw new Error("Enter your delivery address and select your country.");
+  }
+
+  const orderId = String(Date.now());
+
+  const body = {
+    method,
+    cart,
+    orderId,
+    buyerName: document.getElementById("buyerName")?.value?.trim() || "",
+    phone: document.getElementById("phone")?.value?.trim() || "",
+    email: document.getElementById("email")?.value?.trim() || "",
+    address,
+    houseAddress: document.getElementById("houseAddress")?.value?.trim() || "",
+    city: document.getElementById("city")?.value?.trim() || "",
+    state: document.getElementById("state")?.value?.trim() || "",
+    country,
+    user: username,
+    network: "testnet",
+    lat: Number(localStorage.getItem("deliveryLat") || 0),
+    lng: Number(localStorage.getItem("deliveryLng") || 0)
+  };
+
+  const response = await fetch(TESTNET_API + "/api/checkout", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || result.success === false) {
+    throw new Error(result.message || "Could not create the pending order.");
+  }
+
+  return orderId;
+}
+
+async function payDirectWithPiNetwork() {
+  if (window.marketplacePaymentInProgress) return;
+
+  window.marketplacePaymentInProgress = true;
+
+  try {
+    if (String(getWalletNetwork()).toLowerCase() !== "testnet") {
+      throw new Error("Direct Pi marketplace payments are currently Testnet only.");
+    }
+
+    if (!window.Pi || typeof window.Pi.createPayment !== "function") {
+      throw new Error("Pi Network SDK is unavailable. Open checkout inside the Pi Browser and try again.");
+    }
+
+    window.Pi.init({
+      version: "2.0",
+      sandbox: true
+    });
+
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+    if (!Array.isArray(cart) || cart.length === 0) {
+      throw new Error("Your cart is empty.");
+    }
+
+    const address = document.getElementById("address")?.value?.trim() || "";
+    const country = document.getElementById("country")?.value?.trim() || "";
+
+    const quote = await getTestnetCheckoutQuote(cart, address, country);
+    const amount = Number(quote.total);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("The checkout total is invalid. Please recalculate delivery.");
+    }
+
+    window.testnetCheckoutQuote = quote;
+    window.totalPi = amount;
+
+    const auth = await window.Pi.authenticate(
+      ["username", "payments"],
+      function(incompletePayment) {
+        console.warn("Incomplete Pi payment reported by SDK:", incompletePayment);
+      }
+    );
+
+    const accessToken = auth?.accessToken;
+    const piUsername = String(auth?.user?.username || "").trim();
+
+    if (!accessToken || !piUsername) {
+      throw new Error("Pi authentication did not return a valid user session.");
+    }
+
+    // The order must exist before the backend can approve a U2A payment.
+    const orderId = await createPendingU2AMarketplaceOrder(
+      cart,
+      piUsername,
+      amount
+    );
+
+    window.activeU2AOrderId = orderId;
+
+    const paymentData = {
+      amount,
+      memo: "Godomcoworld Testnet Marketplace Order " + orderId,
+      metadata: {
+        purpose: "marketplace",
+        referenceType: "order",
+        referenceId: orderId,
+        network: "testnet"
+      }
+    };
+
+    window.Pi.createPayment(paymentData, {
+      onReadyForServerApproval: async function(paymentId) {
+        try {
+          const response = await fetch(TESTNET_API + "/u2a/payment/approve", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              paymentId,
+              accessToken,
+              orderId,
+              network: "testnet"
+            })
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || "Pi payment approval failed.");
+          }
+
+          console.log("U2A payment approved:", paymentId);
+        } catch (error) {
+          console.error("U2A server approval failed:", error);
+          alert(error.message || "The server could not approve this Pi payment.");
+          window.marketplacePaymentInProgress = false;
+        }
+      },
+
+      onReadyForServerCompletion: async function(paymentId, txid) {
+        try {
+          const response = await fetch(TESTNET_API + "/u2a/payment/complete", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              paymentId,
+              txid,
+              accessToken,
+              network: "testnet"
+            })
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || "Pi payment completion was not confirmed.");
+          }
+
+          // Only clear the cart after authoritative backend completion.
+          localStorage.removeItem("cart");
+          localStorage.setItem("lastOrderId", orderId);
+
+          alert("Pi payment completed successfully. Order ID: " + orderId);
+
+          window.location.href = "/logistics/track.html";
+        } catch (error) {
+          console.error("U2A payment completion failed:", error);
+          alert(
+            "The Pi payment completion could not be confirmed by the server. " +
+            "Do not make another payment yet. Order: " + orderId
+          );
+          window.marketplacePaymentInProgress = false;
+        }
+      },
+
+      onCancel: function(paymentId) {
+        console.warn("Pi payment cancelled:", paymentId);
+        window.marketplacePaymentInProgress = false;
+        alert("Pi payment was cancelled. The order may remain pending.");
+      },
+
+      onError: function(error, payment) {
+        console.error("Pi payment SDK error:", error, payment);
+        window.marketplacePaymentInProgress = false;
+        alert("Pi payment encountered an error. Check the order status before retrying.");
+      }
+    });
+
+  } catch (error) {
+    console.error("Direct Pi payment failed:", error);
+    alert(error.message || "Could not start direct Pi payment.");
+    window.marketplacePaymentInProgress = false;
+  }
+}
 
 // ================= ENABLE CALCULATE BUTTON =================
 function handleAddressInput(){
@@ -708,6 +898,37 @@ async function calculateTotal() {
     console.error(error);
     alert(error.message || "Unable to calculate Testnet total.");
   }
+}
+
+// ================= PAYMENT METHOD SELECTION =================
+function continueWithPaymentMethod() {
+  const selected = document.querySelector(
+    'input[name="marketplacePaymentMethod"]:checked'
+  );
+
+  if (!selected) {
+    alert("Please select a payment method to continue.");
+    return;
+  }
+
+  if (window.marketplacePaymentInProgress) {
+    alert("A payment is already being processed.");
+    return;
+  }
+
+  window.selectedMarketplacePaymentMethod = selected.value;
+
+  if (selected.value === "godomcoworld_wallet") {
+    payWithPi();
+    return;
+  }
+
+  if (selected.value === "pi_network_u2a") {
+    payDirectWithPiNetwork();
+    return;
+  }
+
+  alert("Unsupported payment method.");
 }
 
 // ================= CURRENCY =================
