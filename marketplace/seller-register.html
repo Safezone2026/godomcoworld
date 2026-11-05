@@ -50,6 +50,13 @@
 
 <input type="number" id="latitude" placeholder="Latitude" step="any"><br><br>
 <input type="number" id="longitude" placeholder="Longitude" step="any"><br><br>
+
+<button type="button" onclick="captureSellerGPS()">
+  📍 Capture Shop GPS Location
+</button>
+<p id="sellerGpsStatus" role="status">
+  Capture your actual shop location before registering.
+</p>
 <select id="shopCountry">
 <option value="Nigeria">🇳🇬 Nigeria</option>
 <option value="Ghana">🇬🇭 Ghana</option>
@@ -168,6 +175,57 @@ longitude
 ============================================================
 */
 
+window.captureSellerGPS = function captureSellerGPS() {
+    const status = document.getElementById("sellerGpsStatus");
+    const latitudeEl = document.getElementById("latitude");
+    const longitudeEl = document.getElementById("longitude");
+
+    if (!navigator.geolocation) {
+        status.textContent = "This browser does not support GPS location.";
+        return;
+    }
+
+    status.textContent = "Requesting your device location...";
+
+    navigator.geolocation.getCurrentPosition(
+        position => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            if (
+                !Number.isFinite(latitude) ||
+                !Number.isFinite(longitude) ||
+                latitude < -90 || latitude > 90 ||
+                longitude < -180 || longitude > 180 ||
+                (latitude === 0 && longitude === 0)
+            ) {
+                status.textContent = "The device returned invalid coordinates. Please retry.";
+                return;
+            }
+
+            latitudeEl.value = latitude.toFixed(7);
+            longitudeEl.value = longitude.toFixed(7);
+            status.textContent =
+                "Shop GPS captured successfully. Accuracy: " +
+                Math.round(position.coords.accuracy) + " metres.";
+        },
+        error => {
+            const messages = {
+                1: "Location permission was denied. Allow location access and retry.",
+                2: "Your device could not determine its location. Move outdoors and retry.",
+                3: "GPS request timed out. Please retry."
+            };
+            status.textContent =
+                messages[error.code] || "Unable to capture shop GPS location.";
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 0
+        }
+    );
+};
+
 window.registerSeller = async function registerSeller() {
 
     try {
@@ -229,10 +287,10 @@ window.registerSeller = async function registerSeller() {
         const longitudeText = longitudeEl.value.trim();
 
         const latitude =
-            latitudeText === "" ? 0 : Number(latitudeText);
+            latitudeText === "" ? NaN : Number(latitudeText);
 
         const longitude =
-            longitudeText === "" ? 0 : Number(longitudeText);
+            longitudeText === "" ? NaN : Number(longitudeText);
 
         /*
         --------------------------------------------------------
@@ -275,13 +333,24 @@ window.registerSeller = async function registerSeller() {
             return;
         }
 
-        if (!Number.isFinite(latitude)) {
-            alert("Enter a valid latitude.");
+        if (
+            !Number.isFinite(latitude) ||
+            latitude < -90 || latitude > 90
+        ) {
+            alert("Capture your shop GPS or enter a valid latitude between -90 and 90.");
             return;
         }
 
-        if (!Number.isFinite(longitude)) {
-            alert("Enter a valid longitude.");
+        if (
+            !Number.isFinite(longitude) ||
+            longitude < -180 || longitude > 180
+        ) {
+            alert("Capture your shop GPS or enter a valid longitude between -180 and 180.");
+            return;
+        }
+
+        if (latitude === 0 && longitude === 0) {
+            alert("The coordinates 0, 0 are not a valid shop location. Capture GPS again.");
             return;
         }
 

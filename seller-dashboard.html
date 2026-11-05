@@ -68,18 +68,33 @@ button{
 <div class="card">
   <h3 id="user"></h3>
 
-  <h3>💰 Total Sales</h3>
-  <h2 id="totalSales">Pi figures unavailable</h2>
+  <h3>📚 Historical Seller Records</h3>
+  <p>Converted from historical Naira records. These figures are not withdrawable.</p>
 
-  <h3>📉 Platform Fee (5%)</h3>
-  <h2 id="fees">Pi figures unavailable</h2>
+  <h4>Historical Total Sales</h4>
+  <h2 id="totalSales">Unavailable</h2>
 
-  <h3>💵 Your Earnings</h3>
-  <h1 id="earnings">Pi figures unavailable</h1>
+  <h4>Historical Platform Fee (5%)</h4>
+  <h2 id="fees">Unavailable</h2>
 
-  <h3>⏳ Pending Balance</h3>
-  <h2 id="pendingBalance">Pi figures unavailable</h2>
+  <h4>Historical Earnings</h4>
+  <h2 id="earnings">Unavailable</h2>
+
+  <h4>Historical Pending Balance</h4>
+  <h2 id="pendingBalance">Unavailable</h2>
 </div>
+
+<div class="card" id="liveTestPiAccount">
+  <h3>🟣 Live Test-Pi Wallet</h3>
+  <p>Only genuine Testnet Pi earnings are included here.</p>
+
+  <h4>Available Test-Pi Balance</h4>
+  <h1 id="livePiBalance">Loading...</h1>
+
+  <p>Pending Test-Pi Earnings: Not separately tracked</p>
+  <p>Historical balances are excluded from this wallet.</p>
+</div>
+
 <div class="card">
 <h3>⚡ Quick Actions</h3>
 
@@ -245,6 +260,27 @@ View All Orders
     <input id="profileCity" placeholder="City">
     <input id="profileState" placeholder="State">
     <input id="profileCountry" placeholder="Country">
+
+    <h4>📍 Shop GPS Location</h4>
+    <input
+      id="profileLatitude"
+      type="number"
+      step="any"
+      placeholder="Shop latitude"
+    >
+    <input
+      id="profileLongitude"
+      type="number"
+      step="any"
+      placeholder="Shop longitude"
+    >
+    <button type="button" onclick="captureProfileShopGPS()">
+      📍 Capture Shop GPS
+    </button>
+    <p id="profileGpsStatus" role="status">
+      Capture GPS to update your saved shop location.
+    </p>
+
     <button type="submit">💾 Update Profile</button>
   </form>
 
@@ -426,40 +462,69 @@ document.getElementById("profileDate").innerText =
   seller.createdAt
     ? new Date(seller.createdAt).toLocaleDateString()
     : "Not Available";
-// 💰 Seller financial figures from the Testnet dashboard API
-const formatSellerPiFigure = value => {
+// Historical Naira records converted for display only.
+// ₦471,238,500 = 1 Pi at the historical conversion rate.
+const HISTORICAL_NAIRA_PER_PI = 471238500;
+
+const formatHistoricalPiFigure = value => {
   if (value === null || value === undefined || value === "") {
     return "Unavailable";
   }
 
-  const number = Number(value);
-  if (!Number.isFinite(number)) return "Unavailable";
+  const naira = Number(value);
+  if (!Number.isFinite(naira)) return "Unavailable";
 
-  return "π " + number.toLocaleString(undefined, {
+  const historicalPi = naira / HISTORICAL_NAIRA_PER_PI;
+
+  return "π " + historicalPi.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 8
   });
 };
 
+// Live Testnet Pi is already denominated in Pi. Never convert it.
+const formatLiveTestPi = value => {
+  if (value === null || value === undefined || value === "") {
+    return "π 0.00000000";
+  }
+
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) {
+    return "Unavailable";
+  }
+
+  return "π " + number.toLocaleString(undefined, {
+    minimumFractionDigits: 8,
+    maximumFractionDigits: 8
+  });
+};
+
 document.getElementById("earnings").innerText =
-  formatSellerPiFigure(seller.earnings);
+  formatHistoricalPiFigure(seller.earnings);
 
 document.getElementById("totalSales").innerText =
-  formatSellerPiFigure(seller.totalSales ?? data.totalSales);
+  formatHistoricalPiFigure(seller.totalSales ?? data.totalSales);
 
 document.getElementById("fees").innerText =
-  formatSellerPiFigure(seller.totalFees ?? data.totalFees);
+  formatHistoricalPiFigure(seller.totalFees ?? data.totalFees);
 
 document.getElementById("pendingBalance").innerText =
-  formatSellerPiFigure(seller.pendingBalance ?? data.pendingBalance);
+  formatHistoricalPiFigure(seller.pendingBalance ?? data.pendingBalance);
 
 
-// 💵 Available Balance
-document.getElementById("availableBalance").innerText =
-  "π " + Number(seller.piBalance ?? seller.pi_balance ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 6,
-    maximumFractionDigits: 6
-  });
+// 💵 Genuine available Testnet Pi. This is the balance used by seller withdrawals.
+const livePiBalance = seller.piBalance ?? seller.pi_balance ?? 0;
+
+const livePiElement = document.getElementById("livePiBalance");
+if (livePiElement) {
+  livePiElement.innerText = formatLiveTestPi(livePiBalance);
+}
+
+// Preserve the existing available-balance display if present.
+const availableBalanceElement = document.getElementById("availableBalance");
+if (availableBalanceElement) {
+  availableBalanceElement.innerText = formatLiveTestPi(livePiBalance);
+}
 
 
   const networkEl = document.getElementById("sellerNetwork");
@@ -1043,6 +1108,57 @@ window.onload = async function() {
 <script src="js/receipt.js"></script>
 
 <script>
+window.captureProfileShopGPS = function captureProfileShopGPS() {
+    const status = document.getElementById("profileGpsStatus");
+    const latitudeEl = document.getElementById("profileLatitude");
+    const longitudeEl = document.getElementById("profileLongitude");
+
+    if (!navigator.geolocation) {
+        status.textContent = "This browser does not support GPS location.";
+        return;
+    }
+
+    status.textContent = "Requesting your device location...";
+
+    navigator.geolocation.getCurrentPosition(
+        position => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            if (
+                !Number.isFinite(latitude) ||
+                !Number.isFinite(longitude) ||
+                latitude < -90 || latitude > 90 ||
+                longitude < -180 || longitude > 180 ||
+                (latitude === 0 && longitude === 0)
+            ) {
+                status.textContent = "The device returned invalid coordinates. Please retry.";
+                return;
+            }
+
+            latitudeEl.value = latitude.toFixed(7);
+            longitudeEl.value = longitude.toFixed(7);
+            status.textContent =
+                "Shop GPS captured. Accuracy: " +
+                Math.round(position.coords.accuracy) + " metres.";
+        },
+        error => {
+            const messages = {
+                1: "Location permission was denied. Allow location access and retry.",
+                2: "Your device could not determine its location. Move outdoors and retry.",
+                3: "GPS request timed out. Please retry."
+            };
+            status.textContent =
+                messages[error.code] || "Unable to capture shop GPS location.";
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 0
+        }
+    );
+};
+
 const profileForm = document.getElementById("sellerProfileForm");
 
 if (profileForm) {
@@ -1064,6 +1180,14 @@ if (profileForm) {
       return String(el.value ?? "").trim();
     }
 
+    const latitudeText = getProfileValue("profileLatitude");
+    const longitudeText = getProfileValue("profileLongitude");
+
+    if ((latitudeText === "") !== (longitudeText === "")) {
+      alert("Enter both shop GPS coordinates, or capture the location using the GPS button.");
+      return;
+    }
+
     const payload = {
       phone: getProfileValue("profilePhone"),
       shopAddress: getProfileValue("profileAddress"),
@@ -1072,13 +1196,33 @@ if (profileForm) {
       country: getProfileValue("profileCountry")
     };
 
+    if (latitudeText !== "" && longitudeText !== "") {
+      const latitude = Number(latitudeText);
+      const longitude = Number(longitudeText);
+
+      if (
+        !Number.isFinite(latitude) ||
+        latitude < -90 || latitude > 90 ||
+        !Number.isFinite(longitude) ||
+        longitude < -180 || longitude > 180 ||
+        (latitude === 0 && longitude === 0)
+      ) {
+        alert("Enter valid shop GPS coordinates or capture your location again.");
+        return;
+      }
+
+      payload.latitude = latitude;
+      payload.longitude = longitude;
+    }
+
     console.log("PROFILE UPDATE SUBMIT:", payload);
 
     if (!payload.phone &&
         !payload.shopAddress &&
         !payload.city &&
         !payload.state &&
-        !payload.country) {
+        !payload.country &&
+        payload.latitude === undefined) {
 
       alert("Please enter at least one profile detail.");
       return;
@@ -1146,7 +1290,9 @@ if (profileForm) {
         "profileAddress",
         "profileCity",
         "profileState",
-        "profileCountry"
+        "profileCountry",
+        "profileLatitude",
+        "profileLongitude"
       ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = "";
