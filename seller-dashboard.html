@@ -91,7 +91,7 @@ button{
   <h4>Available Test-Pi Balance</h4>
   <h1 id="livePiBalance">Loading...</h1>
 
-  <p>Pending Test-Pi Earnings: Not separately tracked</p>
+  <p>Pending Test-Pi Earnings: <strong id="pendingPiBalance">Loading...</strong></p>
   <p>Historical balances are excluded from this wallet.</p>
 </div>
 
@@ -518,6 +518,13 @@ const livePiBalance = seller.piBalance ?? seller.pi_balance ?? 0;
 const livePiElement = document.getElementById("livePiBalance");
 if (livePiElement) {
   livePiElement.innerText = formatLiveTestPi(livePiBalance);
+}
+
+// Genuine pending Testnet Pi, separate from historical Naira pending balance.
+const pendingPiBalance = seller.pendingPiBalance ?? seller.pending_pi_balance ?? 0;
+const pendingPiElement = document.getElementById("pendingPiBalance");
+if (pendingPiElement) {
+  pendingPiElement.innerText = formatLiveTestPi(pendingPiBalance);
 }
 
 // Preserve the existing available-balance display if present.

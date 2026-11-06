@@ -55,6 +55,9 @@ button {
   <h3>💰 Available Pi Balance</h3>
   <h2 id="piBalance">π 0.000000</h2>
 
+  <h3>⏳ Pending Test-Pi Earnings</h3>
+  <h2 id="pendingPiBalance">π 0.000000</h2>
+
   <h3>📦 Deliveries Completed</h3>
   <h2 id="completed">0</h2>
 </div>
@@ -158,6 +161,13 @@ async function loadDashboard(){
     const balances = data.balances || {};
     document.getElementById("piBalance").innerText =
       "π " + Number(balances.PI || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6
+      });
+
+    // Genuine pending Test-Pi from the rider wallet, separate from available Pi.
+    document.getElementById("pendingPiBalance").innerText =
+      "π " + Number(data.pendingPiBalance || 0).toLocaleString(undefined, {
         minimumFractionDigits: 6,
         maximumFractionDigits: 6
       });
