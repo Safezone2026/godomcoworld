@@ -959,12 +959,97 @@ function continueWithPaymentMethod() {
   alert("Unsupported payment method.");
 }
 
+
+// ================= EXISTING U2A PAYMENT RECOVERY =================
+async function recoverExistingU2APayment() {
+  if (window.marketplacePaymentInProgress) return;
+
+  if (String(getWalletNetwork()).toLowerCase() !== "testnet") {
+    alert("Payment recovery is available only on Testnet.");
+    return;
+  }
+
+  if (!window.Pi || typeof window.Pi.authenticate !== "function") {
+    alert("Open this page inside Pi Browser to authenticate.");
+    return;
+  }
+
+  const paymentId = "BFSXbepf8lxkUmPc2bAGRmXOiroa";
+  const txid = "fd75fd125f663c58569c63419cc894ae2f74f81c7a5c37aa26a60c5980d420b6";
+  const orderId = "1793880494387";
+
+  window.marketplacePaymentInProgress = true;
+
+  try {
+    window.Pi.init({ version: "2.0", sandbox: true });
+
+    const auth = await window.Pi.authenticate(
+      ["username", "payments"],
+      function(incompletePayment) {
+        console.warn("Pi SDK reported an incomplete payment:", incompletePayment);
+      }
+    );
+
+    const accessToken = auth?.accessToken;
+    if (!accessToken || !auth?.user?.username) {
+      throw new Error("Pi authentication did not return a valid session.");
+    }
+
+    const response = await fetch(
+      "https://godomcoworld-backend-testnet.onrender.com/u2a/payment/complete",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentId,
+          txid,
+          accessToken,
+          network: "testnet"
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message || "The server could not recover the existing payment."
+      );
+    }
+
+    localStorage.setItem("lastOrderId", orderId);
+
+    alert("Existing Pi payment settlement was confirmed. Order: " + orderId);
+    window.location.href = "/logistics/track.html";
+  } catch (error) {
+    console.error("Existing U2A payment recovery failed:", error);
+    alert(
+      "Recovery was not confirmed: " +
+      (error.message || "Unknown error") +
+      "\nDo not make another payment."
+    );
+    window.marketplacePaymentInProgress = false;
+  }
+}
+
 // ================= CURRENCY =================
 // ================= INIT =================
 window.payWithPi = payWithPi;
 window.addEventListener("storage", () => {
   updateCartCount();
 });
+
+const recoveryButton = document.createElement("button");
+recoveryButton.type = "button";
+recoveryButton.id = "recoverExistingU2APaymentButton";
+recoveryButton.textContent = "Recover Existing Testnet Pi Payment";
+recoveryButton.style.cssText =
+  "display:block;margin:18px auto;padding:13px 18px;" +
+  "background:#174ea6;color:white;border:0;border-radius:8px;" +
+  "font-weight:bold;cursor:pointer;";
+recoveryButton.addEventListener("click", recoverExistingU2APayment);
+document.body.appendChild(recoveryButton);
+
 loadCart();
 
 </script>
