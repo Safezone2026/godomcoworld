@@ -99,269 +99,439 @@ body{
 <script src="js/wallet-init.js"></script>
 
 <script>
-  let username = localStorage.getItem("username");
+"use strict";
 
-if(!username){
-  username = prompt("Enter your username (e.g seller1)");
-  localStorage.setItem("username", username);
+const FINANCE_API = "https://godomcoworld-backend-testnet.onrender.com";
+const FINANCE_NETWORK = "testnet";
+
+let currentService = "";
+let financeQuote = null;
+let financeRequestId = null;
+let financeBusy = false;
+
+const DATA_BUNDLES_GB = [1, 2, 5, 10, 15, 20, 30, 40, 50, 100];
+
+function financeUUID() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === "x" ? r : (r & 3 | 8)).toString(16);
+  });
 }
 
-console.log("Current user:", username);
-let currentService = "";
+function financeWalletId() {
+  return localStorage.getItem("walletId_testnet");
+}
 
-// ================= COUNTRY RATES =================
-const countryRates = {
-  NG:{symbol:"₦",rate:1500}, GH:{symbol:"₵",rate:12},
-  KE:{symbol:"KSh",rate:160}, ZA:{symbol:"R",rate:18},
-  EG:{symbol:"E£",rate:50}, CM:{symbol:"FCFA",rate:600},
-  UG:{symbol:"USh",rate:3800}, TZ:{symbol:"TSh",rate:2500},
-  ET:{symbol:"Br",rate:56}, RW:{symbol:"FRw",rate:1300},
-  SN:{symbol:"FCFA",rate:600}, CI:{symbol:"FCFA",rate:600},
-  DZ:{symbol:"DZD",rate:135}, MA:{symbol:"MAD",rate:10},
-  AO:{symbol:"Kz",rate:830}, ZM:{symbol:"ZK",rate:25},
-  ZW:{symbol:"ZWL",rate:6000}, MW:{symbol:"MK",rate:1700},
-  BW:{symbol:"P",rate:13}, NA:{symbol:"N$",rate:18},
-  SL:{symbol:"Le",rate:23000}, LR:{symbol:"L$",rate:190},
-  TG:{symbol:"FCFA",rate:600}, BJ:{symbol:"FCFA",rate:600},
-  NE:{symbol:"FCFA",rate:600}, ML:{symbol:"FCFA",rate:600},
-  BF:{symbol:"FCFA",rate:600}, GA:{symbol:"FCFA",rate:600},
-  CG:{symbol:"FCFA",rate:600}, CD:{symbol:"CDF",rate:2800}
-};
+async function financeRequest(path, body) {
+  const response = await fetch(FINANCE_API + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
 
-// ================= LOAD SERVICES =================
-function loadServices(){
-  let country = document.getElementById("country").value;
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data.success === false) {
+    throw new Error(data.message || "Finance request failed.");
+  }
+
+  return data;
+}
+
+function invalidateFinanceQuote() {
+  financeQuote = null;
+  financeRequestId = null;
+
+  const result = document.getElementById("result");
+  const buttons = document.getElementById("payButtons");
+
+  if (result) result.textContent = "Details changed. Calculate a new quote.";
+  if (buttons) buttons.style.display = "none";
+}
+
+function loadServices() {
+  const country = document.getElementById("country").value;
   document.getElementById("servicesSection").style.display =
     country ? "block" : "none";
+
+  document.getElementById("serviceContainer").innerHTML = "";
+  currentService = "";
+  financeQuote = null;
+  financeRequestId = null;
 }
 
-// ================= OPEN SERVICE =================
-function openService(type){
-  currentService = type;
-  let country = document.getElementById("country").value;
-  if(!country){
-    alert("Select country first");
+function openService(type) {
+  const country = document.getElementById("country").value;
+
+  if (!country) {
+    alert("Select your country first.");
     return;
   }
 
+  currentService = type;
+  financeQuote = null;
+  financeRequestId = null;
+
+  if (country !== "NG") {
+    document.getElementById("serviceContainer").innerHTML =
+      '<p style="color:#ffcc80">Finance Testnet quoting currently supports Nigeria (NGN). Please select Nigeria.</p>';
+    return;
+  }
+
+  const providerOptions = `
+    <option value="">Select network/provider</option>
+    <option value="MTN">MTN</option>
+    <option value="Airtel">Airtel</option>
+    <option value="Glo">Glo</option>
+    <option value="9mobile">9mobile</option>`;
+
+  const dataOptions = DATA_BUNDLES_GB.map(gb =>
+    `<option value="${gb}">${gb} GB</option>`
+  ).join("");
+
   let html = "";
 
-  switch(type){
-    case "airtime":
-      html=`
-        <h3>📱 Airtime Recharge</h3>
-        <label>Phone Number</label><br>
-        <input type="tel" id="phone" placeholder="Enter phone number"><br><br>
-
-        <label>Amount</label><br>
-        <input type="number" id="amount" placeholder="Enter amount"><br><br>
-
-        <div id="result"></div><br>
-
-        <button onclick="calculate('amount')">Calculate</button>
-
-        <div id="payButtons" style="display:none;">
-          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
-          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
-        </div>
-      `;
-      break;
-
-    case "data":
-      html=`
-        <h3>🌐 Data Subscription</h3>
-        <label>Phone Number</label><br>
-        <input type="tel" id="phone" placeholder="Enter phone number"><br><br>
-
-        <label>Select Plan</label><br>
-        <select id="plan">
-          <option value="500">1GB - 500</option>
-          <option value="1000">2GB - 1000</option>
-          <option value="2000">5GB - 2000</option>
-        </select><br><br>
-
-        <div id="result"></div><br>
-
-        <button onclick="calculate('plan')">Calculate</button>
-
-        <div id="payButtons" style="display:none;">
-          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
-          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
-        </div>
-      `;
-      break;
-
-    case "tv":
-      html=`
-        <h3>📺 TV Subscription</h3>
-        <label>Provider</label><br>
-        <select id="tvProvider">
-          <option>DSTV</option>
-          <option>GOTV</option>
-          <option>Startimes</option>
-        </select><br><br>
-
-        <label>Smart Card Number</label><br>
-        <input type="text" id="smartcard" placeholder="Enter smart card number"><br><br>
-
-        <label>Amount</label><br>
-        <input type="number" id="amount" placeholder="Enter amount"><br><br>
-
-        <div id="result"></div><br>
-
-        <button onclick="calculate('amount')">Calculate</button>
-
-        <div id="payButtons" style="display:none;">
-          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
-          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
-        </div>
-      `;
-      break;
-
-    case "electricity":
-      html=`
-        <h3>💡 Electricity Bill</h3>
-        <label>Meter Number</label><br>
-        <input type="text" id="meter" placeholder="Enter meter number"><br><br>
-
-        <label>Amount</label><br>
-        <input type="number" id="amount" placeholder="Enter amount"><br><br>
-
-        <div id="result"></div><br>
-
-        <button onclick="calculate('amount')">Calculate</button>
-
-        <div id="payButtons" style="display:none;">
-          <button class="pay-btn" onclick="payWithPi()">🪙 Pay Pi</button>
-          <button class="pay-btn" onclick="payWithFiat()">💵 Pay Fiat</button>
-        </div>
-      `;
-      break;
+  if (type === "airtime") {
+    html = `
+      <h3>📱 Airtime Recharge</h3>
+      <label>Mobile Network</label><br>
+      <select id="financeProvider">${providerOptions}</select><br><br>
+      <label>Phone Number</label><br>
+      <input type="tel" id="phone" placeholder="Enter phone number"><br><br>
+      <label>Amount (NGN)</label><br>
+      <input type="number" id="amount" min="1" step="0.01" placeholder="Enter airtime amount">
+      ${financePaymentPreview()}`;
+  } else if (type === "data") {
+    html = `
+      <h3>🌐 Data Bundle Subscription</h3>
+      <label>Mobile Network</label><br>
+      <select id="financeProvider">${providerOptions}</select><br><br>
+      <label>Phone Number</label><br>
+      <input type="tel" id="phone" placeholder="Enter phone number"><br><br>
+      <label>Select Data Bundle</label><br>
+      <select id="dataBundle">${dataOptions}</select><br><br>
+      <label>Bundle Price (NGN)</label><br>
+      <input type="number" id="amount" min="1" step="0.01" placeholder="Enter the bundle price">
+      <p id="bundlePreview" style="color:#9ccc65">Selected bundle: 1 GB</p>
+      ${financePaymentPreview()}`;
+  } else if (type === "tv") {
+    html = `
+      <h3>📺 TV Subscription</h3>
+      <label>Provider</label><br>
+      <select id="financeProvider">
+        <option value="">Select provider</option>
+        <option value="DSTV">DSTV</option>
+        <option value="GOTV">GOTV</option>
+        <option value="Startimes">Startimes</option>
+      </select><br><br>
+      <label>Smart Card Number</label><br>
+      <input type="text" id="smartcard" placeholder="Enter smart card number"><br><br>
+      <label>Amount (NGN)</label><br>
+      <input type="number" id="amount" min="1" step="0.01" placeholder="Enter amount">
+      ${financePaymentPreview()}`;
+  } else if (type === "electricity") {
+    html = `
+      <h3>💡 Electricity Bill</h3>
+      <label>Distribution Provider</label><br>
+      <select id="financeProvider">
+        <option value="">Select provider</option>
+        <option value="IKEDC">IKEDC</option>
+        <option value="EKEDC">EKEDC</option>
+        <option value="AEDC">AEDC</option>
+        <option value="IBEDC">IBEDC</option>
+        <option value="KEDCO">KEDCO</option>
+        <option value="PHED">PHED</option>
+        <option value="BEDC">BEDC</option>
+        <option value="EEDC">EEDC</option>
+      </select><br><br>
+      <label>Meter Number</label><br>
+      <input type="text" id="meter" placeholder="Enter meter number"><br><br>
+      <label>Amount (NGN)</label><br>
+      <input type="number" id="amount" min="1" step="0.01" placeholder="Enter amount">
+      ${financePaymentPreview()}`;
   }
 
   document.getElementById("serviceContainer").innerHTML = html;
+
+  if (type === "data") {
+    document.getElementById("dataBundle").addEventListener("change", updateBundlePreview);
+    updateBundlePreview();
+  }
 }
 
-// ================= CALCULATE =================
-function calculate(fieldId){
-  let country = document.getElementById("country").value;
-  let amountInput = document.getElementById(fieldId);
-
-  if(!amountInput) return alert("Amount field not found");
-
-  let amount = parseFloat(amountInput.value);
-  if(!amount) return alert("Enter amount");
-
-  let {symbol,rate} = countryRates[country];
-
-  let usd = amount / rate;
-  let pi = usd / 314159;
-
-  localStorage.setItem("last_amount_local", amount);
-  localStorage.setItem("last_amount_pi", pi);
-
-  document.getElementById("result").innerHTML =
-    `💰 ${symbol}${amount}<br>💱 $${usd.toFixed(2)}<br>🪙 ${pi.toFixed(8)} π`;
-
-  // Show pay buttons
-  let btn = document.getElementById("payButtons");
-  if(btn) btn.style.display = "block";
+function financePaymentPreview() {
+  return `
+    <div id="result" style="margin:12px 0"></div>
+    <button type="button" onclick="calculate()">Get Testnet Quote</button>
+    <div id="payButtons" style="display:none;margin-top:12px">
+      <button class="pay-btn" type="button" onclick="payWithPi()">π Pay with Pi Network</button>
+      <button class="pay-btn" type="button" onclick="payWithWallet()">👛 Pay with Godomcoworld Wallet</button>
+    </div>
+    <p style="color:#ffcc80;font-size:13px">
+      Testnet only: payments are recorded for testing. Airtime, data, TV and electricity services are NOT delivered.
+    </p>`;
 }
 
-// ================= PAYMENT =================
-async function payWithBackend(method){
+function updateBundlePreview() {
+  const bundle = document.getElementById("dataBundle");
+  const preview = document.getElementById("bundlePreview");
 
-  const walletId = localStorage.getItem("walletId");
+  if (bundle && preview) {
+    preview.textContent = "Selected bundle: " + bundle.value + " GB";
+  }
+}
 
-  if(!walletId){
-    return alert("Wallet not found. Open wallet page first.");
+function getFinanceDetails() {
+  const amount = document.getElementById("amount")?.value?.trim();
+  const provider = document.getElementById("financeProvider")?.value?.trim();
+
+  let customerReference = "";
+
+  if (currentService === "airtime" || currentService === "data") {
+    customerReference = document.getElementById("phone")?.value?.trim() || "";
+  } else if (currentService === "tv") {
+    customerReference = document.getElementById("smartcard")?.value?.trim() || "";
+  } else if (currentService === "electricity") {
+    customerReference = document.getElementById("meter")?.value?.trim() || "";
   }
 
-  let phone = document.getElementById("phone")?.value;
-  let meter = document.getElementById("meter")?.value;
-  let card = document.getElementById("smartcard")?.value;
-
-  if(!phone && !meter && !card){
-    return alert("Please fill required details");
+  if (!provider) throw new Error("Select the service provider.");
+  if (!customerReference) throw new Error("Enter the required customer reference.");
+  if (!amount || !/^\d+(?:\.\d{1,2})?$/.test(amount) || Number(amount) <= 0) {
+    throw new Error("Enter a valid positive amount in NGN.");
   }
 
-  // ✅ GET AMOUNT
-  let key = method === "Pi" ? "last_amount_pi" : "last_amount_local";
-  let amount = parseFloat(localStorage.getItem(key));
+  return { amount, provider, customerReference };
+}
 
-  if(!amount){
-    return alert("Click calculate first");
-  }
+async function calculate() {
+  try {
+    if (financeBusy) return;
 
-  // ✅ DETERMINE CURRENCY + NETWORK
-let currency = method === "Pi" ? "PI" : "NG";
+    const details = getFinanceDetails();
 
-const currentNetwork =
-  getWalletNetwork();
-
-const walletId =
-  localStorage.getItem("walletId_" + currentNetwork);
-
-const res = await fetch(
-  "https://godomcoworld-backend-testnet.onrender.com/wallet/pay",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      walletId,
-      amount,
-      currency,
-      type: currentService,
-      network: currentNetwork
-    })
-  }
-);
+    const data = await financeRequest("/api/finance/quote", {
+      serviceType: currentService,
+      amount: details.amount
     });
 
-    const data = await res.json();
-
-    if(data.success){
-      alert(`✅ ${data.message}\nFee: ${data.fee ?? 0}`);
-    if (data.receiptId) {
-  console.log("Receipt:", data.receiptId);
-}
-      // 🔥 REFRESH WALLET
-      if(typeof loadBalance === "function"){
-        loadBalance();
-      }
-
-    } else {
-      alert("❌ " + data.message);
+    if (data.network !== FINANCE_NETWORK || !data.amountPI) {
+      throw new Error("The server did not return a valid Testnet quote.");
     }
 
-  }catch(err){
-    console.error(err);
-    alert("Server error");
+    financeQuote = {
+      serviceType: currentService,
+      amountNGN: details.amount,
+      amountPI: data.amountPI,
+      provider: details.provider,
+      customerReference: details.customerReference
+    };
+
+    financeRequestId = financeUUID();
+
+    document.getElementById("result").innerHTML =
+      `Amount: ₦${Number(details.amount).toLocaleString()}<br>` +
+      `Server quote: ${data.amountPI} π<br>` +
+      `<small>${data.message || "Testnet quote"}</small>`;
+
+    document.getElementById("payButtons").style.display = "block";
+  } catch (error) {
+    alert(error.message || "Unable to calculate quote.");
   }
 }
 
-async function payWithPi(){
-  const allowed = await checkPaymentAccess("Pi");
-  if(!allowed) return;
+async function payWithWallet() {
+  if (!financeQuote || !financeRequestId) {
+    return alert("Get a new quote before paying.");
+  }
 
-  payWithBackend("Pi");
+  if (financeBusy) return;
+
+  const walletId = financeWalletId();
+
+  if (!walletId) {
+    return alert("Your Testnet wallet was not found. Open your Testnet wallet first.");
+  }
+
+  const pin = prompt("Enter your Godomcoworld Transaction PIN:");
+  if (pin === null) return;
+  if (!pin.trim()) return alert("Transaction PIN is required.");
+
+  financeBusy = true;
+
+  try {
+    const verified = await financeRequest("/wallet/security/verify-pin", {
+      walletId,
+      network: FINANCE_NETWORK,
+      pin: pin.trim()
+    });
+
+    const authorizationToken =
+      verified.authorizationToken || verified.token;
+
+    if (!authorizationToken) {
+      throw new Error("PIN verification did not return an authorization token.");
+    }
+
+    const result = await financeRequest("/api/finance/wallet/pay", {
+      walletId,
+      authorizationToken,
+      requestId: financeRequestId,
+      network: FINANCE_NETWORK,
+      serviceType: financeQuote.serviceType,
+      amount: financeQuote.amountNGN,
+      provider: financeQuote.provider,
+      customerReference: financeQuote.customerReference
+    });
+
+    alert(
+      (result.message || "Testnet wallet payment recorded.") +
+      (result.receiptId ? "\nReceipt: " + result.receiptId : "") +
+      "\nNo external service has been delivered."
+    );
+
+    if (typeof loadBalance === "function") {
+      await loadBalance();
+    }
+
+    invalidateFinanceQuote();
+  } catch (error) {
+    alert(error.message || "Godomcoworld Wallet payment failed.");
+  } finally {
+    financeBusy = false;
+  }
 }
 
-async function payWithFiat(){
-  const allowed = await checkPaymentAccess("Fiat");
-  if(!allowed) return;
+async function loadPiSDK() {
+  if (window.Pi) return;
 
-  payWithBackend("Fiat");
+  await new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-finance-pi-sdk]');
+    if (existing) {
+      existing.addEventListener("load", resolve, { once: true });
+      existing.addEventListener("error", reject, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://sdk.minepi.com/pi-sdk.js";
+    script.async = true;
+    script.dataset.financePiSdk = "true";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Unable to load Pi SDK."));
+    document.head.appendChild(script);
+  });
+
+  if (!window.Pi) throw new Error("Pi SDK is unavailable.");
 }
 
-// Hide pay buttons when user edits inputs
-document.addEventListener("input", (e) => {
-  let container = document.getElementById("serviceContainer");
-  if(!container) return;
-  let btn = container.querySelector("#payButtons");
-  if(btn) btn.style.display = "none";
+async function payWithPi() {
+  if (!financeQuote || !financeRequestId) {
+    return alert("Get a new quote before paying.");
+  }
+
+  if (financeBusy) return;
+
+  financeBusy = true;
+
+  try {
+    await loadPiSDK();
+
+    Pi.init({ version: "2.0", sandbox: true });
+
+    const auth = await Pi.authenticate(["username", "payments"]);
+
+    if (!auth || !auth.accessToken) {
+      throw new Error("Pi authentication was not completed.");
+    }
+
+    const details = financeQuote;
+    const requestId = financeRequestId;
+
+    Pi.createPayment({
+      amount: Number(details.amountPI),
+      memo: "Godomcoworld Finance Testnet payment",
+      metadata: {
+        purpose: "finance_service",
+        requestId,
+        serviceType: details.serviceType,
+        provider: details.provider,
+        customerReference: details.customerReference
+      }
+    }, {
+      onReadyForServerApproval: async paymentId => {
+        try {
+          await financeRequest("/u2a/shared/approve", {
+            paymentId,
+            accessToken: auth.accessToken,
+            network: FINANCE_NETWORK,
+            paymentType: "finance_service",
+            serviceType: details.serviceType,
+            amount: details.amountNGN,
+            provider: details.provider,
+            customerReference: details.customerReference
+          });
+        } catch (error) {
+          console.error("Finance U2A approval failed:", error);
+          alert(error.message || "Pi payment approval failed.");
+        }
+      },
+
+      onReadyForServerCompletion: async (paymentId, txid) => {
+        try {
+          const result = await financeRequest("/u2a/shared/complete", {
+            paymentId,
+            txid,
+            accessToken: auth.accessToken,
+            network: FINANCE_NETWORK,
+            paymentType: "finance_service"
+          });
+
+          alert(
+            (result.message || "Finance Testnet payment recorded.") +
+            (result.receiptId ? "\nReceipt: " + result.receiptId : "") +
+            "\nNo external service has been delivered."
+          );
+
+          invalidateFinanceQuote();
+        } catch (error) {
+          console.error("Finance U2A completion failed:", error);
+          alert(error.message || "Payment completion could not be confirmed.");
+        } finally {
+          financeBusy = false;
+        }
+      },
+
+      onCancel: () => {
+        financeBusy = false;
+        alert("Pi payment was cancelled.");
+      },
+
+      onError: error => {
+        financeBusy = false;
+        console.error("Finance Pi payment error:", error);
+        alert(error?.message || "Pi payment failed.");
+      }
+    });
+  } catch (error) {
+    financeBusy = false;
+    alert(error.message || "Unable to start Pi payment.");
+  }
+}
+
+document.addEventListener("input", event => {
+  if (event.target.closest("#serviceContainer")) {
+    invalidateFinanceQuote();
+  }
+});
+
+document.addEventListener("change", event => {
+  if (event.target.closest("#serviceContainer")) {
+    invalidateFinanceQuote();
+    if (event.target.id === "dataBundle") updateBundlePreview();
+  }
 });
 </script>
 

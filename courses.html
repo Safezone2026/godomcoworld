@@ -27,6 +27,33 @@
   color:white;
   margin-top:10px;
 }
+
+.course-select,.course-action{
+  width:100%;border:0;border-radius:8px;padding:12px;
+  margin-top:10px;background:#00c853;color:#fff;
+  font-weight:bold;font-size:15px;cursor:pointer;
+}
+.course-select:focus,.course-action:focus,
+#course-plan:focus{outline:2px solid #fff;outline-offset:2px}
+#course-payment-panel{
+  background:#111;color:#fff;padding:18px;margin:20px 0;
+  border-radius:12px;border:1px solid #333;
+}
+#course-payment-panel label{display:block;margin-top:14px}
+#course-payment-panel select{
+  width:100%;padding:12px;margin-top:7px;border-radius:7px;
+}
+#course-payment-panel button:disabled{opacity:.5;cursor:not-allowed}
+.course-payments{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#course-status{padding:12px;margin-top:12px;border-radius:7px;
+  background:#222;white-space:pre-wrap}
+#course-status.error{border:1px solid #f44336}
+#course-status.success{border:1px solid #00c853}
+.course-note{font-size:13px;color:#ccc;line-height:1.5}
+@media(max-width:520px){
+  .course-payments{grid-template-columns:1fr}
+}
+
 </style>
 
 </head>
@@ -45,37 +72,37 @@
 
 <div class="card">
 <h3>Augmented Reality</h3>
-<a href="courses/ar.html">Open Course</a>
+<button type="button" class="course-select" data-course="ar">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Argumentation Technology</h3>
-<a href="courses/argumentation.html">Open Course</a>
+<button type="button" class="course-select" data-course="argumentation">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Blockchain Technology</h3>
-<a href="courses/blockchain.html">Open Course</a>
+<button type="button" class="course-select" data-course="blockchain">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Hologram Technology</h3>
-<a href="courses/hologram.html">Open Course</a>
+<button type="button" class="course-select" data-course="hologram">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Nanotechnology</h3>
-<a href="courses/nanotech.html">Open Course</a>
+<button type="button" class="course-select" data-course="nanotech">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Space Technology</h3>
-<a href="courses/space.html">Open Course</a>
+<button type="button" class="course-select" data-course="space">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Web3 & Blockchain</h3>
-<a href="courses/webblockchain.html">Open Course</a>
+<button type="button" class="course-select" data-course="webblockchain">Select Course</button>
 </div>
 
 </div>
@@ -86,45 +113,80 @@
 
 <div class="card">
 <h3>Agro Processing</h3>
-<a href="vocational/agro-processing.html">Open Training</a>
+<button type="button" class="course-select" data-course="agro-processing">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Carpentry</h3>
-<a href="vocational/carpentry.html">Open Training</a>
+<button type="button" class="course-select" data-course="carpentry">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Electrical Installation</h3>
-<a href="vocational/electrical.html">Open Training</a>
+<button type="button" class="course-select" data-course="electrical">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Fashion Design</h3>
-<a href="vocational/fashion.html">Open Training</a>
+<button type="button" class="course-select" data-course="fashion">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Mechanical Works</h3>
-<a href="vocational/mechanics.html">Open Training</a>
+<button type="button" class="course-select" data-course="mechanics">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Phone Repair</h3>
-<a href="vocational/phone-repair.html">Open Training</a>
+<button type="button" class="course-select" data-course="phone-repair">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Solar Installation</h3>
-<a href="vocational/solar.html">Open Training</a>
+<button type="button" class="course-select" data-course="solar">Select Course</button>
 </div>
 
 <div class="card">
 <h3>Welding & Fabrication</h3>
-<a href="vocational/welding.html">Open Training</a>
+<button type="button" class="course-select" data-course="welding">Select Course</button>
 </div>
 
 </div>
+
+
+<section id="course-payment-panel">
+  <h2>Course Selection & Subscription</h2>
+  <p id="course-selected-name">Select a course above to continue.</p>
+
+  <label for="course-plan">Available subscription plans</label>
+  <select id="course-plan" disabled>
+    <option value="">Select a course first</option>
+  </select>
+
+  <button type="button" id="course-quote" class="course-action" disabled>
+    Get Official Course Price
+  </button>
+
+  <div id="course-quote-details" class="course-note"></div>
+
+  <div class="course-payments">
+    <button type="button" id="course-pay-pi" class="course-action" disabled>
+      Pay with Pi Network
+    </button>
+    <button type="button" id="course-pay-wallet" class="course-action" disabled>
+      Pay with Godomcoworld Wallet
+    </button>
+  </div>
+
+  <div id="course-status" role="status" aria-live="polite">
+    Course plans and prices will be loaded from the server.
+  </div>
+
+  <p class="course-note">
+    Testnet only: payments are for testing subscription records.
+    They have no financial value. Mainnet is not enabled by this page.
+  </p>
+</section>
 
 </main>
 
@@ -154,6 +216,404 @@
 <a href="dashboard.html"><span>📊</span><p>Dashboard</p></a>
 
 </nav>
+
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  const API = "https://godomcoworld-backend-testnet.onrender.com";
+  const NETWORK = "testnet";
+  const PAYMENT_TYPE = "course_subscription";
+
+  const $ = id => document.getElementById(id);
+  const planSelect = $("course-plan");
+  const statusBox = $("course-status");
+
+  let catalogue = [];
+  let selectedCourse = null;
+  let selectedPlan = null;
+  let currentQuote = null;
+  let busy = false;
+
+  function status(message, type = "") {
+    statusBox.textContent = message;
+    statusBox.className = type;
+  }
+
+  function idOf(item) {
+    return String(
+      item.courseId ?? item.course_id ?? item.slug ??
+      item.id ?? item.code ?? ""
+    ).trim();
+  }
+
+  function titleOf(item) {
+    return String(item.title ?? item.name ?? item.courseName ?? "Course");
+  }
+
+  function plansOf(item) {
+    const plans = item.plans ?? item.subscriptionPlans ??
+      item.subscription_plans ?? item.pricing ?? [];
+    return Array.isArray(plans) ? plans : [];
+  }
+
+  function planIdOf(plan) {
+    return String(
+      plan.planId ?? plan.plan_id ?? plan.id ?? plan.key ?? ""
+    ).trim();
+  }
+
+  function planLabel(plan) {
+    return String(
+      plan.name ?? plan.title ?? plan.label ??
+      plan.duration ?? plan.description ?? "Subscription plan"
+    );
+  }
+
+  function setBusy(value) {
+    busy = value;
+    updateButtons();
+  }
+
+  function updateButtons() {
+    const hasPlan = Boolean(selectedCourse && selectedPlan);
+    $("course-quote").disabled = busy || !hasPlan;
+    $("course-pay-pi").disabled = busy || !currentQuote;
+    $("course-pay-wallet").disabled = busy || !currentQuote;
+    planSelect.disabled = busy || !selectedCourse ||
+      plansOf(selectedCourse).length === 0;
+  }
+
+  async function request(path, body) {
+    const response = await fetch(API + path, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (_) {
+      throw new Error("The server returned an unreadable response.");
+    }
+
+    if (!response.ok || data.success === false) {
+      throw new Error(data.message || data.error ||
+        "The server could not complete the request.");
+    }
+    return data;
+  }
+
+  function findCourse(id) {
+    return catalogue.find(course =>
+      idOf(course).toLowerCase() === id.toLowerCase()
+    );
+  }
+
+  function selectCourse(id) {
+    const course = findCourse(id);
+
+    if (!course) {
+      status("This course is not currently available in the server catalogue.",
+        "error");
+      return;
+    }
+
+    selectedCourse = course;
+    selectedPlan = null;
+    currentQuote = null;
+
+    $("course-selected-name").textContent =
+      "Selected: " + titleOf(course);
+
+    planSelect.replaceChildren();
+
+    const plans = plansOf(course);
+    if (!plans.length) {
+      planSelect.add(new Option(
+        "No subscription plans currently available", ""
+      ));
+      status("The server has not supplied subscription plans for this course.");
+    } else {
+      planSelect.add(new Option("Choose a subscription plan", ""));
+      plans.forEach(plan => {
+        const id = planIdOf(plan);
+        if (id) planSelect.add(new Option(planLabel(plan), id));
+      });
+      status("Choose a plan, then request its official server price.");
+    }
+
+    $("course-quote-details").textContent = "";
+    updateButtons();
+    $("course-payment-panel").scrollIntoView({behavior:"smooth"});
+  }
+
+  async function loadCatalogue() {
+    status("Loading the official course catalogue...");
+
+    try {
+      const response = await fetch(API + "/api/courses", {
+        headers: {"Accept":"application/json"}
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Could not load courses.");
+      }
+
+      const list = Array.isArray(data) ? data :
+        data.courses ?? data.data?.courses ?? data.data ?? [];
+
+      if (!Array.isArray(list) || !list.length) {
+        throw new Error("The server returned no active courses.");
+      }
+
+      catalogue = list;
+
+      document.querySelectorAll("[data-course]").forEach(button => {
+        const match = findCourse(button.dataset.course);
+        const card = button.closest(".card");
+
+        if (!match) {
+          if (card) card.hidden = true;
+          return;
+        }
+
+        if (card) card.hidden = false;
+        button.disabled = false;
+      });
+
+      status("Loaded " + catalogue.length +
+        " courses from the Testnet server. Select a course to view plans.",
+        "success");
+
+      const params = new URLSearchParams(location.search);
+      const requested = params.get("course");
+      if (requested && findCourse(requested)) selectCourse(requested);
+
+    } catch (error) {
+      status("Could not load the official course catalogue: " +
+        error.message, "error");
+    }
+  }
+
+  document.querySelectorAll("[data-course]").forEach(button => {
+    button.addEventListener("click", () =>
+      selectCourse(button.dataset.course)
+    );
+  });
+
+  planSelect.addEventListener("change", () => {
+    const id = planSelect.value;
+    selectedPlan = selectedCourse ?
+      plansOf(selectedCourse).find(plan => planIdOf(plan) === id) : null;
+    currentQuote = null;
+    $("course-quote-details").textContent = "";
+    updateButtons();
+  });
+
+  $("course-quote").addEventListener("click", async () => {
+    if (busy || !selectedCourse || !selectedPlan) return;
+
+    setBusy(true);
+    currentQuote = null;
+    status("Requesting the official subscription price...");
+
+    try {
+      const data = await request("/api/courses/quote", {
+        courseId: idOf(selectedCourse),
+        planId: planIdOf(selectedPlan),
+        network: NETWORK
+      });
+
+      const quote = data.quote ?? data;
+      const amount = Number(
+        quote.amountPI ?? quote.amountPi ?? quote.amount_pi ??
+        quote.totalPI ?? quote.total_pi
+      );
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        throw new Error("The server did not return a valid PI quote.");
+      }
+
+      currentQuote = {
+        amount,
+        courseId: idOf(selectedCourse),
+        planId: planIdOf(selectedPlan),
+        requestId: crypto.randomUUID()
+      };
+
+      $("course-quote-details").textContent =
+        "Official Testnet quote: " + amount + " PI";
+      status("Price received from the server. Choose your payment method.",
+        "success");
+
+    } catch (error) {
+      status("Quote failed: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  async function payWithWallet() {
+    if (busy || !currentQuote) return;
+
+    const walletId = localStorage.getItem("walletId_testnet");
+    if (!walletId) {
+      status("No Testnet Godomcoworld wallet was found. Sign in and create or select your Testnet wallet first.",
+        "error");
+      return;
+    }
+
+    const pin = prompt("Enter your Godomcoworld Transaction PIN:");
+    if (pin === null) return;
+    if (!pin.trim()) {
+      status("Transaction PIN is required.", "error");
+      return;
+    }
+
+    setBusy(true);
+    status("Verifying Transaction PIN...");
+
+    try {
+      const verified = await request("/wallet/security/verify-pin", {
+        walletId,
+        network: NETWORK,
+        pin
+      });
+
+      const authorizationToken =
+        verified.authorizationToken ?? verified.token;
+
+      if (!authorizationToken) {
+        throw new Error("PIN verification did not return an authorization token.");
+      }
+
+      status("PIN verified. Processing Testnet course subscription...");
+
+      const result = await request("/api/courses/wallet/subscribe", {
+        walletId,
+        authorizationToken,
+        requestId: currentQuote.requestId,
+        network: NETWORK,
+        courseId: currentQuote.courseId,
+        planId: currentQuote.planId
+      });
+
+      currentQuote = null;
+      status(result.message ||
+        "Testnet wallet subscription payment recorded. Check your course subscription status.",
+        "success");
+
+    } catch (error) {
+      status("Wallet payment was not completed: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function payWithPi() {
+    if (busy || !currentQuote) return;
+
+    if (!window.Pi) {
+      status("Pi SDK is unavailable. Refresh the page and try again.", "error");
+      return;
+    }
+
+    setBusy(true);
+    status("Connecting to Pi Network Testnet...");
+
+    try {
+      const auth = await Pi.authenticate(
+        ["username", "payments"],
+        () => {}
+      );
+
+      if (!auth || !auth.accessToken) {
+        throw new Error("Pi authentication did not provide an access token.");
+      }
+
+      Pi.init({version:"2.0", sandbox:true});
+
+      const quote = currentQuote;
+      const memo = "Godomcoworld course subscription";
+
+      Pi.createPayment({
+        amount: quote.amount,
+        memo,
+        metadata: {
+          purpose: PAYMENT_TYPE,
+          network: NETWORK,
+          courseId: quote.courseId,
+          planId: quote.planId,
+          requestId: quote.requestId
+        }
+      }, {
+        onReadyForServerApproval: async paymentId => {
+          try {
+            status("Submitting Pi payment for server approval...");
+            await request("/u2a/shared/approve", {
+              paymentId,
+              accessToken: auth.accessToken,
+              network: NETWORK,
+              paymentType: PAYMENT_TYPE
+            });
+          } catch (error) {
+            status("Pi server approval failed: " + error.message, "error");
+            throw error;
+          }
+        },
+
+        onReadyForServerCompletion: async (paymentId, txid) => {
+          try {
+            status("Confirming Pi payment and activating subscription...");
+            const result = await request("/u2a/shared/complete", {
+              paymentId,
+              txid,
+              accessToken: auth.accessToken,
+              network: NETWORK,
+              paymentType: PAYMENT_TYPE
+            });
+
+            currentQuote = null;
+            status(result.message ||
+              "Pi payment completion was submitted. Check your subscription status.",
+              "success");
+          } catch (error) {
+            status("Payment completion needs attention: " +
+              error.message, "error");
+          } finally {
+            setBusy(false);
+          }
+        },
+
+        onCancel: () => {
+          status("Pi payment was cancelled.");
+          setBusy(false);
+        },
+
+        onError: error => {
+          status("Pi payment error: " +
+            (error?.message || String(error)), "error");
+          setBusy(false);
+        }
+      });
+
+    } catch (error) {
+      status("Pi payment could not start: " + error.message, "error");
+      setBusy(false);
+    }
+  }
+
+  $("course-pay-wallet").addEventListener("click", payWithWallet);
+  $("course-pay-pi").addEventListener("click", payWithPi);
+
+  loadCatalogue();
+})();
+</script>
 
 <script src="js/dev-console.js"></script>
 </body>
