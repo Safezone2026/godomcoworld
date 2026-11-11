@@ -260,9 +260,8 @@
   }
 
   function planIdOf(plan) {
-    return String(
-      plan.planId ?? plan.plan_id ?? plan.id ?? plan.key ?? ""
-    ).trim();
+    return String(plan.planId ?? plan.plan_id ?? plan.id ??
+      plan.key ?? plan.name ?? plan.title ?? "").trim();
   }
 
   function planLabel(plan) {
@@ -424,8 +423,8 @@
 
     try {
       const data = await request("/api/courses/quote", {
-        courseId: idOf(selectedCourse),
-        planId: planIdOf(selectedPlan),
+        courseSlug: String(selectedCourse.slug ?? selectedCourse.courseSlug ?? "").trim(),
+        planName: String(selectedPlan.name ?? selectedPlan.title ?? selectedPlan.label ?? "").trim(),
         network: NETWORK
       });
 
@@ -443,8 +442,14 @@
         amount,
         courseId: idOf(selectedCourse),
         planId: planIdOf(selectedPlan),
+        courseSlug: String(selectedCourse.slug ?? selectedCourse.courseSlug ?? "").trim(),
+        planName: String(selectedPlan.name ?? selectedPlan.title ?? selectedPlan.label ?? "").trim(),
         requestId: crypto.randomUUID()
       };
+      if (!currentQuote.courseSlug || !currentQuote.planName) {
+        currentQuote = null;
+        throw new Error("The selected course or subscription plan is missing its official identifier.");
+      }
 
       $("course-quote-details").textContent =
         "Official Testnet quote: " + amount + " PI";
@@ -458,6 +463,82 @@
     }
   });
 
+
+  function requestCourseTransactionPin() {
+    return new Promise(resolve => {
+      const overlay = document.createElement("div");
+      overlay.style.cssText =
+        "position:fixed;inset:0;z-index:99999;background:#0009;" +
+        "display:flex;align-items:center;justify-content:center;padding:20px;";
+      const box = document.createElement("div");
+      box.style.cssText =
+        "width:min(100%,360px);background:#fff;color:#222;padding:22px;" +
+        "border-radius:14px;box-shadow:0 8px 35px #0005;";
+      const title = document.createElement("h3");
+      title.textContent = "Verify Transaction PIN";
+      const input = document.createElement("input");
+      input.type = "password";
+      input.inputMode = "numeric";
+      input.autocomplete = "current-password";
+      input.maxLength = 6;
+      input.placeholder = "Enter 4–6 digit PIN";
+      input.style.cssText =
+        "box-sizing:border-box;width:100%;padding:13px;margin:12px 0;" +
+        "font-size:18px;border:1px solid #aaa;border-radius:8px;";
+      const error = document.createElement("div");
+      error.style.cssText = "color:#c00;font-size:13px;min-height:18px;";
+      const actions = document.createElement("div");
+      actions.style.cssText =
+        "display:flex;gap:10px;margin-top:12px;";
+      const verify = document.createElement("button");
+      verify.type = "button";
+      verify.textContent = "Verify PIN";
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.textContent = "Cancel";
+      [verify, cancel].forEach(button => {
+        button.style.cssText =
+          "flex:1;padding:12px;border:0;border-radius:8px;cursor:pointer;";
+      });
+      let settled = false;
+      function close(value) {
+        if (settled) return;
+        settled = true;
+        document.removeEventListener("keydown", onKey);
+        overlay.remove();
+        resolve(value);
+      }
+      function submit() {
+        const pin = input.value;
+        if (!/^\d{4,6}$/.test(pin)) {
+          error.textContent = "Enter a valid 4–6 digit PIN.";
+          input.focus();
+          return;
+        }
+        close(pin);
+      }
+      function onKey(event) {
+        if (event.key === "Escape") close(null);
+        if (event.key === "Enter") submit();
+      }
+      input.addEventListener("input", () => {
+        input.value = input.value.replace(/\D/g, "").slice(0, 6);
+        error.textContent = "";
+      });
+      verify.addEventListener("click", submit);
+      cancel.addEventListener("click", () => close(null));
+      actions.append(verify, cancel);
+      box.append(title, input, error, actions);
+      overlay.append(box);
+      overlay.addEventListener("click", event => {
+        if (event.target === overlay) close(null);
+      });
+      document.addEventListener("keydown", onKey);
+      document.body.append(overlay);
+      input.focus();
+    });
+  }
+
   async function payWithWallet() {
     if (busy || !currentQuote) return;
 
@@ -468,12 +549,8 @@
       return;
     }
 
-    const pin = prompt("Enter your Godomcoworld Transaction PIN:");
+    const pin = await requestCourseTransactionPin();
     if (pin === null) return;
-    if (!pin.trim()) {
-      status("Transaction PIN is required.", "error");
-      return;
-    }
 
     setBusy(true);
     status("Verifying Transaction PIN...");
@@ -499,8 +576,8 @@
         authorizationToken,
         requestId: currentQuote.requestId,
         network: NETWORK,
-        courseId: currentQuote.courseId,
-        planId: currentQuote.planId
+        courseSlug: currentQuote.courseSlug,
+        planName: currentQuote.planName
       });
 
       currentQuote = null;
@@ -549,6 +626,8 @@
           network: NETWORK,
           courseId: quote.courseId,
           planId: quote.planId,
+          courseSlug: quote.courseSlug,
+          planName: quote.planName,
           requestId: quote.requestId
         }
       }, {
@@ -559,7 +638,9 @@
               paymentId,
               accessToken: auth.accessToken,
               network: NETWORK,
-              paymentType: PAYMENT_TYPE
+              paymentType: PAYMENT_TYPE,
+              courseSlug: quote.courseSlug,
+              planName: quote.planName
             });
           } catch (error) {
             status("Pi server approval failed: " + error.message, "error");
