@@ -23,52 +23,77 @@
 
 <div id="myCourses"></div>
 
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script>
+(async function () {
+  const container = document.getElementById("myCourses");
+  container.textContent = "Connecting to Pi Network Testnet...";
 
-const courseList = [
-  "Augmented Reality",
-  "Argumentation & Critical Thinking",
-  "Blockchain Development",
-  "Hologram Technology",
-  "Nanotechnology",
-  "Space Technology",
-  "Web3 & Blockchain Integration",
-  "Agricultural Processing",
-  "Furniture & Carpentry",
-  "Electrical Installation",
-  "Fashion & Textile Design",
-  "Automobile Mechanics",
-  "Smartphone Repair",
-  "Solar Installation",
-  "Welding & Fitting Technology"
-];
+  try {
+    Pi.init({version:"2.0", sandbox:true});
 
-const container = document.getElementById("myCourses");
+    const auth = await Pi.authenticate(["username"], () => {});
 
-courseList.forEach(course => {
-  let saved = localStorage.getItem("plan_" + course);
-
-  if(saved){
-    let parsed = JSON.parse(saved);
-
-    if(Date.now() < parsed.expiry){
-
-      container.innerHTML += `
-        <div class="card">
-          <h3>${course}</h3>
-          <a href="../course.html?course=${encodeURIComponent(course)}">
-            ▶ Continue Course
-          </a>
-        </div>
-      `;
+    if (!auth || !auth.accessToken) {
+      throw new Error("Pi authentication was not completed.");
     }
+
+    const response = await fetch(
+      "https://godomcoworld-backend-testnet.onrender.com/api/courses/my-subscriptions",
+      {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          accessToken: auth.accessToken,
+          network: "testnet"
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Subscription lookup failed.");
+    }
+
+    container.replaceChildren();
+
+    const subscriptions = Array.isArray(result.subscriptions)
+      ? result.subscriptions : [];
+
+    if (!subscriptions.length) {
+      container.textContent =
+        "No verified active Testnet course subscriptions were found.";
+      return;
+    }
+
+    subscriptions.forEach(subscription => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h3");
+      title.textContent = subscription.course_title ||
+        subscription.course_slug || "Course";
+
+      const plan = document.createElement("p");
+      plan.textContent = "Plan: " + (subscription.plan_name || "Subscription");
+
+      const status = document.createElement("p");
+      status.textContent = "Status: Active (Testnet)";
+
+      const link = document.createElement("a");
+      link.href = "../courses.html?course=" +
+        encodeURIComponent(subscription.course_slug);
+      link.textContent = "▶ View Course";
+
+      card.append(title, plan, status, link);
+      container.appendChild(card);
+    });
+  } catch (error) {
+    container.textContent = "Unable to load verified courses: " +
+      error.message;
   }
-});
-
-if(container.innerHTML === ""){
-  container.innerHTML = "<p>No active courses yet</p>";
-}
-
+})();
 </script>
 
 <script src="../js/dev-console.js"></script>

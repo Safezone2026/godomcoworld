@@ -549,7 +549,7 @@ async function payWithPi() {
           });
         } catch (error) {
           console.error("Finance U2A approval failed:", error);
-          alert(error.message || "Pi payment approval failed.");
+          throw error;
         }
       },
 

@@ -157,6 +157,12 @@
 <section id="course-payment-panel">
   <h2>Course Selection & Subscription</h2>
   <p id="course-selected-name">Select a course above to continue.</p>
+<section id="course-outline-panel" aria-live="polite" hidden>
+  <h3>Course outline</h3>
+  <ol id="course-outline-list"></ol>
+  <p id="course-outline-empty" hidden></p>
+</section>
+
 
   <label for="course-plan">Available subscription plans</label>
   <select id="course-plan" disabled>
@@ -242,6 +248,16 @@
     statusBox.className = type;
   }
 
+  function showMyCoursesLink() {
+    const link = document.createElement("a");
+    link.href = "courses/my-courses.html";
+    link.textContent = "View My Courses";
+    link.style.display = "inline-block";
+    link.style.marginTop = "10px";
+    statusBox.appendChild(document.createElement("br"));
+    statusBox.appendChild(link);
+  }
+
   function idOf(item) {
     return String(
       item.courseId ?? item.course_id ?? item.slug ??
@@ -312,7 +328,45 @@
     );
   }
 
-  function selectCourse(id) {
+
+function renderCourseOutline(course) {
+  const panel = $("course-outline-panel");
+  const list = $("course-outline-list");
+  const empty = $("course-outline-empty");
+
+  if (!panel || !list || !empty) {
+    console.error("Course outline display elements are missing.");
+    return;
+  }
+
+  list.replaceChildren();
+
+  const topics = Array.isArray(course.course_content)
+    ? course.course_content.filter(
+        topic => typeof topic === "string" && topic.trim()
+      )
+    : [];
+
+  if (topics.length) {
+    topics.forEach(topic => {
+      const item = document.createElement("li");
+      item.textContent = topic.trim();
+      list.appendChild(item);
+    });
+
+    list.hidden = false;
+    empty.hidden = true;
+    empty.textContent = "";
+  } else {
+    list.hidden = true;
+    empty.hidden = false;
+    empty.textContent = "A course outline is not available yet.";
+  }
+
+  panel.hidden = false;
+}
+
+function selectCourse(id) {
     const course = findCourse(id);
 
     if (!course) {
@@ -327,6 +381,7 @@
 
     $("course-selected-name").textContent =
       "Selected: " + titleOf(course);
+    renderCourseOutline(course);
 
     planSelect.replaceChildren();
 
@@ -584,6 +639,7 @@
       status(result.message ||
         "Testnet wallet subscription payment recorded. Check your course subscription status.",
         "success");
+      showMyCoursesLink();
 
     } catch (error) {
       status("Wallet payment was not completed: " + error.message, "error");
@@ -604,6 +660,8 @@
     status("Connecting to Pi Network Testnet...");
 
     try {
+      Pi.init({version:"2.0", sandbox:true});
+
       const auth = await Pi.authenticate(
         ["username", "payments"],
         () => {}
@@ -613,7 +671,6 @@
         throw new Error("Pi authentication did not provide an access token.");
       }
 
-      Pi.init({version:"2.0", sandbox:true});
 
       const quote = currentQuote;
       const memo = "Godomcoworld course subscription";
@@ -663,6 +720,7 @@
             status(result.message ||
               "Pi payment completion was submitted. Check your subscription status.",
               "success");
+            showMyCoursesLink();
           } catch (error) {
             status("Payment completion needs attention: " +
               error.message, "error");

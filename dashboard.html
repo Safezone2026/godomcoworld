@@ -91,6 +91,8 @@
         <a href="learn.html">Learning Center</a>
         <a href="vocational/index.html">Vocational Skills</a>
       </div>
+      <div id="dashboard-active-courses"></div>
+      <p><a href="courses/my-courses.html">View All My Courses</a></p>
     </section>
 
     <section class="card">
@@ -178,5 +180,76 @@
   </script>
 
   <script src="js/dev-console.js"></script>
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+(async function () {
+  const container = document.getElementById("dashboard-active-courses");
+  if (!container) return;
+
+  container.textContent = "Loading your active courses...";
+
+  try {
+    Pi.init({version:"2.0", sandbox:true});
+
+    const auth = await Pi.authenticate(["username"], () => {});
+
+    if (!auth || !auth.accessToken) {
+      throw new Error("Pi authentication was not completed.");
+    }
+
+    const response = await fetch(
+      "https://godomcoworld-backend-testnet.onrender.com/api/courses/my-subscriptions",
+      {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          accessToken: auth.accessToken,
+          network: "testnet"
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Subscription lookup failed.");
+    }
+
+    container.replaceChildren();
+
+    const subscriptions = Array.isArray(result.subscriptions)
+      ? result.subscriptions : [];
+
+    if (!subscriptions.length) {
+      container.textContent = "No verified active Testnet courses yet.";
+      return;
+    }
+
+    subscriptions.forEach(subscription => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h3");
+      title.textContent = subscription.course_title ||
+        subscription.course_slug || "Course";
+
+      const status = document.createElement("p");
+      status.textContent = "Active subscription (Testnet)";
+
+      const link = document.createElement("a");
+      link.href = "courses.html?course=" +
+        encodeURIComponent(subscription.course_slug);
+      link.textContent = "▶ Continue Course";
+
+      card.append(title, status, link);
+      container.appendChild(card);
+    });
+  } catch (error) {
+    container.textContent = "Unable to load courses: " + error.message;
+  }
+})();
+</script>
+
 </body>
 </html>
