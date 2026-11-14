@@ -509,65 +509,79 @@ async function recoverFinancePiPayment() {
   if (financeBusy) return;
 
   financeBusy = true;
-  const candidates = [];
 
   try {
     await loadPiSDK();
+
     if (!window.Pi || typeof Pi.authenticate !== "function") {
       throw new Error("Pi SDK is not available. Please reload the page.");
     }
+
     Pi.init({ version: "2.0", sandbox: true });
 
-    const auth = await Pi.authenticate(
-      ["username", "payments"],
-      incompletePayment => {
-        const metadata = incompletePayment?.metadata || {};
-
-        if (metadata.purpose !== "finance_service") return;
-
-        const paymentId =
-          incompletePayment.identifier || incompletePayment.paymentId;
-        const txid =
-          incompletePayment.transaction?.txid || incompletePayment.txid;
-
-        if (paymentId && txid) {
-          candidates.push({
-            paymentId: String(paymentId),
-            txid: String(txid)
-          });
-        }
-      }
-    );
+    const auth = await Pi.authenticate(["username", "payments"]);
 
     if (!auth?.accessToken) {
       throw new Error("Pi authentication was not completed.");
     }
 
-    if (candidates.length === 0) {
-      throw new Error(
-        "No recoverable Finance payment was found in Pi's incomplete-payment records."
-      );
-    }
-
-    if (candidates.length !== 1) {
-      throw new Error(
-        "More than one Finance payment was found. Recovery stopped to avoid selecting the wrong payment."
-      );
-    }
-
-    const payment = candidates[0];
-
-    const result = await financeRequest("/u2a/shared/complete", {
-      paymentId: payment.paymentId,
-      txid: payment.txid,
+    const discovery = await financeRequest("/u2a/shared/recover", {
       accessToken: auth.accessToken,
       network: FINANCE_NETWORK,
       paymentType: "finance_service"
     });
 
+    const candidates = Array.isArray(discovery.payments)
+      ? discovery.payments
+      : [];
+
+    if (candidates.length === 0) {
+      throw new Error(
+        discovery.message ||
+        "No completed Finance Testnet payments were found."
+      );
+    }
+
+    const recovered = [];
+    const failed = [];
+
+    for (const payment of candidates) {
+      try {
+        const result = await financeRequest("/u2a/shared/complete", {
+          paymentId: payment.paymentId,
+          txid: payment.txid,
+          accessToken: auth.accessToken,
+          network: FINANCE_NETWORK,
+          paymentType: "finance_service"
+        });
+
+        if (result.success) {
+          recovered.push(result);
+        } else {
+          failed.push(payment.paymentId);
+        }
+      } catch (error) {
+        console.error(
+          "Finance payment settlement recovery failed:",
+          payment.paymentId,
+          error
+        );
+        failed.push(payment.paymentId);
+      }
+    }
+
+    if (recovered.length === 0) {
+      throw new Error(
+        "Pi confirmed completed payment records, but settlement did not finish. Please retry recovery."
+      );
+    }
+
     alert(
-      (result.message || "Finance Testnet payment recovery confirmed.") +
-      (result.receiptId ? "\nReceipt: " + result.receiptId : "") +
+      recovered.length +
+      " Finance Testnet payment(s) successfully recovered and recorded." +
+      (failed.length
+        ? "\n" + failed.length + " payment(s) still need recovery."
+        : "") +
       "\nReminder: Testnet Finance services are not delivered."
     );
 
@@ -579,7 +593,10 @@ async function recoverFinancePiPayment() {
 
   } catch (error) {
     console.error("Finance Pi payment recovery failed:", error);
-    alert(error.message || "The existing Finance payment could not be recovered.");
+    alert(
+      error.message ||
+      "The existing Finance payment could not be recovered."
+    );
   } finally {
     financeBusy = false;
   }
