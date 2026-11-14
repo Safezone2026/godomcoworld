@@ -238,9 +238,9 @@
       status.textContent = "Active subscription (Testnet)";
 
       const link = document.createElement("a");
-      link.href = "courses.html?course=" +
+      link.href = "courses/topics.html?course=" +
         encodeURIComponent(subscription.course_slug);
-      link.textContent = "▶ Continue Course";
+      link.textContent = "▶ View Course Topics";
 
       card.append(title, status, link);
       container.appendChild(card);

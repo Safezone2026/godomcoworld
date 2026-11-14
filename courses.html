@@ -381,7 +381,7 @@ function selectCourse(id) {
 
     $("course-selected-name").textContent =
       "Selected: " + titleOf(course);
-    renderCourseOutline(course);
+    $("course-outline-panel").hidden = true;
 
     planSelect.replaceChildren();
 

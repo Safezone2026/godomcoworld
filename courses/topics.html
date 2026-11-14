@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Course Topics | Godomcoworld Testnet</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body {
+      background:#0d0d0d;
+      color:#fff;
+      font-family:Arial,sans-serif;
+      padding:20px;
+    }
+    .course-topics-card {
+      max-width:760px;
+      margin:20px auto;
+      padding:20px;
+      background:#1a1a1a;
+      border-radius:10px;
+    }
+    #topic-list li {
+      margin:12px 0;
+      line-height:1.5;
+    }
+    .mainnet-notice {
+      margin-top:22px;
+      padding:15px;
+      border-left:4px solid #4caf50;
+      background:#202b22;
+      line-height:1.6;
+    }
+    .course-link {
+      display:inline-block;
+      margin:12px 12px 0 0;
+      color:#7bdc83;
+    }
+    #topic-status {
+      line-height:1.6;
+      overflow-wrap:anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="course-topics-card">
+    <h2 id="course-title">Course Topics</h2>
+    <p id="topic-status">Verifying your Testnet course subscription...</p>
+    <ol id="topic-list" hidden></ol>
+    <div id="mainnet-notice" class="mainnet-notice" hidden>
+      <strong>Testnet subscription activated.</strong>
+      <p>
+        Your active Testnet subscription has been verified. You can view
+        the topics for this course here.
+      </p>
+      <p>
+        Full learning materials, lessons and learning resources will be
+        available on Godomcoworld Mainnet. Test-Pi has no monetary value
+        and is used exclusively for testing subscription records.
+      </p>
+    </div>
+    <a class="course-link" href="my-courses.html">← My Courses</a>
+    <a class="course-link" href="../courses.html">Course Catalogue</a>
+  </main>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script>
+  (async function () {
+    "use strict";
+
+    const API = "https://godomcoworld-backend-testnet.onrender.com";
+    const statusBox = document.getElementById("topic-status");
+    const titleBox = document.getElementById("course-title");
+    const list = document.getElementById("topic-list");
+    const notice = document.getElementById("mainnet-notice");
+
+    function fail(message) {
+      statusBox.textContent = message;
+      list.hidden = true;
+      notice.hidden = true;
+    }
+
+    try {
+      const params = new URLSearchParams(location.search);
+      const courseSlug = String(params.get("course") || "").trim();
+
+      if (!courseSlug) {
+        throw new Error("No course was selected. Open a course from My Courses.");
+      }
+
+      if (!window.Pi) {
+        throw new Error("Pi Browser authentication is unavailable. Open this page in Pi Browser.");
+      }
+
+      Pi.init({version:"2.0", sandbox:true});
+
+      const auth = await Pi.authenticate(["username"], () => {});
+      if (!auth || !auth.accessToken) {
+        throw new Error("Pi authentication was not completed.");
+      }
+
+      const response = await fetch(API + "/api/courses/my-topics", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          accessToken: auth.accessToken,
+          network: "testnet",
+          courseSlug
+        })
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (_) {
+        throw new Error("The server returned an unreadable response.");
+      }
+
+      if (!response.ok || !result.success || result.network !== "testnet") {
+        throw new Error(
+          result.message || "Your active Testnet subscription could not be verified."
+        );
+      }
+
+      titleBox.textContent = result.courseTitle || "Course Topics";
+      const topics = Array.isArray(result.topics) ? result.topics : [];
+
+      list.replaceChildren();
+
+      if (topics.length) {
+        topics.forEach(topic => {
+          const item = document.createElement("li");
+          item.textContent = topic;
+          list.appendChild(item);
+        });
+        list.hidden = false;
+      } else {
+        statusBox.textContent =
+          "Your subscription is active, but no course topics have been published yet.";
+      }
+
+      notice.hidden = false;
+
+      if (topics.length) {
+        statusBox.textContent =
+          "Your active Testnet subscription has been verified. Course topics are shown below.";
+      }
+    } catch (error) {
+      fail(error.message || "Unable to verify course topic access.");
+    }
+  })();
+  </script>
+  <script src="../js/dev-console.js"></script>
+</body>
+</html>
