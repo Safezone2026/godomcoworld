@@ -512,9 +512,11 @@ async function recoverFinancePiPayment() {
   const candidates = [];
 
   try {
+    await loadPiSDK();
     if (!window.Pi || typeof Pi.authenticate !== "function") {
       throw new Error("Pi SDK is not available. Please reload the page.");
     }
+    Pi.init({ version: "2.0", sandbox: true });
 
     const auth = await Pi.authenticate(
       ["username", "payments"],
