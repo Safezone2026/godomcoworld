@@ -54,6 +54,20 @@
 
 <div id="dashboard" style="display:none;">
 
+<div class="card" id="adminPiSecurityCard">
+  <h2>Pi Testnet Admin Security</h2>
+  <p id="adminPiIdentityStatus">Pi identity has not been linked.</p>
+  <button type="button" onclick="bindAdminPiIdentity()">
+    Verify and Link Admin Pi Identity
+  </button>
+  <p>Testnet Pi withdrawals require a verified Admin Pi identity.</p>
+</div>
+<div class="card">
+  <h3>Admin Pi Testnet Withdrawal History</h3>
+  <div id="adminPiWithdrawalsList">Loading...</div>
+</div>
+
+
   <!-- SUPPORT PORTAL -->
 <section class="card" style="margin:20px 0;">
   <h2>🎫 Customer Support</h2>
@@ -202,6 +216,7 @@
 </div>
 
 
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <script src="js/network.js"></script>
 <script>
 const API = "/api";
@@ -251,6 +266,8 @@ async function login() {
     }
 
     await loadAll();
+    await loadAdminPiIdentity();
+    await loadAdminPiWithdrawals();
   } catch (error) {
     alert(error.message || "Could not sign in to the Testnet admin dashboard.");
   }
@@ -480,7 +497,18 @@ encodeURIComponent(network)
   Number(data.PI || 0).toLocaleString(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 8
-  }) +
+  }) + "</p>" +
+  (network === "testnet"
+    ? "<hr><h4>Testnet Pi Accounting</h4>" +
+      "<p><strong>Live available (withdrawable):</strong> π" +
+      Number(data.piLiveAvailable || 0).toFixed(7) + "</p>" +
+      "<p>Pending (not withdrawable): π" +
+      Number(data.piPending || 0).toFixed(7) + "</p>" +
+      "<p>Historical display only: π" +
+      Number(data.piHistoricalDisplay || 0).toFixed(7) + "</p>" +
+      "<p>Legacy unreconciled (not withdrawable): π" +
+      Number(data.piLegacyUnreconciled || 0).toFixed(7) + "</p>"
+    : "") +
   "</p>" +
 
   "<p>$" +
@@ -526,6 +554,149 @@ document.getElementById("revenueBreakdown").innerHTML = `
 
 `;
 }
+
+let adminPiSdkInitialized = false;
+
+async function bindAdminPiIdentity() {
+  if (getNetwork() !== "testnet") {
+    return alert("Select Testnet before linking your Admin Pi identity.");
+  }
+
+  if (!window.Pi) {
+    return alert("Pi SDK is unavailable. Reload the page and try again.");
+  }
+
+  try {
+    if (!adminPiSdkInitialized) {
+      Pi.init({ version: "2.0", sandbox: true });
+      adminPiSdkInitialized = true;
+    }
+
+    const auth = await Pi.authenticate(["username"], () => {});
+    if (!auth || !auth.accessToken) {
+      throw new Error("Pi authentication returned no access token.");
+    }
+
+    const response = await fetch(API + "/admin/pi-identity/verify", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessToken: auth.accessToken })
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Pi identity verification failed.");
+    }
+
+    document.getElementById("adminPiIdentityStatus").textContent =
+      "Verified Pi identity linked: " + (data.username || "Pi user");
+
+    alert("Admin Pi identity verified and linked.");
+    await loadAdminPiWithdrawals();
+  } catch (err) {
+    alert(err.message || "Pi identity verification failed.");
+  }
+}
+
+async function loadAdminPiIdentity() {
+  const element = document.getElementById("adminPiIdentityStatus");
+  if (!element) return;
+
+  try {
+    const response = await fetch(API + "/admin/pi-identity", {
+      credentials: "include"
+    });
+    const data = await response.json();
+
+    element.textContent = data.linked
+      ? "Verified Pi identity linked: " + (data.username || "Pi user")
+      : "Pi identity has not been linked.";
+  } catch (_) {
+    element.textContent = "Could not check Admin Pi identity.";
+  }
+}
+
+async function loadAdminPiWithdrawals() {
+  const container = document.getElementById("adminPiWithdrawalsList");
+  if (!container) return;
+
+  try {
+    const response = await fetch(API + "/admin/pi-withdrawals", {
+      credentials: "include"
+    });
+    const data = await response.json();
+
+    container.replaceChildren();
+
+    if (!response.ok || !data.success || !data.withdrawals?.length) {
+      container.textContent = "No Admin Pi withdrawals recorded.";
+      return;
+    }
+
+    data.withdrawals.forEach(row => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const info = document.createElement("p");
+      info.textContent = row.withdrawal_id + " | π" +
+        Number(row.amount).toFixed(7) + " | " + row.status +
+        (row.txid ? " | TX: " + row.txid : "");
+      card.appendChild(info);
+
+      if (row.error_message) {
+        const error = document.createElement("p");
+        error.textContent = row.error_message;
+        card.appendChild(error);
+      }
+
+      // Retry only when no payout attempt has begun, or when the
+      // existing Pi payment ID is available for safe recovery.
+      if (
+        row.status === "reserved" ||
+        (row.status === "payout_pending" && row.pi_payment_id)
+      ) {
+        const button = document.createElement("button");
+        button.textContent = "Recover this payout";
+        button.onclick = async () => {
+          if (getNetwork() !== "testnet") {
+            return alert("Select Testnet before recovery.");
+          }
+
+          button.disabled = true;
+          try {
+            const resultResponse = await fetch(
+              API + "/admin/pi-withdraw/recover",
+              {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ withdrawalId: row.withdrawal_id })
+              }
+            );
+
+            const result = await resultResponse.json();
+            alert(result.message || (
+              result.success ? "Pi payout completed." : "Payout remains pending."
+            ));
+          } catch (err) {
+            alert(err.message || "Recovery request failed.");
+          }
+
+          await loadRevenueWallet();
+          await loadAdminPiWithdrawals();
+        };
+        card.appendChild(button);
+      }
+
+      container.appendChild(card);
+    });
+  } catch (_) {
+    container.textContent = "Could not load Admin Pi withdrawal history.";
+  }
+}
+
+
 function toggleWithdrawFields(){
 
   const method = document.getElementById("withdrawMethod").value;
@@ -542,6 +713,36 @@ async function withdrawRevenue(){
   const amount = Number(document.getElementById("withdrawAmount").value);
   const currency = document.getElementById("withdrawCurrency").value;
   const method = document.getElementById("withdrawMethod").value;
+
+  if (!amount || amount <= 0) {
+    return alert("Enter valid amount");
+  }
+
+  if (getNetwork() === "testnet" && currency === "PI") {
+    try {
+      const response = await fetch(API + "/admin/pi-withdraw", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, network: "testnet" })
+      });
+
+      const result = await response.json();
+      alert(result.message || (
+        result.success
+          ? "Testnet Pi withdrawal completed."
+          : result.pending
+            ? "Withdrawal reserved. Check the history for recovery."
+            : "Testnet Pi withdrawal failed."
+      ));
+
+      await loadRevenueWallet();
+      await loadAdminPiWithdrawals();
+    } catch (err) {
+      alert(err.message || "Testnet Pi withdrawal request failed.");
+    }
+    return;
+  }
 
   if(!amount || amount <= 0){
     return alert("Enter valid amount");
