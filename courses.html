@@ -722,9 +722,12 @@ function selectCourse(id) {
   courseRecoveryButton.id = "recoverExistingCourseU2APaymentButton";
   courseRecoveryButton.textContent = "Recover Existing Testnet Pi Payment";
   courseRecoveryButton.style.cssText =
-    "display:block;width:100%;max-width:420px;margin:16px auto;" +
-    "padding:13px 18px;background:#174ea6;color:white;" +
-    "border:0;border-radius:8px;font-weight:bold;cursor:pointer;";
+    "display:block;position:fixed;width:calc(100% - 32px);" +
+    "max-width:420px;left:50%;transform:translateX(-50%);" +
+    "bottom:calc(90px + env(safe-area-inset-bottom, 0px));" +
+    "z-index:10000;padding:13px 18px;background:#174ea6;" +
+    "color:white;border:0;border-radius:8px;font-weight:bold;" +
+    "cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);";
   courseRecoveryButton.addEventListener(
     "click",
     recoverExistingCourseU2APayment
