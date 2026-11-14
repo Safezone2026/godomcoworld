@@ -914,10 +914,6 @@ async function loginPi(){
 // ================= PI OAUTH: ORDINARY BROWSER =================
 async function loginPiOAuth() {
     try {
-        if (!window.Pi || typeof Pi.signIn !== "function") {
-            throw new Error("Pi Sign-In SDK is unavailable. Reload the page.");
-        }
-
         const bytes = new Uint8Array(32);
         crypto.getRandomValues(bytes);
 
@@ -927,15 +923,30 @@ async function loginPiOAuth() {
 
         sessionStorage.setItem("pi_oauth_state", state);
 
-        Pi.signIn({
-            clientId: "A_zzxEIICrnnimjP_Zo6fbwpLoIaySfA1Iv4vQmWAZw",
-            redirectUri: "https://godomcoworld-testnet.netlify.app/signin/callback.html",
-            scopes: ["username", "wallet_address"],
-            state
-        });
+        const authorizeUrl = new URL(
+            "https://accounts.pinet.com/oauth/authorize"
+        );
+
+        authorizeUrl.searchParams.set("response_type", "token");
+        authorizeUrl.searchParams.set(
+            "client_id",
+            "A_zzxEIICrnnimjP_Zo6fbwpLoIaySfA1Iv4vQmWAZw"
+        );
+        authorizeUrl.searchParams.set(
+            "redirect_uri",
+            "https://godomcoworld-testnet.netlify.app/signin/callback.html"
+        );
+        authorizeUrl.searchParams.set(
+            "scope",
+            "username wallet_address"
+        );
+        authorizeUrl.searchParams.set("state", state);
+
+        window.location.assign(authorizeUrl.toString());
+
     } catch (err) {
         console.error("Pi OAuth initiation failed:", err);
-        alert("Pi browser sign-in could not start:\n" + err.message);
+        alert("Pi sign-in could not start: " + err.message);
     }
 }
 </script>
