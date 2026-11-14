@@ -648,6 +648,90 @@ function selectCourse(id) {
     }
   }
 
+
+  // ===== EXISTING TESTNET COURSE U2A PAYMENT RECOVERY =====
+  let courseRecoveryInProgress = false;
+
+  async function recoverExistingCourseU2APayment() {
+    if (busy || courseRecoveryInProgress) return;
+
+    if (NETWORK !== "testnet") {
+      status("Course payment recovery is available only on Testnet.", "error");
+      return;
+    }
+
+    if (!window.Pi || typeof window.Pi.authenticate !== "function") {
+      status("Open this page inside Pi Browser to authenticate.", "error");
+      return;
+    }
+
+    const paymentId = "J7N8UHWh7tjxfyRFPcpCUd1WZU1e";
+    const txid = "bd6aabf4153bf7c83c31cc7c694a9ca849097c53c91d514ce648e3395b656ba0";
+
+    courseRecoveryInProgress = true;
+    setBusy(true);
+    status("Authenticating to recover your existing course payment...");
+
+    try {
+      window.Pi.init({ version: "2.0", sandbox: true });
+
+      const auth = await window.Pi.authenticate(
+        ["username", "payments"],
+        function(incompletePayment) {
+          console.warn("Pi SDK reported an incomplete payment:", incompletePayment);
+        }
+      );
+
+      if (!auth?.accessToken || !auth?.user?.username) {
+        throw new Error("Pi authentication did not return a valid session.");
+      }
+
+      status("Verifying your existing Pi payment with the server...");
+
+      const result = await request("/u2a/shared/complete", {
+        paymentId,
+        txid,
+        accessToken: auth.accessToken,
+        network: NETWORK,
+        paymentType: PAYMENT_TYPE
+      });
+
+      currentQuote = null;
+      status(
+        result.message || "Existing course payment recovered and subscription activated.",
+        "success"
+      );
+      showMyCoursesLink();
+
+    } catch (error) {
+      console.error("Course U2A payment recovery failed:", error);
+      status(
+        "Recovery was not confirmed: " +
+        (error.message || "Unknown error") +
+        ". Do not make another payment.",
+        "error"
+      );
+    } finally {
+      courseRecoveryInProgress = false;
+      setBusy(false);
+    }
+  }
+
+  const courseRecoveryButton = document.createElement("button");
+  courseRecoveryButton.type = "button";
+  courseRecoveryButton.id = "recoverExistingCourseU2APaymentButton";
+  courseRecoveryButton.textContent = "Recover Existing Testnet Pi Payment";
+  courseRecoveryButton.style.cssText =
+    "display:block;width:100%;max-width:420px;margin:16px auto;" +
+    "padding:13px 18px;background:#174ea6;color:white;" +
+    "border:0;border-radius:8px;font-weight:bold;cursor:pointer;";
+  courseRecoveryButton.addEventListener(
+    "click",
+    recoverExistingCourseU2APayment
+  );
+  document.body.appendChild(courseRecoveryButton);
+  // ===== END EXISTING TESTNET COURSE U2A PAYMENT RECOVERY =====
+
   async function payWithPi() {
     if (busy || !currentQuote) return;
 
