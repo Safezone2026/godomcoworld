@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Godomcoworld Pi Sign-In</title>
+<style>
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #0d1117;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+main {
+    width: min(90%, 440px);
+    text-align: center;
+    padding: 28px;
+    background: #161b22;
+    border-radius: 14px;
+}
+</style>
+</head>
+<body>
+<main>
+    <h2>Godomcoworld</h2>
+    <p id="status">Verifying your Pi sign-in...</p>
+</main>
+
+<script>
+(async function () {
+    const status = document.getElementById("status");
+    const API = "https://godomcoworld-backend-testnet.onrender.com";
+
+    function fail(message) {
+        status.textContent = message;
+    }
+
+    try {
+        const params = new URLSearchParams(
+            window.location.hash.slice(1)
+        );
+
+        const accessToken = params.get("access_token");
+        const returnedState = params.get("state");
+        const oauthError = params.get("error");
+        const tokenType = params.get("token_type");
+
+        // Remove OAuth credentials from the address bar immediately.
+        history.replaceState(
+            null,
+            document.title,
+            window.location.pathname + window.location.search
+        );
+
+        const expectedState = sessionStorage.getItem("pi_oauth_state");
+        sessionStorage.removeItem("pi_oauth_state");
+
+        if (oauthError) {
+            throw new Error("Pi authorization was not completed: " + oauthError);
+        }
+
+        if (!expectedState || !returnedState || returnedState !== expectedState) {
+            throw new Error("Sign-in state verification failed. Please try again.");
+        }
+
+        if (!accessToken || tokenType?.toLowerCase() !== "bearer") {
+            throw new Error("Pi did not return a valid access token.");
+        }
+
+        // The backend independently verifies the access token with Pi.
+        const authResponse = await fetch(API + "/api/pi-auth", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                accessToken,
+                wallet_address: null,
+                network: "testnet"
+            })
+        });
+
+        const authResult = await authResponse.json();
+
+        if (!authResponse.ok ||
+            !authResult.success ||
+            !authResult.user?.uid ||
+            !authResult.user?.username) {
+            throw new Error(
+                authResult.message || "Pi identity verification failed."
+            );
+        }
+
+        const username = authResult.user.username;
+
+        // Create or retrieve the user's Testnet wallet.
+        const walletResponse = await fetch(API + "/wallet/create-authenticated", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                network: "testnet"
+            })
+        });
+
+        const walletResult = await walletResponse.json();
+
+        if (!walletResponse.ok || !walletResult.walletId) {
+            throw new Error(
+                walletResult.message || "Testnet wallet creation failed."
+            );
+        }
+
+        if (authResult.user.wallet_address) {
+            localStorage.setItem(
+                "piWalletAddress",
+                authResult.user.wallet_address
+            );
+        } else {
+            localStorage.removeItem("piWalletAddress");
+        }
+
+        localStorage.setItem("username", username);
+        localStorage.setItem("piUsername", username);
+        localStorage.setItem("piUid", authResult.user.uid);
+        localStorage.setItem("walletNetwork", "testnet");
+        localStorage.setItem("walletId_testnet", walletResult.walletId);
+
+        status.textContent = "Sign-in successful. Opening your account...";
+
+        location.replace(
+            "../welcome.html?" +
+            "username=" + encodeURIComponent(username) +
+            "&piUsername=" + encodeURIComponent(username) +
+            "&uid=" + encodeURIComponent(authResult.user.uid) +
+            "&network=testnet" +
+            "&wallet=" + encodeURIComponent(walletResult.walletId)
+        );
+
+    } catch (err) {
+        console.error("Pi OAuth callback failed:", err.message);
+        fail(err.message + " Return to Godomcoworld and try again.");
+    }
+})();
+</script>
+</body>
+</html>

@@ -317,6 +317,12 @@ AI Powered Marketplace • Financial Services • Technology Learning Platform
 🔵 Sign in with Pi
 </a>
 
+<a href="javascript:void(0)"
+   class="hero-btn"
+   onclick="loginPiOAuth()">
+🌐 Sign in with Pi (Browser)
+</a>
+
 </header>
 <section class="section">
 
@@ -903,6 +909,37 @@ async function loginPi(){
 }
 
 </script>
+
+<script>
+// ================= PI OAUTH: ORDINARY BROWSER =================
+async function loginPiOAuth() {
+    try {
+        if (!window.Pi || typeof Pi.signIn !== "function") {
+            throw new Error("Pi Sign-In SDK is unavailable. Reload the page.");
+        }
+
+        const bytes = new Uint8Array(32);
+        crypto.getRandomValues(bytes);
+
+        const state = Array.from(bytes)
+            .map(b => b.toString(16).padStart(2, "0"))
+            .join("");
+
+        sessionStorage.setItem("pi_oauth_state", state);
+
+        Pi.signIn({
+            clientId: "A_zzxEIICrnnimjP_Zo6fbwpLoIaySfA1Iv4vQmWAZw",
+            redirectUri: "https://godomcoworld-testnet.netlify.app/signin/callback.html",
+            scopes: ["username", "wallet_address"],
+            state
+        });
+    } catch (err) {
+        console.error("Pi OAuth initiation failed:", err);
+        alert("Pi browser sign-in could not start:\n" + err.message);
+    }
+}
+</script>
+
 <script src="js/dev-console.js"></script>
 </body>
 
