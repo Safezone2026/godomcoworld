@@ -809,7 +809,13 @@ async function loginPi(){
         ];
 
         const auth = await Pi.authenticate(scopes);
-        console.log("Pi SDK wallet address available:", Boolean(auth?.user?.wallet_address));
+        console.log("[PI SDK AUTH RESULT]", {
+            userFields: Object.keys(auth?.user || {}),
+            hasUid: Boolean(auth?.user?.uid),
+            hasUsername: Boolean(auth?.user?.username),
+            hasWalletAddress: typeof auth?.user?.wallet_address === "string"
+                && auth.user.wallet_address.trim().length > 0
+        });
 
         if (!auth) {
             alert("Pi sign-in was cancelled.");

@@ -138,7 +138,7 @@ background:#16a34a;
 
 <p><strong>Network:</strong> <span id="network">Loading...</span></p>
 
-<p><strong>KYC:</strong> <span id="kyc">Loading...</span></p>
+
 
 </div>
 
@@ -181,8 +181,7 @@ localStorage.getItem("piWalletAddress") || "Not returned by Pi authentication";
 document.getElementById("network").textContent =
 params.get("network") || "Mainnet";
 
-document.getElementById("kyc").textContent =
-params.get("kyc") || "Pending verification";
+
 
 function enterApp(){
 
