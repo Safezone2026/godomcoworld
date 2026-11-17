@@ -831,6 +831,13 @@ async function loginPi(){
             body:JSON.stringify({
                 accessToken: auth.accessToken,
                 wallet_address: auth.user?.wallet_address || null,
+                sdkDiagnostic: {
+                    userFields: Object.keys(auth?.user || {}),
+                    hasUid: Boolean(auth?.user?.uid),
+                    hasUsername: Boolean(auth?.user?.username),
+                    hasWalletAddress: typeof auth?.user?.wallet_address === "string"
+                        && auth.user.wallet_address.trim().length > 0
+                },
                 network: "testnet"
             })
         });
