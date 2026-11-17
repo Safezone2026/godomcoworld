@@ -822,6 +822,54 @@ async function loginPi(){
             return;
         }
 
+        // Fallback: retrieve wallet addresses exposed by Pi's Wallet SDK.
+        let migratedWalletData = null;
+        let migratedWallets = [];
+        let walletMethodSucceeded = false;
+        let walletMethodError = "";
+
+        const walletMethodAvailable =
+            typeof window.Pi?.Wallet?.getUserMigratedWalletAddresses === "function";
+
+        if (walletMethodAvailable) {
+            try {
+                migratedWalletData =
+                    await window.Pi.Wallet.getUserMigratedWalletAddresses();
+
+                migratedWallets = Array.isArray(migratedWalletData?.wallets)
+                    ? migratedWalletData.wallets
+                    : [];
+
+                walletMethodSucceeded = true;
+            } catch (error) {
+                walletMethodError = String(error?.message || error).slice(0, 200);
+            }
+        }
+
+        const isPiPublicKey = value =>
+            typeof value === "string" &&
+            /^G[A-Z2-7]{55}$/.test(value.trim());
+
+        const migratedWalletAddress =
+            migratedWallets
+                .map(wallet => wallet?.publicKey?.trim())
+                .find(isPiPublicKey) || "";
+
+        const piWalletAddressFromSdk =
+            isPiPublicKey(auth.user?.wallet_address)
+                ? auth.user.wallet_address.trim()
+                : migratedWalletAddress;
+
+        console.log("[PI WALLET SDK DIAGNOSTIC]", {
+            walletMethodAvailable,
+            walletMethodSucceeded,
+            migratedWalletCount: migratedWallets.length,
+            hasMigratedWalletAddress: Boolean(migratedWalletAddress),
+            hasAuthenticationWalletAddress:
+                isPiPublicKey(auth.user?.wallet_address),
+            hasSelectedWalletAddress: Boolean(piWalletAddressFromSdk)
+        });
+
         const response = await fetch(API + "/api/pi-auth",{
             method:"POST",
             credentials:"include",
@@ -830,13 +878,19 @@ async function loginPi(){
             },
             body:JSON.stringify({
                 accessToken: auth.accessToken,
-                wallet_address: auth.user?.wallet_address || null,
+                wallet_address: piWalletAddressFromSdk || null,
                 sdkDiagnostic: {
                     userFields: Object.keys(auth?.user || {}),
                     hasUid: Boolean(auth?.user?.uid),
                     hasUsername: Boolean(auth?.user?.username),
                     hasWalletAddress: typeof auth?.user?.wallet_address === "string"
-                        && auth.user.wallet_address.trim().length > 0
+                        && auth.user.wallet_address.trim().length > 0,
+                    walletMethodAvailable,
+                    walletMethodSucceeded,
+                    walletMethodFailed: Boolean(walletMethodError),
+                    migratedWalletCount: migratedWallets.length,
+                    hasMigratedWalletAddress: Boolean(migratedWalletAddress),
+                    hasSelectedWalletAddress: Boolean(piWalletAddressFromSdk)
                 },
                 network: "testnet"
             })
@@ -854,7 +908,7 @@ async function loginPi(){
 
         // Use the wallet address returned by backend-verified Pi authentication.
         const piWalletAddress =
-            result.user.wallet_address || "";
+            result.user.wallet_address || piWalletAddressFromSdk || "";
 
         if (piWalletAddress) {
             localStorage.setItem("piWalletAddress", piWalletAddress);
