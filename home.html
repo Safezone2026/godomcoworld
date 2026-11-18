@@ -827,6 +827,7 @@ async function loginPi(){
         let migratedWallets = [];
         let walletMethodSucceeded = false;
         let walletMethodError = "";
+        let walletMethodErrorCategory = "none";
 
         const walletMethodAvailable =
             typeof window.Pi?.Wallet?.getUserMigratedWalletAddresses === "function";
@@ -842,7 +843,20 @@ async function loginPi(){
 
                 walletMethodSucceeded = true;
             } catch (error) {
-                walletMethodError = String(error?.message || error).slice(0, 200);
+                walletMethodError = String(error?.message || error || "");
+                const errorText = walletMethodError.toLowerCase();
+
+                if (/cancel|reject|denied|declined/.test(errorText)) {
+                    walletMethodErrorCategory = "user_cancelled_or_rejected";
+                } else if (/auth|permission|unauthorized|forbidden|credential/.test(errorText)) {
+                    walletMethodErrorCategory = "authentication_or_permission";
+                } else if (/not supported|not available|undefined|not a function/.test(errorText)) {
+                    walletMethodErrorCategory = "unsupported_operation";
+                } else if (/network|timeout|connection|offline|fetch/.test(errorText)) {
+                    walletMethodErrorCategory = "network_failure";
+                } else {
+                    walletMethodErrorCategory = "unknown_error";
+                }
             }
         }
 
@@ -863,6 +877,8 @@ async function loginPi(){
         console.log("[PI WALLET SDK DIAGNOSTIC]", {
             walletMethodAvailable,
             walletMethodSucceeded,
+            walletMethodFailed: Boolean(walletMethodError),
+            walletMethodErrorCategory,
             migratedWalletCount: migratedWallets.length,
             hasMigratedWalletAddress: Boolean(migratedWalletAddress),
             hasAuthenticationWalletAddress:
@@ -888,6 +904,7 @@ async function loginPi(){
                     walletMethodAvailable,
                     walletMethodSucceeded,
                     walletMethodFailed: Boolean(walletMethodError),
+                    walletMethodErrorCategory,
                     migratedWalletCount: migratedWallets.length,
                     hasMigratedWalletAddress: Boolean(migratedWalletAddress),
                     hasSelectedWalletAddress: Boolean(piWalletAddressFromSdk)
