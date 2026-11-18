@@ -849,6 +849,8 @@ async function loginPi(){
         let walletMethodError = "";
         let walletMethodErrorCategory = "none";
         let walletMethodErrorName = "none";
+        let walletMethodErrorConstructorName = "none";
+        let walletMethodErrorMessage = "";
         let walletMethodErrorCodeCategory = "missing";
 
         const walletMethodAvailable =
@@ -867,23 +869,23 @@ async function loginPi(){
             } catch (error) {
                 walletMethodError = String(error?.message || error || "");
 
-                const allowedErrorNames = [
-                    "Error",
-                    "TypeError",
-                    "ReferenceError",
-                    "NotAllowedError",
-                    "SecurityError",
-                    "AbortError",
-                    "NetworkError",
-                    "InvalidStateError",
-                    "NotSupportedError",
-                    "UnknownError"
-                ];
+                const sanitizeErrorLabel = value =>
+                    String(value || "UnknownError")
+                        .replace(/[^A-Za-z0-9_.-]/g, "")
+                        .slice(0, 80) || "UnknownError";
 
-                walletMethodErrorName =
-                    allowedErrorNames.includes(error?.name)
-                        ? error.name
-                        : "UnknownError";
+                walletMethodErrorName = sanitizeErrorLabel(error?.name);
+                walletMethodErrorConstructorName =
+                    sanitizeErrorLabel(error?.constructor?.name);
+
+                walletMethodErrorMessage = String(
+                    error?.message || error || "No error message supplied"
+                )
+                    .replace(/[\r\n\t]+/g, " ")
+                    .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [REDACTED]")
+                    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED_TOKEN]")
+                    .replace(/\bG[A-Z2-7]{55}\b/g, "[REDACTED_PI_ADDRESS]")
+                    .slice(0, 240);
 
                 const errorCode = error?.code;
                 const errorCodeText =
@@ -979,6 +981,8 @@ async function loginPi(){
                     walletMethodFailed: Boolean(walletMethodError),
                     walletMethodErrorCategory,
                     walletMethodErrorName,
+                    walletMethodErrorConstructorName,
+                    walletMethodErrorMessage,
                     walletMethodErrorCodeCategory,
                     walletAddressScopeRequested,
                     migratedWalletCount: migratedWallets.length,
