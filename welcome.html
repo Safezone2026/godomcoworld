@@ -162,7 +162,10 @@ params.get("username") || "Unknown User";
 document.getElementById("uid").textContent =
 params.get("uid") || "-";
 
-const welcomeNetwork = params.get("network") || "mainnet";
+const welcomeNetwork =
+    params.get("network") ||
+    localStorage.getItem("walletNetwork") ||
+    "testnet";
 const storedWalletId =
 localStorage.getItem("walletId_" + welcomeNetwork);
 
@@ -176,10 +179,10 @@ document.getElementById("wallet").textContent =
         : "Not Assigned");
 
 document.getElementById("piWalletAddress").textContent =
-localStorage.getItem("piWalletAddress") || "Not returned by Pi authentication";
+localStorage.getItem("piWalletAddress") || "";
 
 document.getElementById("network").textContent =
-params.get("network") || "Mainnet";
+welcomeNetwork.toLowerCase() === "testnet" ? "Testnet" : "Mainnet";
 
 
 

@@ -784,10 +784,25 @@ closeGuide();
 const API =
 "https://godomcoworld-backend-testnet.onrender.com";
 
-Pi.init({
-    version: "2.0",
-    sandbox: true
-});
+let piSdkInitializationPromise = null;
+
+async function ensurePiSdkInitialized() {
+    if (!piSdkInitializationPromise) {
+        piSdkInitializationPromise = Promise.resolve().then(() =>
+            Pi.init({
+                version: "2.0",
+                sandbox: true
+            })
+        );
+    }
+
+    try {
+        await piSdkInitializationPromise;
+    } catch (error) {
+        piSdkInitializationPromise = null;
+        throw error;
+    }
+}
 
 // Allow login.html to enter the same Pi authentication flow.
 if (new URLSearchParams(window.location.search).get("startPiLogin") === "1") {
@@ -801,6 +816,8 @@ if (new URLSearchParams(window.location.search).get("startPiLogin") === "1") {
 async function loginPi(){
 
     try{
+
+        await ensurePiSdkInitialized();
 
         const scopes = [
             "username",
@@ -990,6 +1007,34 @@ async function loginPi(){
             localStorage.setItem("piWalletAddress", piWalletAddress);
         } else {
             localStorage.removeItem("piWalletAddress");
+        }
+
+        if (isPiPublicKey(auth.user?.wallet_address)) {
+            alert(
+                "Pi Network authentication response returned your wallet address:\n" +
+                auth.user.wallet_address.trim()
+            );
+        } else if (migratedWalletAddress) {
+            alert(
+                "Pi Network migrated-wallet SDK returned your wallet address:\n" +
+                migratedWalletAddress
+            );
+        } else if (walletMethodError) {
+            alert(
+                "Pi authentication succeeded, but the migrated-wallet request failed.\n" +
+                "SDK error category: " + walletMethodErrorCategory +
+                "\nNo wallet address was returned."
+            );
+        } else if (walletMethodSucceeded) {
+            alert(
+                "Pi authentication succeeded, but the migrated-wallet lookup returned " +
+                "no valid wallet address."
+            );
+        } else {
+            alert(
+                "Pi authentication succeeded, but no wallet address was returned " +
+                "by the authentication response or migrated-wallet lookup."
+            );
         }
 
         // Ordinary Pi users are identified by their Pi username.
