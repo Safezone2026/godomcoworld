@@ -809,6 +809,9 @@ async function loginPi(){
         ];
 
         const auth = await Pi.authenticate(scopes);
+        const walletAddressScopeRequested =
+            Array.isArray(scopes) && scopes.includes("wallet_address");
+
         console.log("[PI SDK AUTH RESULT]", {
             userFields: Object.keys(auth?.user || {}),
             hasUid: Boolean(auth?.user?.uid),
@@ -828,6 +831,8 @@ async function loginPi(){
         let walletMethodSucceeded = false;
         let walletMethodError = "";
         let walletMethodErrorCategory = "none";
+        let walletMethodErrorName = "none";
+        let walletMethodErrorCodeCategory = "missing";
 
         const walletMethodAvailable =
             typeof window.Pi?.Wallet?.getUserMigratedWalletAddresses === "function";
@@ -844,13 +849,61 @@ async function loginPi(){
                 walletMethodSucceeded = true;
             } catch (error) {
                 walletMethodError = String(error?.message || error || "");
-                const errorText = walletMethodError.toLowerCase();
 
-                if (/cancel|reject|denied|declined/.test(errorText)) {
+                const allowedErrorNames = [
+                    "Error",
+                    "TypeError",
+                    "ReferenceError",
+                    "NotAllowedError",
+                    "SecurityError",
+                    "AbortError",
+                    "NetworkError",
+                    "InvalidStateError",
+                    "NotSupportedError",
+                    "UnknownError"
+                ];
+
+                walletMethodErrorName =
+                    allowedErrorNames.includes(error?.name)
+                        ? error.name
+                        : "UnknownError";
+
+                const errorCode = error?.code;
+                const errorCodeText =
+                    String(errorCode ?? "").toLowerCase();
+
+                const errorText =
+                    (walletMethodError + " " +
+                     walletMethodErrorName + " " +
+                     errorCodeText).toLowerCase();
+
+                if (errorCode === undefined || errorCode === null) {
+                    walletMethodErrorCodeCategory = "missing";
+                } else if (/permission|denied|forbidden/.test(errorCodeText)) {
+                    walletMethodErrorCodeCategory = "permission";
+                } else if (/auth|credential|token/.test(errorCodeText)) {
+                    walletMethodErrorCodeCategory = "authentication";
+                } else if (/unsupported|not_supported/.test(errorCodeText)) {
+                    walletMethodErrorCodeCategory = "unsupported";
+                } else if (/network|timeout|connection/.test(errorCodeText)) {
+                    walletMethodErrorCodeCategory = "network";
+                } else if (/cancel|abort/.test(errorCodeText)) {
+                    walletMethodErrorCodeCategory = "cancelled";
+                } else if (typeof errorCode === "number") {
+                    walletMethodErrorCodeCategory = "numeric";
+                } else if (typeof errorCode === "string") {
+                    walletMethodErrorCodeCategory = "other_string";
+                } else {
+                    walletMethodErrorCodeCategory = "other_type";
+                }
+
+                if (/cancel|reject|declined|abort/.test(errorText)) {
                     walletMethodErrorCategory = "user_cancelled_or_rejected";
-                } else if (/auth|permission|unauthorized|forbidden|credential/.test(errorText)) {
+                } else if (/notallowed|securityerror|permission|unauthorized|forbidden/.test(errorText)) {
                     walletMethodErrorCategory = "authentication_or_permission";
-                } else if (/not supported|not available|undefined|not a function/.test(errorText)) {
+                } else if (/auth|credential|token/.test(errorText)) {
+                    walletMethodErrorCategory = "authentication_or_permission";
+                } else if (/not supported|not available|undefined|not a function|notsupportederror/.test(errorText)) {
                     walletMethodErrorCategory = "unsupported_operation";
                 } else if (/network|timeout|connection|offline|fetch/.test(errorText)) {
                     walletMethodErrorCategory = "network_failure";
@@ -879,6 +932,9 @@ async function loginPi(){
             walletMethodSucceeded,
             walletMethodFailed: Boolean(walletMethodError),
             walletMethodErrorCategory,
+            walletMethodErrorName,
+            walletMethodErrorCodeCategory,
+            walletAddressScopeRequested,
             migratedWalletCount: migratedWallets.length,
             hasMigratedWalletAddress: Boolean(migratedWalletAddress),
             hasAuthenticationWalletAddress:
@@ -905,6 +961,9 @@ async function loginPi(){
                     walletMethodSucceeded,
                     walletMethodFailed: Boolean(walletMethodError),
                     walletMethodErrorCategory,
+                    walletMethodErrorName,
+                    walletMethodErrorCodeCategory,
+                    walletAddressScopeRequested,
                     migratedWalletCount: migratedWallets.length,
                     hasMigratedWalletAddress: Boolean(migratedWalletAddress),
                     hasSelectedWalletAddress: Boolean(piWalletAddressFromSdk)
