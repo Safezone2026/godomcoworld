@@ -30,7 +30,7 @@
   container.textContent = "Connecting to Pi Network Testnet...";
 
   try {
-    Pi.init({version:"2.0", sandbox:true});
+    Pi.init({version:"2.0", sandbox:false});
 
     const auth = await Pi.authenticate(["username"], () => {});
 

@@ -673,7 +673,7 @@ function selectCourse(id) {
     status("Authenticating to recover your existing course payment...");
 
     try {
-      window.Pi.init({ version: "2.0", sandbox: true });
+      window.Pi.init({ version: "2.0", sandbox: false });
 
       const auth = await window.Pi.authenticate(
         ["username", "payments"],
@@ -747,7 +747,7 @@ function selectCourse(id) {
     status("Connecting to Pi Network Testnet...");
 
     try {
-      Pi.init({version:"2.0", sandbox:true});
+      Pi.init({version:"2.0", sandbox:false});
 
       const auth = await Pi.authenticate(
         ["username", "payments"],

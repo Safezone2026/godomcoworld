@@ -791,7 +791,7 @@ async function ensurePiSdkInitialized() {
         piSdkInitializationPromise = Promise.resolve().then(() =>
             Pi.init({
                 version: "2.0",
-                sandbox: true
+                sandbox: false
             })
         );
     }
