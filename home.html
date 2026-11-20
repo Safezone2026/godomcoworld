@@ -819,307 +819,35 @@ async function loginPi(){
 
         await ensurePiSdkInitialized();
 
-        const scopes = [
-            "username",
-            "payments",
-            "wallet_address"
-        ];
-
+        const scopes = ["username", "payments"];
         const auth = await Pi.authenticate(scopes);
-        const walletAddressScopeRequested =
-            Array.isArray(scopes) && scopes.includes("wallet_address");
 
         console.log("[PI SDK AUTH RESULT]", {
             userFields: Object.keys(auth?.user || {}),
             hasUid: Boolean(auth?.user?.uid),
-            hasUsername: Boolean(auth?.user?.username),
-            hasWalletAddress: typeof auth?.user?.wallet_address === "string"
-                && auth.user.wallet_address.trim().length > 0
+            hasUsername: Boolean(auth?.user?.username)
         });
 
-        if (!auth) {
-            alert("Pi sign-in was cancelled.");
+        if (!auth || !auth.user?.uid || !auth.user?.username) {
+            alert("Pi sign-in did not return the required user ID and username.");
             return;
         }
 
-        // Fallback: retrieve wallet addresses exposed by Pi's Wallet SDK.
-        let migratedWalletData = null;
-        let migratedWallets = [];
-        let walletMethodSucceeded = false;
-        let walletMethodError = "";
-        let walletMethodErrorCategory = "none";
-        let walletMethodErrorName = "none";
-        let walletMethodErrorConstructorName = "none";
-        let walletMethodErrorMessage = "";
-        let walletMethodErrorCodeCategory = "missing";
-        let walletMethodErrorOwnPropertyNames = [];
-        let walletMethodErrorOwnProperties = {};
-        let walletMethodErrorStack = "";
-        let walletMethodErrorCause = "";
-
-        const walletMethodAvailable =
-            typeof window.Pi?.Wallet?.getUserMigratedWalletAddresses === "function";
-
-        if (walletMethodAvailable) {
-            try {
-                migratedWalletData =
-                    await window.Pi.Wallet.getUserMigratedWalletAddresses();
-
-                migratedWallets = Array.isArray(migratedWalletData?.wallets)
-                    ? migratedWalletData.wallets
-                    : [];
-
-                walletMethodSucceeded = true;
-            } catch (error) {
-                walletMethodError = String(error?.message || error || "");
-
-                const sanitizeWalletDiagnosticText = value =>
-                    String(value ?? "")
-                        .replace(/[\r\n\t]+/g, " ")
-                        .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [REDACTED]")
-                        .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED_TOKEN]")
-                        .replace(/\bG[A-Z2-7]{55}\b/g, "[REDACTED_PI_ADDRESS]")
-                        .replace(/([?&](?:access_token|token|authorization|api_key|apikey|secret|signature)=)[^&\s]+/gi, "$1[REDACTED]")
-                        .slice(0, 1200);
-
-                try {
-                    if (error && (typeof error === "object" || typeof error === "function")) {
-                        walletMethodErrorOwnPropertyNames =
-                            Object.getOwnPropertyNames(error).slice(0, 30);
-
-                        for (const key of walletMethodErrorOwnPropertyNames.slice(0, 20)) {
-                            try {
-                                const descriptor = Object.getOwnPropertyDescriptor(error, key);
-                                const value = descriptor && Object.prototype.hasOwnProperty.call(descriptor, "value")
-                                    ? descriptor.value
-                                    : "[Accessor]";
-
-                                const safeKey = String(key).replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 80);
-
-                                if (!safeKey) continue;
-
-                                if (value === null || ["string", "number", "boolean"].includes(typeof value)) {
-                                    walletMethodErrorOwnProperties[safeKey] =
-                                        typeof value === "string"
-                                            ? sanitizeWalletDiagnosticText(value)
-                                            : value;
-                                } else {
-                                    let nestedKeys = [];
-                                    try {
-                                        nestedKeys = Object.getOwnPropertyNames(value).slice(0, 20);
-                                    } catch (_) {}
-
-                                    walletMethodErrorOwnProperties[safeKey] = {
-                                        type: typeof value,
-                                        ownPropertyNames: nestedKeys
-                                    };
-                                }
-                            } catch (_) {}
-                        }
-                    }
-                } catch (_) {}
-
-                try {
-                    walletMethodErrorStack =
-                        sanitizeWalletDiagnosticText(error?.stack || "");
-                } catch (_) {}
-
-                try {
-                    const cause = error?.cause;
-                    if (cause !== undefined && cause !== null) {
-                        if (typeof cause === "object") {
-                            walletMethodErrorCause = sanitizeWalletDiagnosticText(
-                                JSON.stringify({
-                                    name: cause.name,
-                                    message: cause.message,
-                                    code: cause.code,
-                                    status: cause.status,
-                                    statusCode: cause.statusCode,
-                                    ownPropertyNames: Object.getOwnPropertyNames(cause).slice(0, 20)
-                                })
-                            );
-                        } else {
-                            walletMethodErrorCause = sanitizeWalletDiagnosticText(cause);
-                        }
-                    }
-                } catch (_) {
-                    walletMethodErrorCause = "[Cause could not be inspected]";
-                }
-
-                const sanitizeErrorLabel = value =>
-                    String(value || "UnknownError")
-                        .replace(/[^A-Za-z0-9_.-]/g, "")
-                        .slice(0, 80) || "UnknownError";
-
-                walletMethodErrorName = sanitizeErrorLabel(error?.name);
-                walletMethodErrorConstructorName =
-                    sanitizeErrorLabel(error?.constructor?.name);
-
-                walletMethodErrorMessage = String(
-                    error?.message || error || "No error message supplied"
-                )
-                    .replace(/[\r\n\t]+/g, " ")
-                    .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [REDACTED]")
-                    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED_TOKEN]")
-                    .replace(/\bG[A-Z2-7]{55}\b/g, "[REDACTED_PI_ADDRESS]")
-                    .slice(0, 240);
-
-                const errorCode = error?.code;
-                const errorCodeText =
-                    String(errorCode ?? "").toLowerCase();
-
-                const errorText =
-                    (walletMethodError + " " +
-                     walletMethodErrorName + " " +
-                     errorCodeText).toLowerCase();
-
-                if (errorCode === undefined || errorCode === null) {
-                    walletMethodErrorCodeCategory = "missing";
-                } else if (/permission|denied|forbidden/.test(errorCodeText)) {
-                    walletMethodErrorCodeCategory = "permission";
-                } else if (/auth|credential|token/.test(errorCodeText)) {
-                    walletMethodErrorCodeCategory = "authentication";
-                } else if (/unsupported|not_supported/.test(errorCodeText)) {
-                    walletMethodErrorCodeCategory = "unsupported";
-                } else if (/network|timeout|connection/.test(errorCodeText)) {
-                    walletMethodErrorCodeCategory = "network";
-                } else if (/cancel|abort/.test(errorCodeText)) {
-                    walletMethodErrorCodeCategory = "cancelled";
-                } else if (typeof errorCode === "number") {
-                    walletMethodErrorCodeCategory = "numeric";
-                } else if (typeof errorCode === "string") {
-                    walletMethodErrorCodeCategory = "other_string";
-                } else {
-                    walletMethodErrorCodeCategory = "other_type";
-                }
-
-                if (/cancel|reject|declined|abort/.test(errorText)) {
-                    walletMethodErrorCategory = "user_cancelled_or_rejected";
-                } else if (/notallowed|securityerror|permission|unauthorized|forbidden/.test(errorText)) {
-                    walletMethodErrorCategory = "authentication_or_permission";
-                } else if (/auth|credential|token/.test(errorText)) {
-                    walletMethodErrorCategory = "authentication_or_permission";
-                } else if (/not supported|not available|undefined|not a function|notsupportederror/.test(errorText)) {
-                    walletMethodErrorCategory = "unsupported_operation";
-                } else if (/network|timeout|connection|offline|fetch/.test(errorText)) {
-                    walletMethodErrorCategory = "network_failure";
-                } else {
-                    walletMethodErrorCategory = "unknown_error";
-                }
-            }
-        }
-
-        const isPiPublicKey = value =>
-            typeof value === "string" &&
-            /^G[A-Z2-7]{55}$/.test(value.trim());
-
-        const migratedWalletAddress =
-            migratedWallets
-                .map(wallet => wallet?.publicKey?.trim())
-                .find(isPiPublicKey) || "";
-
-        const piWalletAddressFromSdk =
-            isPiPublicKey(auth.user?.wallet_address)
-                ? auth.user.wallet_address.trim()
-                : migratedWalletAddress;
-
-        console.log("[PI WALLET SDK DIAGNOSTIC]", {
-            walletMethodAvailable,
-            walletMethodSucceeded,
-            walletMethodFailed: Boolean(walletMethodError),
-            walletMethodErrorCategory,
-            walletMethodErrorName,
-            walletMethodErrorCodeCategory,
-            walletAddressScopeRequested,
-            migratedWalletCount: migratedWallets.length,
-            hasMigratedWalletAddress: Boolean(migratedWalletAddress),
-            hasAuthenticationWalletAddress:
-                isPiPublicKey(auth.user?.wallet_address),
-            hasSelectedWalletAddress: Boolean(piWalletAddressFromSdk)
-        });
-
-        const response = await fetch(API + "/api/pi-auth",{
-            method:"POST",
-            credentials:"include",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
+        const response = await fetch(API + "/api/pi-auth", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
                 accessToken: auth.accessToken,
-                wallet_address: piWalletAddressFromSdk || null,
-                sdkDiagnostic: {
-                    userFields: Object.keys(auth?.user || {}),
-                    hasUid: Boolean(auth?.user?.uid),
-                    hasUsername: Boolean(auth?.user?.username),
-                    hasWalletAddress: typeof auth?.user?.wallet_address === "string"
-                        && auth.user.wallet_address.trim().length > 0,
-                    walletMethodAvailable,
-                    walletMethodSucceeded,
-                    walletMethodFailed: Boolean(walletMethodError),
-                    walletMethodErrorCategory,
-                    walletMethodErrorName,
-                    walletMethodErrorConstructorName,
-                    walletMethodErrorMessage,
-                    walletMethodErrorOwnPropertyNames,
-                    walletMethodErrorOwnProperties,
-                    walletMethodErrorStack,
-                    walletMethodErrorCause,
-                    walletMethodErrorCodeCategory,
-                    walletAddressScopeRequested,
-                    migratedWalletCount: migratedWallets.length,
-                    hasMigratedWalletAddress: Boolean(migratedWalletAddress),
-                    hasSelectedWalletAddress: Boolean(piWalletAddressFromSdk)
-                },
                 network: "testnet"
             })
         });
 
-
         const result = await response.json();
 
-
-        if(!response.ok || !result.success || !result.user){
-            localStorage.removeItem("piWalletAddress");
+        if (!response.ok || !result.success || !result.user) {
             alert(result.message || "Pi backend authentication failed.");
             return;
-        }
-
-        // Use the wallet address returned by backend-verified Pi authentication.
-        const piWalletAddress =
-            result.user.wallet_address || piWalletAddressFromSdk || "";
-
-        if (piWalletAddress) {
-            localStorage.setItem("piWalletAddress", piWalletAddress);
-        } else {
-            localStorage.removeItem("piWalletAddress");
-        }
-
-        if (isPiPublicKey(auth.user?.wallet_address)) {
-            alert(
-                "Pi Network authentication response returned your wallet address:\n" +
-                auth.user.wallet_address.trim()
-            );
-        } else if (migratedWalletAddress) {
-            alert(
-                "Pi Network migrated-wallet SDK returned your wallet address:\n" +
-                migratedWalletAddress
-            );
-        } else if (walletMethodError) {
-            alert(
-                "Pi authentication succeeded, but the migrated-wallet request failed.\n" +
-                "SDK error category: " + walletMethodErrorCategory +
-                "\nNo wallet address was returned."
-            );
-        } else if (walletMethodSucceeded) {
-            alert(
-                "Pi authentication succeeded, but the migrated-wallet lookup returned " +
-                "no valid wallet address."
-            );
-        } else {
-            alert(
-                "Pi authentication succeeded, but no wallet address was returned " +
-                "by the authentication response or migrated-wallet lookup."
-            );
         }
 
         // Ordinary Pi users are identified by their Pi username.

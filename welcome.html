@@ -134,7 +134,7 @@ background:#16a34a;
 <p><strong>UID:</strong> <span id="uid">Loading...</span></p>
 
 <p><strong>Wallet ID:</strong> <span id="wallet">Loading...</span></p>
-<p><strong>Pi Wallet Address:</strong> <span id="piWalletAddress">Loading...</span></p>
+
 
 <p><strong>Network:</strong> <span id="network">Loading...</span></p>
 
@@ -178,8 +178,7 @@ document.getElementById("wallet").textContent =
         ? urlWalletId
         : "Not Assigned");
 
-document.getElementById("piWalletAddress").textContent =
-localStorage.getItem("piWalletAddress") || "";
+
 
 document.getElementById("network").textContent =
 welcomeNetwork.toLowerCase() === "testnet" ? "Testnet" : "Mainnet";

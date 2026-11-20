@@ -68,10 +68,7 @@
         <span id="piUid">Not available</span>
       </div>
 
-      <div class="account-row">
-        <span class="account-label">Wallet Address</span>
-        <span id="walletAddress">Not returned by authentication</span>
-      </div>
+
 
       <div class="account-row">
         <span class="account-label">Network</span>
@@ -116,9 +113,7 @@
       document.getElementById("piUid").textContent =
         localStorage.getItem("piUid") || "Not available";
 
-      document.getElementById("walletAddress").textContent =
-        localStorage.getItem("piWalletAddress") ||
-        "Not returned by authentication";
+
 
       const network = (
         localStorage.getItem("walletNetwork") || ""
@@ -159,7 +154,6 @@
               "username",
               "piUsername",
               "piUid",
-              "piWalletAddress",
               "walletNetwork",
               "walletId_testnet"
             ].forEach(key => localStorage.removeItem(key));
