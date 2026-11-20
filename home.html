@@ -852,6 +852,10 @@ async function loginPi(){
         let walletMethodErrorConstructorName = "none";
         let walletMethodErrorMessage = "";
         let walletMethodErrorCodeCategory = "missing";
+        let walletMethodErrorOwnPropertyNames = [];
+        let walletMethodErrorOwnProperties = {};
+        let walletMethodErrorStack = "";
+        let walletMethodErrorCause = "";
 
         const walletMethodAvailable =
             typeof window.Pi?.Wallet?.getUserMigratedWalletAddresses === "function";
@@ -868,6 +872,79 @@ async function loginPi(){
                 walletMethodSucceeded = true;
             } catch (error) {
                 walletMethodError = String(error?.message || error || "");
+
+                const sanitizeWalletDiagnosticText = value =>
+                    String(value ?? "")
+                        .replace(/[\r\n\t]+/g, " ")
+                        .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [REDACTED]")
+                        .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED_TOKEN]")
+                        .replace(/\bG[A-Z2-7]{55}\b/g, "[REDACTED_PI_ADDRESS]")
+                        .replace(/([?&](?:access_token|token|authorization|api_key|apikey|secret|signature)=)[^&\s]+/gi, "$1[REDACTED]")
+                        .slice(0, 1200);
+
+                try {
+                    if (error && (typeof error === "object" || typeof error === "function")) {
+                        walletMethodErrorOwnPropertyNames =
+                            Object.getOwnPropertyNames(error).slice(0, 30);
+
+                        for (const key of walletMethodErrorOwnPropertyNames.slice(0, 20)) {
+                            try {
+                                const descriptor = Object.getOwnPropertyDescriptor(error, key);
+                                const value = descriptor && Object.prototype.hasOwnProperty.call(descriptor, "value")
+                                    ? descriptor.value
+                                    : "[Accessor]";
+
+                                const safeKey = String(key).replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 80);
+
+                                if (!safeKey) continue;
+
+                                if (value === null || ["string", "number", "boolean"].includes(typeof value)) {
+                                    walletMethodErrorOwnProperties[safeKey] =
+                                        typeof value === "string"
+                                            ? sanitizeWalletDiagnosticText(value)
+                                            : value;
+                                } else {
+                                    let nestedKeys = [];
+                                    try {
+                                        nestedKeys = Object.getOwnPropertyNames(value).slice(0, 20);
+                                    } catch (_) {}
+
+                                    walletMethodErrorOwnProperties[safeKey] = {
+                                        type: typeof value,
+                                        ownPropertyNames: nestedKeys
+                                    };
+                                }
+                            } catch (_) {}
+                        }
+                    }
+                } catch (_) {}
+
+                try {
+                    walletMethodErrorStack =
+                        sanitizeWalletDiagnosticText(error?.stack || "");
+                } catch (_) {}
+
+                try {
+                    const cause = error?.cause;
+                    if (cause !== undefined && cause !== null) {
+                        if (typeof cause === "object") {
+                            walletMethodErrorCause = sanitizeWalletDiagnosticText(
+                                JSON.stringify({
+                                    name: cause.name,
+                                    message: cause.message,
+                                    code: cause.code,
+                                    status: cause.status,
+                                    statusCode: cause.statusCode,
+                                    ownPropertyNames: Object.getOwnPropertyNames(cause).slice(0, 20)
+                                })
+                            );
+                        } else {
+                            walletMethodErrorCause = sanitizeWalletDiagnosticText(cause);
+                        }
+                    }
+                } catch (_) {
+                    walletMethodErrorCause = "[Cause could not be inspected]";
+                }
 
                 const sanitizeErrorLabel = value =>
                     String(value || "UnknownError")
@@ -983,6 +1060,10 @@ async function loginPi(){
                     walletMethodErrorName,
                     walletMethodErrorConstructorName,
                     walletMethodErrorMessage,
+                    walletMethodErrorOwnPropertyNames,
+                    walletMethodErrorOwnProperties,
+                    walletMethodErrorStack,
+                    walletMethodErrorCause,
                     walletMethodErrorCodeCategory,
                     walletAddressScopeRequested,
                     migratedWalletCount: migratedWallets.length,
