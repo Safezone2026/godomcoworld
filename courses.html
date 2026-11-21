@@ -665,12 +665,9 @@ function selectCourse(id) {
       return;
     }
 
-    const paymentId = "J7N8UHWh7tjxfyRFPcpCUd1WZU1e";
-    const txid = "bd6aabf4153bf7c83c31cc7c694a9ca849097c53c91d514ce648e3395b656ba0";
-
     courseRecoveryInProgress = true;
     setBusy(true);
-    status("Authenticating to recover your existing course payment...");
+    status("Authenticating and searching for recoverable course payments...");
 
     try {
       window.Pi.init({ version: "2.0", sandbox: false });
@@ -686,23 +683,79 @@ function selectCourse(id) {
         throw new Error("Pi authentication did not return a valid session.");
       }
 
-      status("Verifying your existing Pi payment with the server...");
+      const accessToken = auth.accessToken;
 
-      const result = await request("/u2a/shared/complete", {
-        paymentId,
-        txid,
-        accessToken: auth.accessToken,
-        network: NETWORK,
-        paymentType: PAYMENT_TYPE
+      const discovery = await request("/u2a/shared/recover", {
+        accessToken,
+        network: "testnet",
+        paymentType: "course_subscription"
       });
 
-      currentQuote = null;
-      status(
-        result.message || "Existing course payment recovered and subscription activated.",
-        "success"
-      );
-      showMyCoursesLink();
+      const payments = Array.isArray(discovery.payments)
+        ? discovery.payments
+        : [];
 
+      if (!payments.length) {
+        status(
+          discovery.message ||
+          "No completed, recoverable Testnet course payments were found.",
+          "error"
+        );
+        return;
+      }
+
+      let recovered = 0;
+      const failures = [];
+
+      for (const payment of payments) {
+        try {
+          if (!payment.paymentId || !payment.txid) {
+            throw new Error("The server returned incomplete payment details.");
+          }
+
+          const result = await request("/u2a/shared/complete", {
+            paymentId: payment.paymentId,
+            txid: payment.txid,
+            accessToken,
+            network: "testnet",
+            paymentType: "course_subscription"
+          });
+
+          if (!result || result.success === false) {
+            throw new Error(
+              result?.message || "Course subscription settlement was not confirmed."
+            );
+          }
+
+          recovered++;
+        } catch (paymentError) {
+          console.error(
+            "Course payment recovery failed:",
+            payment.paymentId,
+            paymentError
+          );
+          failures.push(paymentError.message || "Unknown error");
+        }
+      }
+
+      if (recovered > 0) {
+        currentQuote = null;
+        status(
+          "Recovered " + recovered + " course payment(s)." +
+          (failures.length
+            ? " " + failures.length + " payment(s) still need attention."
+            : " Your subscription status has been updated."),
+          "success"
+        );
+        showMyCoursesLink();
+      } else {
+        status(
+          "No course payments were recovered. " +
+          failures.length +
+          " payment(s) could not be settled. Do not make another payment.",
+          "error"
+        );
+      }
     } catch (error) {
       console.error("Course U2A payment recovery failed:", error);
       status(
@@ -720,7 +773,7 @@ function selectCourse(id) {
   const courseRecoveryButton = document.createElement("button");
   courseRecoveryButton.type = "button";
   courseRecoveryButton.id = "recoverExistingCourseU2APaymentButton";
-  courseRecoveryButton.textContent = "Recover Existing Testnet Pi Payment";
+  courseRecoveryButton.textContent = "Recover Testnet Course Payments";
   courseRecoveryButton.style.cssText =
     "display:block;position:fixed;width:calc(100% - 32px);" +
     "max-width:420px;left:50%;transform:translateX(-50%);" +
