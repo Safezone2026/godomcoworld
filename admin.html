@@ -907,22 +907,52 @@ async function markAsPaid(id){
 }
 async function loadLogs(){
   const network = getNetwork();
+  const container = document.getElementById("logsList");
 
-const res = await fetch(
-  API + "/logs?network=" +
-  encodeURIComponent(network)
-);
-  const data = await res.json();
+  try {
+    const res = await fetch(
+      API + "/logs?network=" + encodeURIComponent(network),
+      { credentials: "include" }
+    );
 
-  document.getElementById("logsList").innerHTML =
-    data.map(l => `
-      <div class="card">
-        🧾 ${l.action}<br>
-        💰 ${l.amount || ""} ${l.currency || ""}<br>
-        👤 ${l.walletId || ""}<br>
-        📅 ${new Date(l.date).toLocaleString()}
-      </div>
-    `).join('');
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("Administrator session expired. Please sign in again.");
+    }
+
+    if (!res.ok) {
+      throw new Error("Could not load system logs.");
+    }
+
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error(data.message || "Invalid system logs response.");
+    }
+
+    if (!data.length) {
+      container.textContent = "No Testnet system logs recorded yet.";
+      return;
+    }
+
+    container.replaceChildren();
+
+    data.forEach(log => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.whiteSpace = "pre-line";
+      card.textContent = [
+        "🧾 " + (log.action || "System event"),
+        "💰 " + (log.amount || "") + " " + (log.currency || ""),
+        "👤 " + (log.walletId || ""),
+        "📅 " + (log.date ? new Date(log.date).toLocaleString() : "")
+      ].join("\n");
+
+      container.appendChild(card);
+    });
+  } catch (err) {
+    container.textContent = "Could not load system logs: " + err.message;
+    console.error("SYSTEM LOGS ERROR:", err);
+  }
 }
 
 // PAYMENT SETTINGS 
