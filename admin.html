@@ -309,6 +309,7 @@ let logsLoaded = false;
 let activityLoaded = false;
 let disputesLoaded = false;
 let logisticsLoaded = false;
+let coursesLoaded = false;
 
 function adminRenderCards(containerId, rows, fields) {
   const container = document.getElementById(containerId);
@@ -407,6 +408,11 @@ if (!logisticsLoaded) {
     loadLogistics();
     logisticsLoaded = true;
 }
+
+    if (!coursesLoaded) {
+      loadCourses();
+      coursesLoaded = true;
+    }
 
     loadDeliveries();
     loadUsers();
@@ -1051,13 +1057,32 @@ console.log(
   });
 }
 // ================= LOGISTICS =================
+async function loadCourses() {
+  try {
+    const data = await adminFetch("/admin/courses");
+    adminRenderCards("coursesList", data.courses, [
+      ["Course ID", "id"],
+      ["Slug", "slug"],
+      ["Title", "title"],
+      ["Category", "category"],
+      ["Description", "description"],
+      ["Active", "active"]
+    ]);
+  } catch (error) {
+    adminShowError("coursesList", error.message);
+  }
+}
+
 async function loadLogistics() {
   try {
     const data = await adminFetch("/admin/logistics");
     adminRenderCards("logisticsList", data.logistics, [
-      ["Name", "name"], ["Username", "username"],
-      ["Phone", "phone"], ["Country", "country"],
-      ["Status", "status"]
+      ["Rider", "rider_name"],
+      ["Pi username", "pi_username"],
+      ["Network", "network"],
+      ["Live Test-Pi", "pi_balance"],
+      ["Pending Test-Pi", "pending_pi_balance"],
+      ["Registered", "created_at"]
     ]);
   } catch (error) {
     adminShowError("logisticsList", error.message);
@@ -1070,8 +1095,10 @@ async function loadDeliveries() {
     const data = await adminFetch("/admin/deliveries");
     adminRenderCards("deliveryList", data.deliveries, [
       ["Delivery ID", "id"], ["Order ID", "order_id"],
-      ["Rider", "rider_name"], ["Status", "status"],
-      ["Delivery status", "delivery_status"], ["Date", "created_at"]
+      ["Rider", "rider"], ["Status", "status"],
+      ["Delivery status", "delivery_status"],
+      ["Product", "product_name"], ["Fee", "fee"],
+      ["Date", "created_at"]
     ]);
   } catch (error) {
     adminShowError("deliveryList", error.message);
@@ -1124,8 +1151,9 @@ async function loadActivity() {
   try {
     const data = await adminFetch("/admin/activity");
     adminRenderCards("activityList", data.activities, [
-      ["Action", "action"], ["Wallet", "wallet_id"],
-      ["User", "username"], ["Date", "created_at"]
+      ["Type", "type"],
+      ["Activity", "message"],
+      ["Date", "created_at"]
     ]);
   } catch (error) {
     adminShowError("activityList", error.message);
