@@ -54,6 +54,10 @@
 
 <div id="dashboard" style="display:none;">
 
+<div style="display:flex; justify-content:flex-end; margin:12px 0;">
+  <button type="button" onclick="logout()">Logout</button>
+</div>
+
 <div class="card" id="adminPiSecurityCard">
   <h2>Pi Testnet Admin Security</h2>
   <p id="adminPiIdentityStatus">Pi identity has not been linked.</p>
@@ -270,6 +274,29 @@ async function login() {
     await loadAdminPiWithdrawals();
   } catch (error) {
     alert(error.message || "Could not sign in to the Testnet admin dashboard.");
+  }
+}
+
+async function logout() {
+  try {
+    const res = await fetch(API + "/admin/logout", {
+      method: "POST",
+      credentials: "include"
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok && res.status !== 401 && res.status !== 403) {
+      throw new Error(data.error || data.message || "Admin logout failed.");
+    }
+
+    document.getElementById("adminPass").value = "";
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("loginBox").style.display = "block";
+
+    alert("You have been logged out.");
+  } catch (error) {
+    alert(error.message || "Could not log out. Please try again.");
   }
 }
 
