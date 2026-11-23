@@ -302,43 +302,76 @@ async function authenticateSellerDashboard() {
     throw new Error("Pi SDK could not be initialized.");
   }
 
+  const selectedSellerId = (
+    prompt(
+      "Enter the Seller ID of the Testnet store you want to access:",
+      sellerId
+    ) || ""
+  ).trim();
+
+  if (!/^\d+$/.test(selectedSellerId)) {
+    throw new Error("A valid registered Seller ID is required.");
+  }
+
+  const sourceSellerId = String(sellerId || "").trim();
+  const sourceUsername = String(currentSeller || "").trim();
+
+  if (!/^\d+$/.test(sourceSellerId) || !sourceUsername) {
+    throw new Error(
+      "Your existing linked seller profile is required to authorize another profile."
+    );
+  }
+
   const auth = await Pi.authenticate(
     ["username", "payments"],
     payment => console.warn("Incomplete Pi payment:", payment)
   );
 
-  if (!auth || !auth.accessToken) {
+  if (!auth?.accessToken) {
     throw new Error("Pi authentication did not return an access token.");
   }
 
-  const username = (prompt("Enter your registered Seller username:") || "").trim();
-  if (!username) throw new Error("Seller username is required.");
+  const authorizationToken = await obtainSellerWithdrawalPinToken(
+    API,
+    sourceUsername,
+    auth.accessToken,
+    sourceSellerId
+  );
 
-  const response = await fetch(`${API}/seller/pi-identity/verify`, {
+  const response = await fetch(`${API}/seller/pi-identity/link`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
-      username,
+      sellerId: selectedSellerId,
       accessToken: auth.accessToken,
-      network: "testnet"
+      network: "testnet",
+      authorizationSourceSellerId: sourceSellerId,
+      authorizationToken
     })
   });
 
   const result = await response.json();
-  if (!response.ok || !result.success || !result.sellerId) {
-    if (result.registered === false) {
-      alert("No registered Seller account was found. Please register first.");
-      window.location.href = "marketplace/seller-register.html";
-      return false;
-    }
-    throw new Error(result.message || "Seller identity verification failed.");
+
+  if (!response.ok || !result.success || !result.seller?.id) {
+    throw new Error(
+      result.message || "Unable to link this Pi account to the selected seller."
+    );
   }
 
-  sellerId = String(result.sellerId);
-  currentSeller = result.username;
+  sellerId = String(result.seller.id);
+  currentSeller = result.seller.username;
+
   localStorage.setItem("sellerId", sellerId);
   localStorage.setItem("username", currentSeller);
   localStorage.setItem("walletNetwork", "testnet");
+
+  console.log("Seller Pi identity linked:", {
+    sellerId,
+    username: currentSeller,
+    walletId: result.wallet?.walletId,
+    network: "testnet"
+  });
+
   return true;
 }
 
@@ -860,14 +893,14 @@ async function getSellerPinAccessToken() {
   return token;
 }
 
-async function obtainSellerWithdrawalPinToken(api, username, accessToken) {
+async function obtainSellerWithdrawalPinToken(api, username, accessToken, pinSellerId = sellerId) {
   let pin = await sellerPinPrompt("Enter your Transaction PIN");
   if (pin === null) throw new Error("PIN entry cancelled.");
 
   let response = await fetch(`${api}/seller/security/verify-pin`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({username, accessToken, pin})
+    body: JSON.stringify({username, accessToken, sellerId: String(pinSellerId || ''), pin})
   });
 
   let result = await response.json();
@@ -882,7 +915,7 @@ async function obtainSellerWithdrawalPinToken(api, username, accessToken) {
     response = await fetch(`${api}/seller/security/setup-pin`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({username, accessToken, pin: first})
+      body: JSON.stringify({username, accessToken, sellerId: String(pinSellerId || ''), pin: first})
     });
     result = await response.json();
     if (!response.ok || !result.success) {
@@ -893,7 +926,7 @@ async function obtainSellerWithdrawalPinToken(api, username, accessToken) {
     response = await fetch(`${api}/seller/security/verify-pin`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({username, accessToken, pin})
+      body: JSON.stringify({username, accessToken, sellerId: String(pinSellerId || ''), pin})
     });
     result = await response.json();
   }
