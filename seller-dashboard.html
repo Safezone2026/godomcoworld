@@ -314,13 +314,31 @@ async function authenticateSellerDashboard() {
   }
 
   const sourceSellerId = String(sellerId || "").trim();
-  const sourceUsername = String(currentSeller || "").trim();
 
-  if (!/^\d+$/.test(sourceSellerId) || !sourceUsername) {
+  if (!/^\d+$/.test(sourceSellerId)) {
+    throw new Error("A valid existing linked Seller ID is required.");
+  }
+
+  // Retrieve the exact registered username for the authorization source.
+  const sourceResponse = await fetch(
+    `${API}/seller/pi-identity/${encodeURIComponent(sourceSellerId)}?network=testnet`
+  );
+
+  const sourceResult = await sourceResponse.json();
+
+  if (
+    !sourceResponse.ok ||
+    !sourceResult.success ||
+    !sourceResult.seller ||
+    String(sourceResult.seller.id) !== sourceSellerId ||
+    !String(sourceResult.seller.username || "").trim()
+  ) {
     throw new Error(
-      "Your existing linked seller profile is required to authorize another profile."
+      sourceResult.message || "Could not retrieve the existing seller profile."
     );
   }
+
+  const sourceUsername = String(sourceResult.seller.username).trim();
 
   const auth = await Pi.authenticate(
     ["username", "payments"],
