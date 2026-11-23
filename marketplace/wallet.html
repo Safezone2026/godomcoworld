@@ -56,6 +56,13 @@ select, input[type=number]{
 
 <p id="networkStatus">🟢 Mainnet Wallet</p>
 <p id="walletIdDisplay" style="font-size:11px; color:#aaa;"></p>
+<div id="walletIdentityDisplay"
+     style="margin:12px 0;padding:12px;border:1px solid #555;border-radius:10px;">
+  <p>Pi username: <strong id="walletPiUsername">-</strong></p>
+  <p>Godomcoworld username: <strong id="walletAccountUsername">-</strong></p>
+  <p>Role: <strong id="walletAccountRole">-</strong></p>
+  <p>Profile ID: <strong id="walletProfileId">-</strong></p>
+</div>
 <button onclick="
 localStorage.removeItem('username');
 location.reload();
@@ -222,64 +229,124 @@ async function loadRates() {
 let currentNetwork =
 getWalletNetwork();
 
-// ================= USER =================
-let username = localStorage.getItem("username");
+const walletParams = new URLSearchParams(window.location.search);
+const walletRole = walletParams.get("role") || "user";
+const selectedSellerId = walletParams.get("sellerId") || "";
+const selectedSellerUsername = walletParams.get("username") || "";
+const isSellerWallet = walletRole === "seller" && Boolean(selectedSellerId);
 
-if (!username) {
+if (isSellerWallet) {
+  currentNetwork = "testnet";
+  localStorage.setItem("walletNetwork", "testnet");
+
+  const networkSelect = document.getElementById("walletNetwork");
+  if (networkSelect) {
+    networkSelect.value = "testnet";
+    networkSelect.disabled = true;
+  }
+}
+
+// ================= PROFILE IDENTITY =================
+let username = isSellerWallet
+  ? selectedSellerUsername
+  : localStorage.getItem("username");
+
+if (!isSellerWallet && !username) {
   username = prompt("Enter your username (same every time)");
+  if (!username) {
+    throw new Error("Wallet username is required.");
+  }
   localStorage.setItem("username", username);
 }
 
-let walletId =
-  localStorage.getItem(
-    "walletId_" + currentNetwork
-  );
+let walletId = null;
 
-// ================= LOAD WALLET =================
+function displayWalletIdentity({piUsername, accountUsername, role, profileId}) {
+  document.getElementById("walletPiUsername").textContent = piUsername || "Not linked";
+  document.getElementById("walletAccountUsername").textContent = accountUsername || "-";
+  document.getElementById("walletAccountRole").textContent = role || "-";
+  document.getElementById("walletProfileId").textContent = profileId || "Ordinary account";
+}
+
 async function initWallet() {
+  if (isSellerWallet) {
+    // Seller wallets must come from the selected seller's authoritative identity.
+    // Never create or substitute an ordinary-user wallet here.
+    try {
+      const response = await fetch(
+        `${API}/seller/pi-identity/${encodeURIComponent(selectedSellerId)}?network=testnet`
+      );
+      const data = await response.json();
 
-  walletId =
-    localStorage.getItem(
-      "walletId_" + currentNetwork
-    );
+      if (!response.ok || !data.success || !data.wallet?.walletId) {
+        throw new Error(data.message || "Selected seller wallet could not be verified.");
+      }
 
-  // ✅ If wallet already exists → DO NOT create again
+      if (String(data.seller?.id) !== String(selectedSellerId)) {
+        throw new Error("Seller identity mismatch. Wallet access stopped.");
+      }
+
+      walletId = data.wallet.walletId;
+      username = data.seller.username || selectedSellerUsername;
+
+      displayWalletIdentity({
+        piUsername: data.pi?.username,
+        accountUsername: username,
+        role: "Seller",
+        profileId: "Seller ID " + selectedSellerId
+      });
+
+      document.getElementById("walletIdDisplay").textContent =
+        "Wallet ID: " + walletId;
+
+      await loadBalance();
+      return;
+
+    } catch (error) {
+      console.error("Seller wallet identity error:", error);
+      document.getElementById("walletIdDisplay").textContent =
+        "Seller wallet verification failed";
+      alert(error.message || "Unable to verify this seller wallet.");
+      return;
+    }
+  }
+
+  // Ordinary-user wallet: preserve its existing network-specific storage.
+  walletId = localStorage.getItem("walletId_" + currentNetwork);
+
+  displayWalletIdentity({
+    piUsername: localStorage.getItem("piUsername") || "Not linked",
+    accountUsername: username,
+    role: "Ordinary User",
+    profileId: "User account"
+  });
+
   if (walletId) {
-    console.log("Using existing wallet:", walletId);
-
     document.getElementById("walletIdDisplay").textContent =
       "Wallet ID: " + walletId;
-
     await loadBalance();
     return;
   }
 
-  // Only create if no wallet exists...
   const res = await fetch(API + "/wallet/create", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-  username: username.trim(),
-  network: currentNetwork,
-})
+      username: username.trim(),
+      network: currentNetwork
+    })
   });
 
   const data = await res.json();
 
-if (!data.walletId) {
-  console.error("Wallet creation failed:", data);
-  alert(data.message || "Failed to create wallet.");
-  return;
-}
+  if (!data.walletId) {
+    console.error("Wallet creation failed:", data);
+    alert(data.message || "Failed to create wallet.");
+    return;
+  }
 
-walletId = data.walletId;
-
-localStorage.setItem(
-  "walletId_" + currentNetwork,
-  walletId
-);
-
-console.log("Wallet created:", walletId);
+  walletId = data.walletId;
+  localStorage.setItem("walletId_" + currentNetwork, walletId);
 
   document.getElementById("walletIdDisplay").textContent =
     "Wallet ID: " + walletId;
@@ -324,6 +391,13 @@ function connectWallet(){
   alert("Wallet connected ✅\nWallet ID: " + walletId);
 }
 async function switchWalletNetwork(){
+
+  if (isSellerWallet) {
+    currentNetwork = "testnet";
+    document.getElementById("walletNetwork").value = "testnet";
+    alert("Seller profile wallets are currently available on Testnet only.");
+    return;
+  }
 
   currentNetwork =
     document.getElementById("walletNetwork").value;
@@ -742,17 +816,17 @@ async function depositPi() {
 }
 // updateWalletDisplay
 async function updateWalletDisplay() {
-  const walletId = localStorage.getItem("walletId_" + currentNetwork);
+  const selectedWalletId = walletId;
   const balanceElement = document.getElementById("piBalance");
 
-  if (!walletId) {
+  if (!selectedWalletId) {
     if (balanceElement) balanceElement.innerText = "0 π";
     return;
   }
 
   try {
     const res = await fetch(
-      `${API}/wallet/${encodeURIComponent(walletId)}?network=${encodeURIComponent(currentNetwork)}`
+      `${API}/wallet/${encodeURIComponent(selectedWalletId)}?network=${encodeURIComponent(currentNetwork)}`
     );
 
     if (!res.ok) throw new Error("Unable to load wallet balance");
@@ -778,9 +852,97 @@ function clearTransactionAuthorization(){
   transactionAuthorizationExpiresAt = 0;
 }
 
+
+async function setupSellerTransactionPin(pin) {
+  if (!isSellerWallet || !selectedSellerId) {
+    throw new Error("A selected Seller profile is required.");
+  }
+
+  if (!await authenticatePi()) {
+    throw new Error("Pi authentication is required to set up this Seller PIN.");
+  }
+
+  const sellerUsername = String(
+    username || selectedSellerUsername || piAuthenticatedUser?.username || ""
+  ).trim();
+
+  if (!sellerUsername || !piAccessToken) {
+    throw new Error("Verified Seller Pi identity is unavailable. Please sign in again.");
+  }
+
+  const response = await fetch(API + "/seller/security/setup-pin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: sellerUsername,
+      sellerId: String(selectedSellerId),
+      accessToken: piAccessToken,
+      pin
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "Unable to create the Seller Transaction PIN.");
+  }
+
+  return data;
+}
+
+async function verifySellerTransactionPin(pin) {
+  if (!isSellerWallet || !selectedSellerId) {
+    throw new Error("A selected Seller profile is required.");
+  }
+
+  if (!await authenticatePi()) {
+    throw new Error("Pi authentication is required to verify this Seller PIN.");
+  }
+
+  const sellerUsername = String(
+    username || selectedSellerUsername || piAuthenticatedUser?.username || ""
+  ).trim();
+
+  if (!sellerUsername || !piAccessToken) {
+    throw new Error("Verified Seller Pi identity is unavailable. Please sign in again.");
+  }
+
+  const response = await fetch(API + "/seller/security/verify-pin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: sellerUsername,
+      sellerId: String(selectedSellerId),
+      accessToken: piAccessToken,
+      pin
+    })
+  });
+
+  const data = await response.json();
+
+  return { response, data };
+}
+
 async function loadSecurityStatus(){
 
   if(!walletId){
+    return;
+  }
+
+  if (isSellerWallet) {
+    const status = document.getElementById("securityStatus");
+    const setupArea = document.getElementById("pinSetupArea");
+    const changeArea = document.getElementById("pinChangeArea");
+
+    if (setupArea) setupArea.style.display = "none";
+    if (changeArea) changeArea.style.display = "none";
+
+    if (status) {
+      status.textContent =
+        "Seller Transaction PIN is verified securely against Seller ID " +
+        selectedSellerId +
+        ". If no PIN exists, you will be prompted to create one when authorizing a transaction.";
+    }
     return;
   }
 
@@ -847,6 +1009,33 @@ async function loadSecurityStatus(){
 
 async function setupTransactionPin(){
 
+  if (isSellerWallet) {
+    const pin = document.getElementById("transactionPin").value.trim();
+    const confirmPin = document.getElementById("transactionPinConfirm").value.trim();
+    const message = document.getElementById("securityMessage");
+
+    if (!/^\d{4,6}$/.test(pin)) {
+      message.textContent = "PIN must contain 4 to 6 digits.";
+      return;
+    }
+    if (pin !== confirmPin) {
+      message.textContent = "PIN confirmation does not match.";
+      return;
+    }
+
+    try {
+      await setupSellerTransactionPin(pin);
+      document.getElementById("transactionPin").value = "";
+      document.getElementById("transactionPinConfirm").value = "";
+      message.textContent = "Seller Transaction PIN created successfully.";
+      await loadSecurityStatus();
+    } catch (error) {
+      message.textContent = error.message || "Unable to create Seller PIN.";
+    }
+    return;
+  }
+
+
   const pin =
     document.getElementById("transactionPin").value.trim();
 
@@ -911,6 +1100,12 @@ async function setupTransactionPin(){
 
 
 async function changeTransactionPin(){
+
+  if (isSellerWallet) {
+    alert("Seller PIN changes are not available through this wallet page. No ordinary-user PIN endpoint will be used for this Seller profile.");
+    return;
+  }
+
 
   const currentPin =
     document.getElementById("currentTransactionPin").value.trim();
@@ -1093,6 +1288,70 @@ function requestMaskedTransactionPin(message) {
 }
 
 async function requestTransactionAuthorization(operationName){
+
+  if (isSellerWallet) {
+    clearTransactionAuthorization();
+
+    if (!walletId || !selectedSellerId) {
+      alert("Seller wallet identity is not initialized.");
+      return null;
+    }
+
+    try {
+      const pin = await requestMaskedTransactionPin(
+        "Enter the Transaction PIN for Seller ID " + selectedSellerId +
+        " to " + operationName.toLowerCase() + ":"
+      );
+
+      if (pin === null) return null;
+
+      const result = await verifySellerTransactionPin(pin);
+      let data = result.data;
+
+      if (result.response.status === 404) {
+        const createPin = await requestMaskedTransactionPin(
+          "No Transaction PIN exists for this Seller profile. Create a new 4–6 digit Seller PIN:"
+        );
+        if (createPin === null) return null;
+
+        const confirmPin = await requestMaskedTransactionPin(
+          "Confirm the new Seller Transaction PIN:"
+        );
+        if (confirmPin === null) return null;
+
+        if (createPin !== confirmPin) {
+          alert("PIN confirmation does not match. No PIN was created.");
+          return null;
+        }
+
+        await setupSellerTransactionPin(createPin);
+
+        const retry = await verifySellerTransactionPin(createPin);
+        data = retry.data;
+
+        if (!retry.response.ok || !data.success || !data.authorizationToken) {
+          alert(data.message || "Seller PIN was created, but verification did not succeed. Please try again.");
+          return null;
+        }
+      } else if (!result.response.ok || !data.success || !data.authorizationToken) {
+        alert(data.message || "Seller Transaction PIN verification failed.");
+        return null;
+      }
+
+      transactionAuthorizationToken = data.authorizationToken;
+      transactionAuthorizationExpiresAt = data.expiresAt
+        ? new Date(data.expiresAt).getTime()
+        : Date.now() + (5 * 60 * 1000);
+
+      return transactionAuthorizationToken;
+
+    } catch (error) {
+      console.error("Seller Transaction PIN error:", error);
+      alert(error.message || "Unable to verify the Seller Transaction PIN.");
+      return null;
+    }
+  }
+
 
   clearTransactionAuthorization();
 
@@ -1565,17 +1824,9 @@ async function performSwap(){
 async function loadSwapHistory(){
 
   console.log("loadSwapHistory()", {
-    walletId:
-      localStorage.getItem(
-        "walletId_" + currentNetwork
-      ),
+    walletId,
     currentNetwork
   });
-
-  const walletId =
-    localStorage.getItem(
-      "walletId_" + currentNetwork
-    );
 
   if(!walletId){
     return;
@@ -1944,10 +2195,7 @@ async function requestWithdrawal(){
 
   }
 
-  const currentWalletId =
-    localStorage.getItem(
-      "walletId_" + currentNetwork
-    );
+  const currentWalletId = walletId;
 
   if(!currentWalletId){
 
@@ -2029,17 +2277,9 @@ async function requestWithdrawal(){
 async function loadWithdrawals(){
 
   console.log("loadWithdrawals()", {
-    walletId:
-      localStorage.getItem(
-        "walletId_" + currentNetwork
-      ),
+    walletId,
     currentNetwork
   });
-
-  const walletId =
-    localStorage.getItem(
-      "walletId_" + currentNetwork
-    );
 
   if(!walletId){
     return;
@@ -2226,12 +2466,29 @@ window.onload = async function(){
 <nav class="bottom-nav">
 <a href="/index.html"><span>🏠</span><p>Home</p></a>
 <a href="/finance.html"><span>💰</span><p>Finance</p></a>
-<a href="/marketplace/wallet.html"><span>👛</span><p>Wallet</p></a>
+<a id="walletNavLink" href="/marketplace/wallet.html"><span>👛</span><p>Wallet</p></a>
 <a href="/history.html"><span>🧾</span><p>History</p></a>
 <a href="/support.html"><span>🆘</span><p>Support</p></a>
 <a href="/chatbot.html"><span>🤖</span><p>AI Help</p></a>
 <a href="/dashboard.html"><span>📊</span><p>Dashboard</p></a>
 </nav>
+
+
+<script>
+(function preserveSelectedSellerWalletNavigation() {
+  const link = document.getElementById("walletNavLink");
+  if (!link) return;
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("role") === "seller" && params.get("sellerId")) {
+    link.href =
+      "/marketplace/wallet.html?role=seller&sellerId=" +
+      encodeURIComponent(params.get("sellerId")) +
+      "&username=" +
+      encodeURIComponent(params.get("username") || "");
+  }
+})();
+</script>
 
 <script src="../js/dev-console.js"></script>
 <script src="../js/receipt.js"></script>
