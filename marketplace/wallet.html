@@ -287,33 +287,32 @@ async function authorizeSellerWalletEntry() {
     throw new Error("Pi authentication is required to open this seller wallet.");
   }
 
-  let pin = prompt(
+  let pin = await requestMaskedTransactionPin(
     "Enter the Transaction PIN for Seller ID " +
-    selectedSellerId + " to open this wallet:"
+    selectedSellerId + " to open this wallet."
   );
 
-  if (pin === null || !String(pin).trim()) {
+  if (pin === null) {
     throw new Error("Wallet access cancelled. Transaction PIN is required.");
   }
 
   let result = await verifySellerTransactionPin(String(pin).trim());
 
   if (result.response.status === 404) {
-    const newPin = prompt(
+    const newPin = await requestMaskedTransactionPin(
       "Create a 4–6 digit Transaction PIN for Seller ID " +
-      selectedSellerId + ":"
+      selectedSellerId + "."
     );
 
-    if (newPin === null || !/^\d{4,6}$/.test(String(newPin).trim())) {
-      throw new Error("A valid 4–6 digit PIN is required.");
+    if (newPin === null) {
+      throw new Error("PIN setup cancelled.");
     }
 
-    const confirmation = prompt("Confirm the new Transaction PIN:");
+    const confirmation = await requestMaskedTransactionPin(
+      "Confirm the new Transaction PIN."
+    );
 
-    if (
-      confirmation === null ||
-      String(confirmation).trim() !== String(newPin).trim()
-    ) {
+    if (confirmation === null || confirmation !== newPin) {
       throw new Error("PIN confirmation does not match.");
     }
 
