@@ -349,12 +349,6 @@ async function authenticateSellerDashboard() {
     throw new Error("Pi authentication did not return an access token.");
   }
 
-  const authorizationToken = await obtainSellerWithdrawalPinToken(
-    API,
-    sourceUsername,
-    auth.accessToken,
-    sourceSellerId
-  );
 
   const response = await fetch(`${API}/seller/pi-identity/link`, {
     method: "POST",
@@ -364,7 +358,6 @@ async function authenticateSellerDashboard() {
       accessToken: auth.accessToken,
       network: "testnet",
       authorizationSourceSellerId: sourceSellerId,
-      authorizationToken
     })
   });
 

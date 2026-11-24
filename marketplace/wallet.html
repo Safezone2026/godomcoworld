@@ -277,6 +277,61 @@ function displayWalletIdentity({piUsername, accountUsername, role, profileId}) {
   document.getElementById("walletProfileId").textContent = profileId || "Ordinary account";
 }
 
+
+async function authorizeSellerWalletEntry() {
+  if (!isSellerWallet || !selectedSellerId) {
+    throw new Error("Seller wallet identity is missing.");
+  }
+
+  if (!await authenticatePi()) {
+    throw new Error("Pi authentication is required to open this seller wallet.");
+  }
+
+  let pin = prompt(
+    "Enter the Transaction PIN for Seller ID " +
+    selectedSellerId + " to open this wallet:"
+  );
+
+  if (pin === null || !String(pin).trim()) {
+    throw new Error("Wallet access cancelled. Transaction PIN is required.");
+  }
+
+  let result = await verifySellerTransactionPin(String(pin).trim());
+
+  if (result.response.status === 404) {
+    const newPin = prompt(
+      "Create a 4–6 digit Transaction PIN for Seller ID " +
+      selectedSellerId + ":"
+    );
+
+    if (newPin === null || !/^\d{4,6}$/.test(String(newPin).trim())) {
+      throw new Error("A valid 4–6 digit PIN is required.");
+    }
+
+    const confirmation = prompt("Confirm the new Transaction PIN:");
+
+    if (
+      confirmation === null ||
+      String(confirmation).trim() !== String(newPin).trim()
+    ) {
+      throw new Error("PIN confirmation does not match.");
+    }
+
+    await setupSellerTransactionPin(String(newPin).trim());
+    result = await verifySellerTransactionPin(String(newPin).trim());
+  }
+
+  if (!result.response.ok || !result.data?.success) {
+    throw new Error(
+      result.data?.message ||
+      "PIN verification failed. Seller wallet access denied."
+    );
+  }
+
+  // Do not retain the verification token for financial operations.
+  return true;
+}
+
 async function initWallet() {
   if (isSellerWallet) {
     // Seller wallets must come from the selected seller's authoritative identity.
@@ -308,6 +363,7 @@ async function initWallet() {
       document.getElementById("walletIdDisplay").textContent =
         "Wallet ID: " + walletId;
 
+      await authorizeSellerWalletEntry();
       await loadBalance();
       return;
 
