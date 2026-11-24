@@ -100,6 +100,15 @@ Reset Wallet
 
   <p id="securityStatus">Checking Transaction PIN status...</p>
 
+    <button
+      id="sellerPinResetButton"
+      type="button"
+      style="display:none;"
+      onclick="resetSellerTransactionPin()"
+    >
+      Reset this Seller Profile's Transaction PIN
+    </button>
+
   <div id="pinSetupArea">
     <input
       type="password"
@@ -890,6 +899,70 @@ async function setupSellerTransactionPin(pin) {
   return data;
 }
 
+async function resetSellerTransactionPin() {
+  if (!isSellerWallet || !selectedSellerId) {
+    throw new Error("A selected Seller profile is required.");
+  }
+
+  const confirmed = confirm(
+    "Reset the Transaction PIN for Seller ID " + selectedSellerId +
+    " only? Other Seller profiles will not be affected."
+  );
+
+  if (!confirmed) return;
+
+  if (!await authenticatePi()) {
+    throw new Error("Pi authentication is required to reset this Seller PIN.");
+  }
+
+  const sellerUsername = String(
+    username || selectedSellerUsername || piAuthenticatedUser?.username || ""
+  ).trim();
+
+  if (!sellerUsername || !piAccessToken) {
+    throw new Error("Verified Seller Pi identity is unavailable. Please sign in again.");
+  }
+
+  const response = await fetch(API + "/seller/security/reset-pin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: sellerUsername,
+      sellerId: String(selectedSellerId),
+      accessToken: piAccessToken
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "Unable to reset this Seller Transaction PIN.");
+  }
+
+  clearTransactionAuthorization();
+
+  const setupArea = document.getElementById("pinSetupArea");
+  const resetButton = document.getElementById("sellerPinResetButton");
+  const status = document.getElementById("securityStatus");
+  const message = document.getElementById("securityMessage");
+
+  if (setupArea) setupArea.style.display = "block";
+  if (resetButton) resetButton.style.display = "none";
+
+  if (status) {
+    status.textContent =
+      "PIN reset completed for Seller ID " + selectedSellerId +
+      ". Create a new PIN for this profile.";
+  }
+
+  if (message) {
+    message.textContent = "Your other Seller profiles were not changed.";
+  }
+
+  alert("Seller ID " + selectedSellerId +
+    " Transaction PIN was reset. You can now create a new PIN.");
+}
+
 async function verifySellerTransactionPin(pin) {
   if (!isSellerWallet || !selectedSellerId) {
     throw new Error("A selected Seller profile is required.");
@@ -936,6 +1009,9 @@ async function loadSecurityStatus(){
 
     if (setupArea) setupArea.style.display = "none";
     if (changeArea) changeArea.style.display = "none";
+
+      const resetButton = document.getElementById("sellerPinResetButton");
+      if (resetButton) resetButton.style.display = "inline-block";
 
     if (status) {
       status.textContent =
