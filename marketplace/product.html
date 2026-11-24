@@ -51,6 +51,15 @@ async function loadProduct() {
       return;
     }
 
+    const galleryImages = [
+      ...(Array.isArray(product.imagePaths) ? product.imagePaths : []),
+      product.imagePath
+    ]
+      .filter(Boolean)
+      .map(imagePath => String(imagePath).startsWith("http")
+        ? String(imagePath)
+        : "https://godomcoworld-backend-testnet.onrender.com" + String(imagePath))
+      .filter((imagePath, index, images) => images.indexOf(imagePath) === index);
     const storedPrice = Number(product.price) || 0;
     const currency = String(product.currency || "").trim().toUpperCase();
     let pi = storedPrice;
@@ -74,13 +83,15 @@ async function loadProduct() {
     productDetails.innerHTML = `
       <div style="max-width:400px;">
         <img
-  src="${product.imagePath?.startsWith("http")
-    ? product.imagePath
-    : "https://godomcoworld-backend-testnet.onrender.com" + product.imagePath}"
-  style="width:100%; border-radius:10px;"
-  alt="${product.name}"
-  onerror="this.style.display='none';"
->
+          id="productMainImage"
+          src="${galleryImages[0] || ''}"
+          style="width:100%; max-height:420px; object-fit:contain; border-radius:10px;"
+          alt="${product.name}"
+          onerror="this.style.display='none';"
+        >
+        <div id="productImageThumbnails"
+             style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        </div>
         <h2>${product.name}</h2>
         <p>${product.description}</p>
         <h3 style="font-size:24px;">
@@ -94,6 +105,28 @@ async function loadProduct() {
         </button>
       </div>
     `;
+    const mainImage = document.getElementById("productMainImage");
+    const thumbnails = document.getElementById("productImageThumbnails");
+
+    if (galleryImages.length > 1 && mainImage && thumbnails) {
+      galleryImages.forEach((imageUrl, index) => {
+        const thumbnail = document.createElement("button");
+        thumbnail.type = "button";
+        thumbnail.style.cssText = "padding:3px; border:1px solid #ccc; border-radius:6px; background:white; cursor:pointer;";
+
+        const image = document.createElement("img");
+        image.src = imageUrl;
+        image.alt = `${product.name} image ${index + 1}`;
+        image.style.cssText = "width:75px; height:75px; object-fit:cover; border-radius:4px;";
+
+        thumbnail.appendChild(image);
+        thumbnail.addEventListener("click", () => {
+          mainImage.src = imageUrl;
+        });
+
+        thumbnails.appendChild(thumbnail);
+      });
+    }
   } catch (err) {
     console.error(err);
     productDetails.innerHTML = "<p>Error loading product</p>";
