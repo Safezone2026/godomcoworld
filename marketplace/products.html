@@ -300,7 +300,75 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
         `product.html?id=${encodeURIComponent(product.id)}&network=${encodeURIComponent(CURRENT_NETWORK)}`;
     });
 
-    // 🗑️ DELETE BUTTON
+
+function requestProductDeletePin() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:999999;display:flex;" +
+      "align-items:center;justify-content:center;" +
+      "background:rgba(0,0,0,.7);padding:20px;";
+
+    const dialog = document.createElement("div");
+    dialog.style.cssText =
+      "width:100%;max-width:360px;padding:24px;border-radius:12px;" +
+      "background:#fff;color:#222;";
+
+    const title = document.createElement("h3");
+    title.textContent = "Confirm Transaction PIN";
+
+    const input = document.createElement("input");
+    input.type = "password";
+    input.inputMode = "numeric";
+    input.autocomplete = "current-password";
+    input.maxLength = 6;
+    input.placeholder = "Enter 4–6 digit PIN";
+    input.style.cssText =
+      "width:100%;box-sizing:border-box;padding:12px;" +
+      "margin:12px 0;border:1px solid #ccc;border-radius:6px;";
+
+    const confirmButton = document.createElement("button");
+    confirmButton.textContent = "Verify PIN";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.textContent = "Cancel";
+    cancelButton.style.marginLeft = "10px";
+
+    let finished = false;
+    function close(value) {
+      if (finished) return;
+      finished = true;
+      overlay.remove();
+      resolve(value);
+    }
+
+    confirmButton.onclick = () => {
+      const value = input.value.trim();
+      if (!/^[0-9]{4,6}$/.test(value)) {
+        alert("Enter a valid 4–6 digit PIN.");
+        return;
+      }
+      close(value);
+    };
+
+    cancelButton.onclick = () => close(null);
+    overlay.onclick = (event) => {
+      if (event.target === overlay) close(null);
+    };
+
+    input.onkeydown = (event) => {
+      if (event.key === "Enter") confirmButton.click();
+      if (event.key === "Escape") close(null);
+    };
+
+    dialog.append(title, input, confirmButton, cancelButton);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    input.focus();
+  });
+}
+
+// 🗑️ DELETE BUTTON
     if (product.sellerUsername === currentSellerUsername) {
       const delBtn = document.createElement('button');
       delBtn.textContent = 'Delete';
@@ -308,25 +376,89 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
       delBtn.style.color = '#fff';
 
       delBtn.onclick = async () => {
-        if (!confirm("Are you sure?")) return;
+        if (!confirm("Are you sure you want to delete this product?")) return;
 
         try {
-          const res = await fetch(`${API_URL}/delete-product`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: product.id,
-              network: CURRENT_NETWORK
-            })
+          let requestBody = {
+            id: product.id,
+            network: CURRENT_NETWORK
+          };
+
+          if (String(CURRENT_NETWORK).toLowerCase() === "testnet") {
+            if (!window.Pi || typeof window.Pi.authenticate !== "function") {
+              throw new Error("Pi authentication is unavailable. Please sign in again.");
+            }
+
+            const sellerId = localStorage.getItem("sellerId");
+            if (!sellerId) {
+              throw new Error("Seller profile ID is missing. Please select your seller profile again.");
+            }
+
+            const auth = await window.Pi.authenticate(["username"], () => {});
+            const accessToken = auth && auth.accessToken;
+            if (!accessToken) {
+              throw new Error("Pi authentication failed. Please sign in again.");
+            }
+
+            const pin = await requestProductDeletePin();
+            if (pin === null) return;
+            if (!pin.trim()) {
+              throw new Error("Transaction PIN is required.");
+            }
+
+            const verifyResponse = await fetch(`${API_URL}/seller/security/verify-pin`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                username: currentSellerUsername,
+                sellerId,
+                accessToken,
+                pin: pin.trim()
+              })
+            });
+
+            const verification = await verifyResponse.json();
+            if (!verifyResponse.ok || verification.success !== true) {
+              throw new Error(verification.message || "Transaction PIN verification failed.");
+            }
+
+            const authorizationToken = verification.authorizationToken;
+
+            if (!authorizationToken) {
+              throw new Error("PIN verification did not return an authorization token.");
+            }
+
+            requestBody = {
+              ...requestBody,
+              username: currentSellerUsername,
+              sellerId,
+              accessToken,
+              authorizationToken
+            };
+          }
+
+          const endpoint =
+            String(CURRENT_NETWORK).toLowerCase() === "testnet"
+              ? `${API_URL}/seller/delete-product`
+              : `${API_URL}/delete-product`;
+
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
           });
 
           const result = await res.json();
-          alert(result.message);
-          loadProducts();
+          if (!res.ok || result.success !== true) {
+            throw new Error(result.message || "Product deletion failed.");
+          }
+
+          alert(result.message || "Product deleted successfully.");
+          await loadProducts();
 
         } catch (err) {
-          console.error(err);
-          alert('Delete failed');
+          console.error("Product deletion failed:", err);
+          alert(err.message || "Delete failed.");
         }
       };
 

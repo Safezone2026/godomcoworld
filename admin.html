@@ -1010,31 +1010,101 @@ async function savePaymentSettings(){
 
 // ================= PRODUCTS =================
 async function loadProducts() {
-  const res = await fetch(API + '/products');
+  const network = getNetwork();
+  const res = await fetch(
+    API + '/products?network=' + encodeURIComponent(network)
+  );
+
+  if (!res.ok) {
+    throw new Error("Could not load products.");
+  }
+
   const data = await res.json();
+
+  if (!Array.isArray(data)) {
+    throw new Error(data.message || "Invalid products response.");
+  }
 
   const container = document.getElementById('productsList');
   container.innerHTML = '';
 
+  const isLegacyNaira = p => {
+    const currency = String(p.currency || "").trim().toUpperCase();
+    return currency === "₦" || currency === "NGN" || currency === "NAIRA";
+  };
+
+  // Match marketplace conversion exactly. PI-denominated prices are
+  // displayed directly and are never converted a second time.
+  let piRate = null;
+
+  if (data.some(isLegacyNaira)) {
+    const rateResponse = await fetch(API + '/exchange-rates');
+
+    if (!rateResponse.ok) {
+      throw new Error("Could not retrieve the exchange rate for legacy Naira products.");
+    }
+
+    const rateData = await rateResponse.json();
+    const nairaToUSD = Number(rateData?.rates?.NG?.rate);
+
+    if (!rateData.success || !Number.isFinite(nairaToUSD) || nairaToUSD <= 0) {
+      throw new Error("The exchange-rate response is invalid.");
+    }
+
+    piRate = nairaToUSD * 314159;
+  }
+
   data.forEach(p => {
+    const storedPrice = Number(p.price);
+    if (!Number.isFinite(storedPrice)) return;
+
+    let piPrice = storedPrice;
+
+    if (isLegacyNaira(p)) {
+      if (!Number.isFinite(piRate) || piRate <= 0) return;
+      piPrice = storedPrice / piRate;
+    }
+
     const div = document.createElement('div');
     div.className = 'card';
 
-    div.innerHTML =
-      "<strong>" + p.name + "</strong><br>" +
-      "₦" + Number(p.price).toLocaleString() + "<br>" +
-      "Seller: " + p.sellerUsername;
+    const name = document.createElement('strong');
+    name.textContent = p.name || "Unnamed product";
+
+    const price = document.createElement('div');
+    price.textContent = "π" + piPrice.toFixed(8);
+
+    const seller = document.createElement('div');
+    seller.textContent = "Seller: " + (p.sellerUsername || "");
+
+    div.append(name, document.createElement('br'), price, seller);
 
     const btn = document.createElement('button');
     btn.textContent = "Delete";
 
     btn.onclick = async () => {
-      await fetch(API + '/delete-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: p.id })
-      });
-      loadProducts();
+      if (!confirm("Delete this product?")) return;
+
+      try {
+        const deleteResponse = await fetch(API + '/delete-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: p.id,
+            network: network
+          })
+        });
+
+        const deleteResult = await deleteResponse.json();
+
+        if (!deleteResponse.ok || !deleteResult.success) {
+          throw new Error(deleteResult.message || "Product deletion failed.");
+        }
+
+        await loadProducts();
+      } catch (error) {
+        alert(error.message || "Product deletion failed.");
+      }
     };
 
     div.appendChild(btn);
