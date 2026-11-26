@@ -104,8 +104,12 @@
   <input type="number" name="price" placeholder="Price in π" min="0.00000001" step="0.00000001" required />
 
   <input type="text" name="sellerUsername" placeholder="Seller Username" required />
-  <input type="file" name="images" accept="image/*" multiple required />
-    <small>Select up to 8 images of this product.</small>
+  <div class="product-image-picker" style="margin:10px 0;">
+    <input type="file" id="productImagesInput" accept="image/*" hidden />
+    <button type="button" id="addProductImageButton">Add product image</button>
+    <small id="productImageCount" style="display:block;margin-top:6px;">0/8 images selected</small>
+    <div id="productImagePreviews" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;"></div>
+  </div>
   <input type="number" id="weight" placeholder="Weight (kg)">
   <select name="category" required>
     <option value="">Select Category</option>
@@ -630,24 +634,123 @@ function goToCheckout() {
 }
 
 // -------------------- UPLOAD PRODUCT --------------------
+
+// Sequential product image selection: supports Android pickers that select one file at a time.
+const selectedProductImages = [];
+const productImagesInput = document.getElementById("productImagesInput");
+const addProductImageButton = document.getElementById("addProductImageButton");
+const productImageCount = document.getElementById("productImageCount");
+const productImagePreviews = document.getElementById("productImagePreviews");
+
+function renderProductImageSelections() {
+  if (!productImageCount || !productImagePreviews) return;
+
+  productImagePreviews.querySelectorAll("img").forEach(img => {
+    if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
+  });
+
+  productImagePreviews.innerHTML = "";
+  productImageCount.textContent = `${selectedProductImages.length}/8 images selected`;
+
+  selectedProductImages.forEach((file, index) => {
+    const card = document.createElement("div");
+    card.style.cssText = "width:105px;display:flex;flex-direction:column;gap:5px;";
+
+    const preview = document.createElement("img");
+    preview.src = URL.createObjectURL(file);
+    preview.alt = `Product image ${index + 1}`;
+    preview.style.cssText = "width:100px;height:85px;object-fit:cover;border-radius:6px;";
+
+    const label = document.createElement("small");
+    label.textContent = `Image ${index + 1}`;
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.textContent = "Remove";
+    removeButton.addEventListener("click", () => {
+      selectedProductImages.splice(index, 1);
+      renderProductImageSelections();
+      updateAddProductImageButton();
+    });
+
+    card.append(preview, label, removeButton);
+    productImagePreviews.appendChild(card);
+  });
+
+  updateAddProductImageButton();
+}
+
+function updateAddProductImageButton() {
+  if (addProductImageButton) {
+    addProductImageButton.disabled = selectedProductImages.length >= 8;
+    addProductImageButton.textContent =
+      selectedProductImages.length >= 8 ? "Maximum 8 images selected" : "Add another image";
+  }
+}
+
+if (productImagesInput && addProductImageButton) {
+  addProductImageButton.addEventListener("click", () => {
+    if (selectedProductImages.length < 8) productImagesInput.click();
+  });
+
+  productImagesInput.addEventListener("change", () => {
+    const newlySelected = Array.from(productImagesInput.files || []);
+    let added = 0;
+
+    for (const file of newlySelected) {
+      if (!file.type || !file.type.startsWith("image/")) {
+        alert(`${file.name} is not a supported image.`);
+        continue;
+      }
+
+      const duplicate = selectedProductImages.some(existing =>
+        existing.name === file.name &&
+        existing.size === file.size &&
+        existing.lastModified === file.lastModified
+      );
+
+      if (duplicate) {
+        alert(`${file.name} has already been selected.`);
+        continue;
+      }
+
+      if (selectedProductImages.length >= 8) {
+        alert("You can upload a maximum of 8 product images.");
+        break;
+      }
+
+      selectedProductImages.push(file);
+      added++;
+    }
+
+    // Clear the native picker so the same picker can be opened again.
+    productImagesInput.value = "";
+    renderProductImageSelections();
+  });
+
+  renderProductImageSelections();
+}
+
 if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
 
-      const imageInput = form.querySelector('input[name="images"]');
-
-      if (!imageInput || imageInput.files.length === 0) {
-        alert("Please select at least one product image.");
+      if (selectedProductImages.length === 0) {
+        alert("Please add at least one product image.");
         return;
       }
 
-      if (imageInput.files.length > 8) {
+      if (selectedProductImages.length > 8) {
         alert("You can upload a maximum of 8 product images.");
         return;
       }
 
 const formData = new FormData(form);
+formData.delete("images");
+selectedProductImages.forEach(file => {
+  formData.append("images", file, file.name);
+});
 
     // Product price is entered directly in Pi.
     const piPrice = Number(formData.get("price"));
