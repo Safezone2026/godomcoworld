@@ -274,14 +274,22 @@ let buyerLatitude = null;
 let buyerLongitude = null;
 
 function getSellerDistanceKm(product) {
-  const lat = Number(product.sellerLat);
-  const lng = Number(product.sellerLng);
+  const rawLat = product.sellerLat;
+  const rawLng = product.sellerLng;
+
+  if (
+    rawLat === null || rawLat === undefined || rawLat === "" ||
+    rawLng === null || rawLng === undefined || rawLng === "" ||
+    buyerLatitude === null || buyerLongitude === null
+  ) return null;
+
+  const lat = Number(rawLat);
+  const lng = Number(rawLng);
 
   if (
     !Number.isFinite(lat) || lat < -90 || lat > 90 ||
     !Number.isFinite(lng) || lng < -180 || lng > 180 ||
-    (lat === 0 && lng === 0) ||
-    buyerLatitude === null || buyerLongitude === null
+    (lat === 0 && lng === 0)
   ) return null;
 
   const rad = value => value * Math.PI / 180;
@@ -396,14 +404,15 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
 
 <p>Category: ${product.category || 'N/A'}</p>
         <p class="seller-distance">
-          Seller: ${product.sellerUsername || 'Marketplace seller'}<br>
-          Country: ${product.sellerCountry || 'Not provided'}<br>
-          ${
-            product.nearbyDistanceKm === null
-              ? 'Shop distance: GPS unavailable or location not enabled'
-              : 'Shop distance: ' + product.nearbyDistanceKm.toFixed(1) + ' km away'
-          }
-        </p>
+            Country: ${product.sellerCountry || 'Not provided'}<br>
+            State: ${product.sellerState || 'Not provided'}<br>
+            City: ${product.sellerCity || 'Not provided'}
+            ${
+              product.nearbyDistanceKm !== null
+                ? '<br>Shop distance: ' + product.nearbyDistanceKm.toFixed(1) + ' km away'
+                : ''
+            }
+          </p>
       `;
 
     // ================= PRODUCT DETAILS =================
