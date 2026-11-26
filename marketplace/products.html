@@ -133,29 +133,6 @@
 <h2>Browse Products</h2>
 <input type="text" id="searchInput" placeholder="Search products..." style="padding:5px; width:200px; margin:10px 0;">
 
-<div id="nearbySellerControls" style="margin:10px;padding:12px;background:#292929;border:1px solid #555;border-radius:8px;">
-  <strong>Find products near me</strong>
-  <button type="button" onclick="enableBuyerLocation()">Use my location</button>
-  <label style="display:inline-block;margin:8px;">
-    Distance:
-    <select id="sellerDistanceFilter" onchange="displayProducts()" style="width:auto;">
-      <option value="all">Any distance</option>
-      <option value="5">Within 5 km</option>
-      <option value="10">Within 10 km</option>
-      <option value="25">Within 25 km</option>
-      <option value="50">Within 50 km</option>
-    </select>
-  </label>
-  <label style="display:inline-block;margin:8px;">
-    Sort:
-    <select id="sellerDistanceSort" onchange="displayProducts()" style="width:auto;">
-      <option value="default">Default order</option>
-      <option value="nearest">Nearest sellers first</option>
-    </select>
-  </label>
-  <p id="buyerLocationStatus">Enable location to calculate distances to shops.</p>
-</div>
-
 <div style="margin:10px 0;">
   <button onclick="filterCategory('All')">All</button>
   <button onclick="filterCategory('Vegetables')">Vegetables</button>
@@ -270,105 +247,14 @@ async function loadProducts() {
 }
 
 // -------------------- DISPLAY PRODUCTS --------------------
-let buyerLatitude = null;
-let buyerLongitude = null;
-
-function getSellerDistanceKm(product) {
-  const rawLat = product.sellerLat;
-  const rawLng = product.sellerLng;
-
-  if (
-    rawLat === null || rawLat === undefined || rawLat === "" ||
-    rawLng === null || rawLng === undefined || rawLng === "" ||
-    buyerLatitude === null || buyerLongitude === null
-  ) return null;
-
-  const lat = Number(rawLat);
-  const lng = Number(rawLng);
-
-  if (
-    !Number.isFinite(lat) || lat < -90 || lat > 90 ||
-    !Number.isFinite(lng) || lng < -180 || lng > 180 ||
-    (lat === 0 && lng === 0)
-  ) return null;
-
-  const rad = value => value * Math.PI / 180;
-  const dLat = rad(lat - buyerLatitude);
-  const dLng = rad(lng - buyerLongitude);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(rad(buyerLatitude)) * Math.cos(rad(lat)) *
-    Math.sin(dLng / 2) ** 2;
-
-  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function enableBuyerLocation() {
-  const status = document.getElementById("buyerLocationStatus");
-
-  if (!navigator.geolocation) {
-    status.textContent = "Location services are not supported.";
-    return;
-  }
-
-  status.textContent = "Requesting location permission...";
-
-  navigator.geolocation.getCurrentPosition(
-    position => {
-      buyerLatitude = position.coords.latitude;
-      buyerLongitude = position.coords.longitude;
-      status.textContent =
-        "Location active. Distances are approximate straight-line distances.";
-      displayProducts();
-    },
-    error => {
-      status.textContent = error.code === 1
-        ? "Location permission denied. Allow location access to use nearby filters."
-        : "Unable to get your location. Please try again.";
-    },
-    { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
-  );
-}
-
 function displayProducts() {
   productList.innerHTML = '';
 
   const searchText = document.getElementById('searchInput')?.value.toLowerCase() || '';
 
-const distanceFilter =
-      document.getElementById("sellerDistanceFilter")?.value || "all";
-    const distanceSort =
-      document.getElementById("sellerDistanceSort")?.value || "default";
-
-    let filtered = allProducts
-      .filter(p => (currentCategory === 'All' || p.category === currentCategory))
-      .filter(p => (p.name || '').toLowerCase().includes(searchText))
-      .map(product => ({
-        ...product,
-        nearbyDistanceKm: getSellerDistanceKm(product)
-      }));
-
-    if (distanceFilter !== "all") {
-      if (buyerLatitude === null || buyerLongitude === null) {
-        document.getElementById("buyerLocationStatus").textContent =
-          "Enable your location before selecting a distance filter.";
-        filtered = [];
-      } else {
-        const maxDistance = Number(distanceFilter);
-        filtered = filtered.filter(product =>
-          product.nearbyDistanceKm !== null &&
-          product.nearbyDistanceKm <= maxDistance
-        );
-      }
-    }
-
-    if (distanceSort === "nearest") {
-      filtered.sort((a, b) => {
-        if (a.nearbyDistanceKm === null) return 1;
-        if (b.nearbyDistanceKm === null) return -1;
-        return a.nearbyDistanceKm - b.nearbyDistanceKm;
-      });
-    }
+  const filtered = allProducts
+    .filter(p => (currentCategory === 'All' || p.category === currentCategory))
+    .filter(p => (p.name || '').toLowerCase().includes(searchText));
 
   if (filtered.length === 0) {
     productList.innerHTML = "<p>No products found</p>";
@@ -403,16 +289,11 @@ console.log("FULL PRODUCT:", JSON.stringify(product, null, 2));
       <strong style="font-size:18px;">π${pi.toFixed(8)}</strong>
 
 <p>Category: ${product.category || 'N/A'}</p>
-        <p class="seller-distance">
-            Country: ${product.sellerCountry || 'Not provided'}<br>
-            State: ${product.sellerState || 'Not provided'}<br>
-            City: ${product.sellerCity || 'Not provided'}
-            ${
-              product.nearbyDistanceKm !== null
-                ? '<br>Shop distance: ' + product.nearbyDistanceKm.toFixed(1) + ' km away'
-                : ''
-            }
-          </p>
+        <p class="seller-location">
+          Country: ${product.sellerCountry || 'Not provided'}<br>
+          State: ${product.sellerState || 'Not provided'}<br>
+          City: ${product.sellerCity || 'Not provided'}
+        </p>
       `;
 
     // ================= PRODUCT DETAILS =================
