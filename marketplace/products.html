@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <title>Marketplace Products</title>
 <link rel="stylesheet" href="../css/style.css">
 <style>
@@ -402,6 +403,11 @@ function requestProductDeletePin() {
             if (!sellerId) {
               throw new Error("Seller profile ID is missing. Please select your seller profile again.");
             }
+
+            window.Pi.init({
+              version: "2.0",
+              sandbox: false
+            });
 
             const auth = await window.Pi.authenticate(["username"], () => {});
             const accessToken = auth && auth.accessToken;
