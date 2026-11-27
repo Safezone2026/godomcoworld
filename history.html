@@ -411,8 +411,12 @@ async function loadHistory() {
                     ["Transaction ID", transactionId || "Unavailable"],
                     ["Type", transaction.type || "Wallet"],
                     ["Amount",
-                        Number(transaction.amount || 0).toLocaleString() +
-                        " " + (transaction.currency || "")],
+                        (
+                            String(transaction.currency || "").toUpperCase() === "PI"
+                                ? Number(transaction.amount || 0).toFixed(7).replace(/\.?0+$/, "") + " π"
+                                : Number(transaction.amount || 0).toLocaleString() +
+                                  " " + (transaction.currency || "")
+                        )],
                     ["Status", transaction.status || "Completed"]
                 ]
             });
