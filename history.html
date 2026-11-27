@@ -383,7 +383,11 @@ async function loadHistory() {
                 details: [
                     ["Order ID", orderId || "Unavailable"],
                     ["Status", order.status || "Unknown"],
-                    ["Total", "₦" + Number(order.total || 0).toLocaleString()]
+                    ["Total",
+                        String(order.payment_currency || "").toUpperCase() === "PI"
+                            ? Number(order.total || 0).toFixed(7).replace(/\.?0+$/, "") + " π"
+                            : "₦" + Number(order.total || 0).toLocaleString()
+                    ]
                 ]
             });
         });
